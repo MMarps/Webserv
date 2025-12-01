@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/01 16:15:48 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/01 18:13:21 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,29 +15,37 @@
 
 //////* Libraries *//////
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/epoll.h>    // Linux epoll
-// #include <sys/event.h>    // BSD kqueue/kevent
-#include <sys/time.h>
-#include <sys/wait.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <poll.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <sys/socket.h>
+# include <sys/select.h>
+# include <sys/epoll.h>    // Linux epoll
+# include <sys/time.h>
+# include <sys/wait.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <netdb.h>
+# include <poll.h>
+# include <fcntl.h>
+# include <dirent.h>
+# include <unistd.h>
+# include <errno.h>
+# include <string.h>
+# include <signal.h>
+# include <stdio.h>
+# include <stdlib.h>
 
-#include <iostream>
-#include <string>
-#include <vector>
+# include <iostream>
+# include <sstream>
+
+# include <string>
+# include <vector>
+# include <map>
+
+# include <stdexcept>
+
+
+#include "Server.hpp"
+
 
 #endif

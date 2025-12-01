@@ -41,3 +41,6 @@ obj
 
 # debug information files
 *.dwo
+
+# Other
+guideline
