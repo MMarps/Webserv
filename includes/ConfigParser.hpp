@@ -1,32 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
+/*   ConfigParser.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/02 16:34:20 by mmarpaul         ###   ########.fr       */
+/*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
+/*   Updated: 2025/12/02 18:17:46 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SERVER_HPP
-# define SERVER_HPP
+#ifndef CONFIGPARSER_HPP
+# define CONFIGPARSER_HPP
 
 # include "Webserv.hpp"
 
-class	Server {
+class	ConfigParser {
 public:
-	Server(const std::string& confFileName);
-	Server(const Server& other);
-	~Server();
-	
-	Server&	operator=(const Server& other);
+	ConfigParser(const std::string& path);
 
 	class	ErrorException : public std::exception {
 	public:
 		ErrorException(const std::string& msg) throw() {
-			_msg = "Error: Server: " + msg;
+			_msg = "Error: ConfigParser: " + msg;
 		}
 		virtual const char*	what() const throw() {
 			return (_msg.c_str());
@@ -35,12 +31,10 @@ public:
 		std::string	_msg;
 	};
 
-private:
-	int							_port;
-	std::string					_root;
-	std::vector<std::string>	_index;
-	std::string					_serverName;
+	bool	parse();
 
+private:
+	std::string	_path;
 };
 
 #endif

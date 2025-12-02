@@ -6,11 +6,11 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/01 17:51:09 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/02 16:34:42 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "server.hpp"
+#include "Server.hpp"
 
 Server::Server(const std::string& confFileName) {
 	
@@ -31,3 +31,6 @@ Server&	Server::operator=(const Server& other) {
 	}
 	return (*this);
 }
+
+Server::~Server() {}
+
