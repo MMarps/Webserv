@@ -1,4 +1,4 @@
-NAME			:= webserv.out
+NAME			:= webserv
 
 CC				:= c++
 CFLAGS			:= -Wall -Werror -Wextra -std=c++98
@@ -17,17 +17,18 @@ SRC_DIR			:= srcs
 OBJ_DIR			:= obj
 
 # Source files (without .c)
-FILES :=	main.cpp
+FILES :=	main.cpp \
+			server.cpp
 
 # Source and object files
-SRCS := $(addprefix $(SRCS_DIR)/, $(FILES))
+SRCS := $(addprefix $(SRC_DIR)/, $(FILES))
 OBJS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # Default target
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(OBJS) $(INC) -o $@
 	@echo "$@ : $(BLUE)[READY]$(NC)"
 
 # Pattern rules for object files
