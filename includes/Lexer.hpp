@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:55:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/09 18:39:45 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/11 00:09:07 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,10 @@
 # define LEXER_HPP
 
 # include "Webserv.hpp"
+# include <list>
 
 enum	tokenType {
 	T_EOF,
-	T_SYMBOL,
 	T_IDENT,
 	T_STR,
 	T_NUM,
@@ -27,10 +27,8 @@ enum	tokenType {
 struct	Token {
 	tokenType		type;
 	std::string		content;
-	unsigned int	l;
-	unsigned int	c;
-	Token*			next;
-	Token*			prev;
+	size_t			l;
+	size_t			c;
 	Token();
 };
 
@@ -39,13 +37,32 @@ public:
 	Lexer(const char *path);
 	~Lexer();
 
-	// Token*	getNext() const;
-	// Token*	getPrev() const;
+	const std::list<Token>&	getTokens() const;
+	void					printTokens();
+	
+	class	LexerError : public std::exception {
+	public:
+		LexerError(const std::string& msg) throw() {
+			_msg = "Error: Lexer: " + msg;
+		}
+		virtual ~LexerError() throw() {}
+		virtual const char*	what() const throw() {
+			return (_msg.c_str());
+		}
+	private:
+		std::string	_msg;
+	};
 
 private:
-	std::string	_path;
-	Token*		_t;
+	std::string			_path;
+	std::string			_f;
+	std::list<Token>	_t;
+	size_t				_l;
+	size_t				_c;
+	size_t				i;
 
+	void	SkipWhiteSpaceAndComment();
+	bool	isSep(const char& c) const;
 };
 
 

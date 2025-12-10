@@ -17,21 +17,22 @@ SRC_DIR			:= srcs
 OBJ_DIR			:= obj
 
 # Source files (without .c)
-FILES :=	main.cpp
+FILES :=	main.cpp \
+			Lexer.cpp
 
 # Source and object files
-SRCS := $(addprefix $(SRCS_DIR)/, $(FILES))
-OBJS := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+SRCS := $(addprefix $(SRC_DIR)/, $(FILES))
+OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 # Default target
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(INC) $(OBJS) -o $@
 	@echo "$@ : $(BLUE)[READY]$(NC)"
 
 # Pattern rules for object files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
 	@echo "$@ : $(GREEN)[OK]$(NC)"
