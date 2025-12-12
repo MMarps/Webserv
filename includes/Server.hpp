@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/11 00:07:03 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/11 16:37:17 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,14 @@
 # define SERVER_HPP
 
 # include "Webserv.hpp"
+# include "Config.hpp"
+# include "Lexer.hpp"
 
 class	Server {
 public:
 	Server(const std::string& confFileName);
-	Server(const Server& other);
 	~Server();
 	
-	Server&	operator=(const Server& other);
 
 	class	ErrorException : public std::exception {
 	public:
@@ -36,11 +36,11 @@ public:
 		std::string	_msg;
 	};
 
+	// const Lexer&	getTok() const;
+
 private:
-	int							_port;
-	std::string					_root;
-	std::vector<std::string>	_index;
-	std::string					_serverName;
+	// Lexer	*_tok;
+	// Config	*_conf;
 
 };
 

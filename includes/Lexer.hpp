@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:55:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/11 00:09:07 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/11 19:07:18 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,28 @@
 # include "Webserv.hpp"
 # include <list>
 
+class	ParserError : public std::exception {
+	public:
+		ParserError(const std::string& msg) throw() {
+			_msg = "Error: Parsing: " + msg;
+		}
+		virtual ~ParserError() throw() {}
+		virtual const char*	what() const throw() {
+			return (_msg.c_str());
+		}
+	private:
+		std::string	_msg;
+};
+
 enum	tokenType {
 	T_EOF,
+	T_UNKNOWN,
 	T_IDENT,
 	T_STR,
 	T_NUM,
+	T_LBRACE,
+	T_RBRACE,
+	T_SEMICOLON,
 	T_SYMBOL
 };
 
@@ -34,36 +51,41 @@ struct	Token {
 
 class	Lexer {
 public:
-	Lexer(const char *path);
+	Lexer(const std::string& path);
 	~Lexer();
 
 	const std::list<Token>&	getTokens() const;
 	void					printTokens();
-	
-	class	LexerError : public std::exception {
-	public:
-		LexerError(const std::string& msg) throw() {
-			_msg = "Error: Lexer: " + msg;
-		}
-		virtual ~LexerError() throw() {}
-		virtual const char*	what() const throw() {
-			return (_msg.c_str());
-		}
-	private:
-		std::string	_msg;
-	};
+
+	/// Token Stream
+	typedef std::list<Token>::const_iterator	Iter;
+
+	const Token&	peek() const;
+	const Token&	next();
+	bool			eof() const;
+
+	void			expectText(const std::string& s);
+	void			expectType(tokenType t);
+
+	Iter			mark() const;
+	void			restore(Iter newIt);
 
 private:
 	std::string			_path;
 	std::string			_f;
-	std::list<Token>	_t;
+	std::list<Token>	_tok;
 	size_t				_l;
 	size_t				_c;
-	size_t				i;
 
-	void	SkipWhiteSpaceAndComment();
-	bool	isSep(const char& c) const;
+	size_t				i;
+	Iter				it;
+	Token				_eofTok;
+
+	void		SkipWhiteSpaceAndComment();
+	bool		isSep(const char& c) const;
+	tokenType	findIdentifier(const std::string& str) const;
 };
 
+bool	isNumber(const std::string& str);
 
 #endif

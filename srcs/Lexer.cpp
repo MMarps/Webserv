@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/11 00:49:21 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/11 19:07:16 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,21 +15,22 @@
 #include <sstream>
 
 Token::Token()
-	: type(T_EOF),
+	: type(T_UNKNOWN),
 	  content(),
 	  l(1),
 	  c(1) {}
 
-Lexer::Lexer(const char* path): _path(path), _f(), _t(), _l(1), _c(1), i(0) {
-	std::ifstream	file(path, std::ios::binary);
+Lexer::Lexer(const std::string& path)
+	: _path(path), _f(), _tok(), _l(1), _c(1), i(0) {
+	std::ifstream	file(path.c_str(), std::ios::binary);
 	if (!file.is_open())
-		throw LexerError("Cannot open " + _path);
+		throw ParserError("Cannot open " + _path);
 	std::ostringstream	ss;
 	ss << file.rdbuf();
 	_f = ss.str();
 	file.close();
 	if (_f.empty())
-		throw LexerError(_path + " is empty");
+		throw ParserError(_path + " is empty");
 
 	size_t	start = 0;
 	size_t	end = 0;
@@ -45,23 +46,34 @@ Lexer::Lexer(const char* path): _path(path), _f(), _t(), _l(1), _c(1), i(0) {
 				i++;
 			}
 			end = i;
-			newToken.type = T_IDENT;
 			newToken.content = _f.substr(start, end - start);
+			newToken.type = findIdentifier(newToken.content);
 			newToken.l = _l;
 			newToken.c = _c - newToken.content.size();
-			_t.push_back(newToken);
+			_tok.push_back(newToken);
 		}
 		else if (isSep(_f[i])) {
-			newToken.type = T_SYMBOL;
 			newToken.content = _f.substr(i, 1);
+			newToken.type = findIdentifier(newToken.content);
 			newToken.l = _l;
 			newToken.c = _c;
-			_t.push_back(newToken);
+			_tok.push_back(newToken);
 			i++;
 			_c++;
 		}
 		SkipWhiteSpaceAndComment();
 	}
+	if (_tok.empty())
+		throw ParserError(_path + " is empty");
+	Token	lastToken;
+	lastToken.type = T_EOF;
+	lastToken.content = "";
+	lastToken.l = 0;
+	lastToken.c = 0;
+	_tok.push_back(lastToken);
+
+	it = _tok.begin();
+	_eofTok = lastToken;
 }
 
 Lexer::~Lexer() {}
@@ -69,23 +81,26 @@ Lexer::~Lexer() {}
 ////////////////////////////////////////////
 
 const std::list<Token>&	Lexer::getTokens() const {
-	return (_t);
+	return (_tok);
 }
 
 static const char* tokenTypeToString(tokenType t) {
 	switch (t) {
-		case T_EOF:    return "T_EOF";
-		case T_SYMBOL: return "T_SYMBOL";
-		case T_IDENT:  return "T_IDENT";
-		case T_STR:    return "T_STR";
-		case T_NUM:    return "T_NUM";
-		default:       return "UNKNOWN";
+		case T_EOF:			return "T_EOF";
+		case T_SYMBOL:		return "T_SYMBOL";
+		case T_IDENT:		return "T_IDENT";
+		case T_LBRACE:		return "T_LBRACE";
+		case T_RBRACE:		return "T_RBRACE";
+		case T_SEMICOLON:	return "T_SEMICOLON";
+		case T_STR:			return "T_STR";
+		case T_NUM:			return "T_NUM";
+		default:   			return "T_UNKNOWN";
 	}
 }
 
 void Lexer::printTokens() {
 	size_t idx = 0;
-	for (std::list<Token>::const_iterator it = _t.begin(); it != _t.end(); ++it, ++idx) {
+	for (std::list<Token>::const_iterator it = _tok.begin(); it != _tok.end(); ++it, ++idx) {
 		const Token& tok = *it;
 		std::cout << idx << ": "
 					<< tokenTypeToString(tok.type)
@@ -124,7 +139,80 @@ void	Lexer::SkipWhiteSpaceAndComment() {
 }
 
 bool	Lexer::isSep(const char& c) const {
-	if (std::isspace(c) || c == '{' || c == '}' || c == ';')
+	if (std::isspace(static_cast<unsigned char>(c)) || c == '{' || c == '}' || c == ';')
 		return (true);
 	return (false);
+}
+
+bool	isNumber(const std::string& str) {
+	if (str.empty())
+		return (false);
+	for (size_t j = 0; j < str.size(); j++) {
+		if (!std::isdigit(static_cast<unsigned char>(str[j])))
+			return (false);
+	}
+	return (true);
+}
+
+tokenType	Lexer::findIdentifier(const std::string& str) const {
+	if (str == "server"
+		|| str == "listen"
+		|| str == "server_name"
+		|| str == "root"
+		|| str == "index"
+		|| str == "client_max_body_size"
+		|| str == "error_page"
+		|| str == "location"
+		|| str == "methods"
+		|| str == "autoindex"
+		|| str == "upload_store"
+		|| str == "cgi"
+		|| str == "return")
+		return (T_IDENT);
+	else if (str == "{")
+		return (T_LBRACE);
+	else if (str == "}")
+		return (T_RBRACE);
+	else if (str == ";")
+		return (T_SEMICOLON);
+	else if (isNumber(str))
+		return (T_NUM);
+	else
+		return (T_STR);
+}
+
+////////////   Token Stream   //////////////
+
+const Token&	Lexer::peek() const {
+	if (it == _tok.end())
+		return (_eofTok);
+	return (*it);
+}
+
+const Token&	Lexer::next() {
+	if (it == _tok.end())
+		return (_eofTok);
+	const Token &t = *it;
+	++it;
+	return (t);
+}
+
+bool	Lexer::eof() const {
+	return (it == _tok.end());
+}
+
+// void	Lexer::expectText(const std::string& s) {
+
+// }
+
+// void	Lexer::expectType(tokenType t) {
+
+// }
+
+Lexer::Iter	Lexer::mark() const {
+	return (it);
+}
+
+void	Lexer::restore(Iter newIt) {
+	it = newIt;
 }
