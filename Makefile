@@ -18,7 +18,8 @@ OBJ_DIR			:= obj
 
 # Source files (without .c)
 FILES :=	main.cpp \
-			server.cpp
+			server.cpp \
+			Request.cpp
 
 # Source and object files
 SRCS := $(addprefix $(SRC_DIR)/, $(FILES))

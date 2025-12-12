@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/06 15:18:39 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/12 15:50:13 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,11 @@
 #include <stdlib.h>
 
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <string>
 #include <vector>
+
+#include "Request.hpp"
 
 #endif
