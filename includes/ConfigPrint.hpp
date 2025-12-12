@@ -1,27 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Server.cpp                                         :+:      :+:    :+:   */
+/*   ConfigPrint.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 18:30:27 by mmarps           ###   ########.fr       */
+/*   Created: 2025/12/12 16:44:23 by mmarps            #+#    #+#             */
+/*   Updated: 2025/12/12 16:45:57 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+#ifndef CONFIGPRINT_HPP
+# define CONFIGPRINT_HPP
 
-Server::Server(const std::string& confFileName) {
-	Lexer	ts(confFileName);
-	Parser	p(ts);
+# include <iostream>
+# include "Config.hpp"
 
-	ts.printTokens();
-	conf = p.parseConfig();
-}
+void	printConfig(Config const &cfg, std::ostream &os = std::cout);
 
-Server::~Server() {}
-
-const Config&	Server::getConfig() const {
-	return (conf);
-}
+#endif // CONFIG_PRINTER_HPP

@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/11 19:07:16 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/12 18:21:42 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,6 @@ Lexer::Lexer(const std::string& path)
 	_tok.push_back(lastToken);
 
 	it = _tok.begin();
-	_eofTok = lastToken;
 }
 
 Lexer::~Lexer() {}
@@ -185,32 +184,20 @@ tokenType	Lexer::findIdentifier(const std::string& str) const {
 
 const Token&	Lexer::peek() const {
 	if (it == _tok.end())
-		return (_eofTok);
+		return (*(_tok.end()));
 	return (*it);
 }
 
 const Token&	Lexer::next() {
 	if (it == _tok.end())
-		return (_eofTok);
-	const Token &t = *it;
+		return (*(_tok.end()));
+	const Token& t = *it;
 	++it;
 	return (t);
 }
 
 bool	Lexer::eof() const {
 	return (it == _tok.end());
-}
-
-// void	Lexer::expectText(const std::string& s) {
-
-// }
-
-// void	Lexer::expectType(tokenType t) {
-
-// }
-
-Lexer::Iter	Lexer::mark() const {
-	return (it);
 }
 
 void	Lexer::restore(Iter newIt) {

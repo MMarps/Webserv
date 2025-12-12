@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:55:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/11 19:07:18 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/12 18:21:36 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,16 +17,16 @@
 # include <list>
 
 class	ParserError : public std::exception {
-	public:
-		ParserError(const std::string& msg) throw() {
-			_msg = "Error: Parsing: " + msg;
-		}
-		virtual ~ParserError() throw() {}
-		virtual const char*	what() const throw() {
-			return (_msg.c_str());
-		}
-	private:
-		std::string	_msg;
+public:
+	ParserError(const std::string& msg) throw() {
+		_msg = "Error: Parsing: " + msg;
+	}
+	virtual ~ParserError() throw() {}
+	virtual const char*	what() const throw() {
+		return (_msg.c_str());
+	}
+private:
+	std::string	_msg;
 };
 
 enum	tokenType {
@@ -64,10 +64,6 @@ public:
 	const Token&	next();
 	bool			eof() const;
 
-	void			expectText(const std::string& s);
-	void			expectType(tokenType t);
-
-	Iter			mark() const;
 	void			restore(Iter newIt);
 
 private:
@@ -79,7 +75,6 @@ private:
 
 	size_t				i;
 	Iter				it;
-	Token				_eofTok;
 
 	void		SkipWhiteSpaceAndComment();
 	bool		isSep(const char& c) const;

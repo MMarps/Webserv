@@ -18,7 +18,11 @@ OBJ_DIR			:= obj
 
 # Source files (without .c)
 FILES :=	main.cpp \
-			Lexer.cpp
+			Lexer.cpp \
+			Parser.cpp \
+			Server.cpp \
+			Config.cpp \
+			ConfigPrint.cpp
 
 # Source and object files
 SRCS := $(addprefix $(SRC_DIR)/, $(FILES))
