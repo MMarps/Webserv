@@ -6,24 +6,13 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/13 02:16:43 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/13 03:01:18 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Webserv.hpp"
 
-std::string getDoc(std::string docPath)
-{
-	std::ifstream file(docPath.c_str());
-	std::string line;
-	std::string doc;
 
-	while (getline(file, line))
-	{
-		doc += line;
-	}
-	return (doc);
-}
 int	main(int ac, char **av)
 {
 	(void)ac;
@@ -82,13 +71,10 @@ int	main(int ac, char **av)
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 				buffer[r] = '\0';
 				Request req(buffer);
-				// printf("%s\n", buffer);
-				std::string reponse;
-				std::cout << std::endl << req.getPath().length() << std::endl;
-				reponse = "HTTP/1.0 200 OK\nContent-Type: text/html\nContent-Length: 175\n\n";
-				reponse += getDoc("test_doc/"+req.getPath());
-				std::cout << reponse << std::endl;
-				if (send(clientFd, reponse.c_str(), reponse.size(), 0) == -1)
+				Response response(req.getPath());
+				
+				std::cout << response.getRep() << std::endl;
+				if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1)
 				{
 					perror("send");
 				}

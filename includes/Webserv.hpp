@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 15:50:13 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/13 02:50:49 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,5 +43,6 @@
 #include <vector>
 
 #include "Request.hpp"
+#include "Response.hpp"
 
 #endif

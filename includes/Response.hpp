@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/08 13:39:28 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/13 02:49:44 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,25 +18,22 @@
 class Response
 {
 private:
-	const std::string _version;
-	const std::string _statutCode;
-	const std::string _statutMssage;
-	const std::string _contentType;
-	const std::string _contentLength;
-	const std::string _content;
+	std::string _version;
+	std::string _statutCode;
+	std::string _statutMessage;
+	std::string _contentType;
+	std::string _contentLength;
+	std::string _content;
+	std::string _response;
 
 public:
-	Response(/* args */);
+	Response(std::string docPath);
 	~Response();
+	void getDoc(std::string docPath);
+	std::string getRep();
 };
 
-Response::Response(/* args */)
-{
-}
 
-Response::~Response()
-{
-}
 
 
 #endif
