@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 15:59:09 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/13 02:16:43 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,8 +84,9 @@ int	main(int ac, char **av)
 				Request req(buffer);
 				// printf("%s\n", buffer);
 				std::string reponse;
-				reponse = "HTTP/1.0 200 OK\n Content-Type: text/html\nContent-Length: 175\n\n";
-				reponse += getDoc("test_doc/index.html");
+				std::cout << std::endl << req.getPath().length() << std::endl;
+				reponse = "HTTP/1.0 200 OK\nContent-Type: text/html\nContent-Length: 175\n\n";
+				reponse += getDoc("test_doc/"+req.getPath());
 				std::cout << reponse << std::endl;
 				if (send(clientFd, reponse.c_str(), reponse.size(), 0) == -1)
 				{
