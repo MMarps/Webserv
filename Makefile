@@ -1,4 +1,4 @@
-NAME			:= webserv.out
+NAME			:= webserv
 
 CC				:= c++
 CFLAGS			:= -Wall -Werror -Wextra -std=c++98
