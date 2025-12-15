@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 16:19:42 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/15 17:54:36 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,11 +37,15 @@
 
 # include <iostream>
 # include <sstream>
+# include <fstream>
 
 # include <string>
 # include <vector>
 # include <map>
 
 # include <stdexcept>
+
+# include <Response.hpp>
+# include <Request.hpp>
 
 #endif
