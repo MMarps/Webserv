@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 16:19:21 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/15 18:14:19 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ public:
 	const Config&	getConfig() const;
 
 private:
-	Config	conf;
+	Config	_conf;
 };
 
 #endif
