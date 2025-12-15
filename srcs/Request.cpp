@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/13 02:17:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/15 16:06:45 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,17 +37,23 @@ Request::~Request()
 {
 }
 
-std::string Request::getMethode()
+std::string Request::getMethode() const
 {
 	return (this->_methode);
 }
 
-std::string Request::getPath()
+std::string Request::getPath() const
 {
 	return (this->_path);
 }
 
-std::string Request::getVersion()
+std::string Request::getVersion() const
 {
 	return (this->_version);
+}
+
+std::ostream &operator<<(std::ostream &o, Request const &request)
+{
+	o << BGREEN << request.getMethode() << request.getPath() <<  request.getVersion() << NC << std::endl;
+	return (o);
 }

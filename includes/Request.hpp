@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/13 02:07:49 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/15 16:03:51 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,12 @@ private:
 public:
 	Request(char *buffer);
 	~Request();
-	std::string getMethode();
-	std::string getPath();
-	std::string getVersion();
+	std::string getMethode() const;
+	std::string getPath() const;
+	std::string getVersion() const;
 
 };
 
-
+std::ostream &operator<<(std::ostream &o, Request const &request);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/13 03:01:18 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/15 16:07:03 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,15 +65,16 @@ int	main(int ac, char **av)
 			char buffer[1024];
 			if (events[i].data.fd == serverFd)
 			{
-				printf("Un client arrive !\n");
-
+				
+				std::cout << "Un client arrive !" << std::endl << std::endl;
 				int clientFd = accept(serverFd, NULL, NULL);
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 				buffer[r] = '\0';
 				Request req(buffer);
+				std::cout << req;
 				Response response(req.getPath());
 				
-				std::cout << response.getRep() << std::endl;
+				std::cout << response.getRep() << std::endl << std::endl;
 				if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1)
 				{
 					perror("send");
