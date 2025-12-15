@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 18:30:27 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/15 13:56:02 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ Server::Server(const std::string& confFileName) {
 	Lexer	ts(confFileName);
 	Parser	p(ts);
 
-	ts.printTokens();
+	// ts.printTokens();
 	conf = p.parseConfig();
 }
 

@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:55:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 18:21:36 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/15 14:10:08 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ public:
 	typedef std::list<Token>::const_iterator	Iter;
 
 	const Token&	peek() const;
+	const Token&	peekLast() const;
 	const Token&	next();
 	bool			eof() const;
 
@@ -75,6 +76,7 @@ private:
 
 	size_t				i;
 	Iter				it;
+	Iter				_last;
 
 	void		SkipWhiteSpaceAndComment();
 	bool		isSep(const char& c) const;

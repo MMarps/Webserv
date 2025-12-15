@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 18:21:42 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/15 14:10:07 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,10 +188,15 @@ const Token&	Lexer::peek() const {
 	return (*it);
 }
 
+const Token&	Lexer::peekLast() const {
+	return (*_last);
+}
+
 const Token&	Lexer::next() {
 	if (it == _tok.end())
 		return (*(_tok.end()));
 	const Token& t = *it;
+	_last = it;
 	++it;
 	return (t);
 }

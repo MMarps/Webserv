@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 18:37:27 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/15 14:40:09 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ Parser::Parser(Lexer& ts): _ts(ts) {}
 
 Config	Parser::parseConfig() {
 	Config	cfg;
+
 	while (!_ts.eof()) {
 		const Token &t = _ts.peek();
 		if (t.type == T_IDENT && t.content == "server") {
@@ -27,7 +28,7 @@ Config	Parser::parseConfig() {
 		else if (t.type == T_EOF)
 			break;
 		else
-			throwError("Expected 'server' at top level");
+			throwError("Expected 'server' at top level", false);
 	}
 	return (cfg);
 }
@@ -36,7 +37,7 @@ ServerConfig	Parser::parseServer() {
 	ServerConfig	srv;
 
 	if (_ts.eof() || _ts.peek().type != T_LBRACE)
-		throwError("Expected '{' after 'server' identifier");
+		throwError("Expected '{' after 'server' identifier", false);
 	_ts.next();
 	while (!_ts.eof() && _ts.peek().type != T_RBRACE) {
 		const Token& t = _ts.peek();
@@ -46,15 +47,13 @@ ServerConfig	Parser::parseServer() {
 		else if (t.type == T_IDENT) {
 			parseDirective(srv);
 		}
-		// else if (t.type == T_EOF)
-		// 	break ;
-		// else if (_ts.eof())
+		// else if (t.type == T_EOF/*  || _ts.eof() */)
 		// 	break ;
 		else
-			throwError("Unexpected token inside 'server' block");
+			throwError("Unexpected token inside 'server' block", false);
 	}
 	if (_ts.eof())
-		throwError("Unterminated 'server' block");
+		throwError("Unterminated 'server' block", false);
 	_ts.next();
 	return (srv);
 }
@@ -64,23 +63,23 @@ LocationConfig	Parser::parseLocation() {
 
 	_ts.next();
 	if (_ts.eof())
-		throwError("Expected location path after 'location'");
+		throwError("Expected location path after 'location'", false);
 	const Token& p = _ts.peek();
 	if (p.type != T_IDENT && p.type != T_STR && p.type != T_NUM)
-		throwError("Invalid location path");
+		throwError("Invalid location path", false);
 	loc.path = p.content;
 	_ts.next();
 	if (_ts.eof() || _ts.peek().type != T_LBRACE)
-		throwError("Expected '{' after location path");
+		throwError("Expected '{' after location path", false);
 	_ts.next();
 	while (!_ts.eof() && _ts.peek().type != T_RBRACE) {
 		if (_ts.peek().type == T_IDENT)
 			parseDirective(loc);
 		else
-			throwError("Unexpected token inside 'location' block");
+			throwError("Unexpected token inside 'location' block", false);
 	}
 	if (_ts.eof())
-		throwError("Unterminated 'location' block");
+		throwError("Unterminated 'location' block", false);
 	_ts.next();
 	return (loc);
 }
@@ -97,7 +96,7 @@ void	Parser::parseDirective(ServerConfig& srv) {
 			srv.server_names.push_back(args[i]);
 	else if (name == "root") {
 		if (args.size() != 1)
-			throwError("One argument expected for 'root'");
+			throwError("One argument expected for 'root'", true);
 		srv.root = args[0];
 	}
 	else if (name == "index")
@@ -107,12 +106,12 @@ void	Parser::parseDirective(ServerConfig& srv) {
 		parseErrorPage(srv, args);
 	else if (name == "client_max_body_size") {
 		if (args.size() != 1)
-			throwError("One argument expected for 'client_max_body_size'");
+			throwError("One argument expected for 'client_max_body_size'", true);
 		srv.client_max_body_size = parseSize(args[0]);
 		srv.has_client_max_body_size = true;
 	}
 	else
-		throwError("Directive unknown");
+		throwError("Directive unknown", true);
 }
 
 void	Parser::parseDirective(LocationConfig& loc) {
@@ -121,7 +120,7 @@ void	Parser::parseDirective(LocationConfig& loc) {
 
 	if (name == "root") {
 		if (args.size() != 1)
-			throwError("One argument expected for 'root'");
+			throwError("One argument expected for 'root'", true);
 		loc.root = args[0];
 	}
 	else if (name == "index")
@@ -129,7 +128,7 @@ void	Parser::parseDirective(LocationConfig& loc) {
 			loc.index.push_back(args[i]);
 	else if (name == "autoindex") {
 		if (args.size() != 1)
-			throwError("One argument expected for 'autoindex'");
+			throwError("One argument expected for 'autoindex'", true);
 		if (args[0] == "on")
 			loc.autoindex = true;
 		else
@@ -140,7 +139,7 @@ void	Parser::parseDirective(LocationConfig& loc) {
 	}
 	else if (name == "client_max_body_size") {
 		if (args.size() != 1)
-			throwError("One argument expected for 'client_max_body_size'");
+			throwError("One argument expected for 'client_max_body_size'", true);
 		loc.client_max_body_size = parseSize(args[0]);
 		loc.has_client_max_body_size = true;
 	}
@@ -148,31 +147,31 @@ void	Parser::parseDirective(LocationConfig& loc) {
 		loc.methods = parseMethods(args);
 	else if (name == "upload_store") {
 		if (args.size() != 1)
-			throwError("One argument expected for 'upload_store'");
+			throwError("One argument expected for 'upload_store'", true);
 		loc.upload_store = args[0];
 	}
 	else if (name == "return")
 		parseReturn(loc, args);
 	else
-		throwError("Directive unknown1");
+		throwError("Directive unknown1", true);
 }
 
 Listen			Parser::parseListen(std::vector<std::string>& args) {
 	Listen l;
 
 	if (args.size() == 0)
-		throwError("Expected argument after directive 'listen'");
+		throwError("Expected argument after directive 'listen'", true);
 	else if (args.size() > 1)
-		throwError("Too many arguments after directive 'listen'");
+		throwError("Too many arguments after directive 'listen'", true);
 
 	std::string s = args[0];
 	size_t pos = s.find(':');
 	if (pos == std::string::npos) {
 		if (!isNumber(s))
-			throwError("Invalid port in 'listen'");
+			throwError("Invalid port in 'listen'", true);
 		int p = std::atoi(s.c_str());
 		if (p <= 0 || p > 65535)
-			throwError("Port out of range, must be between [0, 65535]");
+			throwError("Port out of range, must be between [0, 65535]", true);
 		l.port = p;
 		l.host = "*";
 	}
@@ -180,10 +179,10 @@ Listen			Parser::parseListen(std::vector<std::string>& args) {
 		l.host = s.substr(0, pos);
 		std::string sub = s.substr(pos + 1);
 		if (!isNumber(sub))
-			throwError("Invalid port in 'listen'");
+			throwError("Invalid port in 'listen'", true);
 		int p = std::atoi(sub.c_str());
 		if (p <= 0 || p > 65535)
-			throwError("Port out of range, must be between [0, 65535]");
+			throwError("Port out of range, must be between [0, 65535]", true);
 		l.port = p;
 	}
 	return (l);
@@ -191,12 +190,12 @@ Listen			Parser::parseListen(std::vector<std::string>& args) {
 
 void	Parser::parseErrorPage(ServerConfig& srv, const std::vector<std::string>& args) {
 	if (args.size() < 2 || (args.size() % 2 != 0))
-		throwError("'error_page' expect code and path");
+		throwError("'error_page' expect code and path", true);
 	for (size_t i = 0; i < args.size(); i += 2) {
 		const std::string &code = args[i];
 		const std::string &path = args[i+1];
 		if (!isNumber(code))
-			throwError("Invalid error code");
+			throwError("Invalid error code", true);
 		int c = atoi(code.c_str());
 		srv.error_pages[c] = path;
 	}
@@ -211,14 +210,14 @@ size_t	Parser::parseSize(const std::string& s) {
 		num = num.substr(0, num.size() - 1);
 	}
 	if (!isNumber(num))
-		throwError("Invalid number");
+		throwError("Invalid number", true);
 	size_t val = static_cast<size_t>(std::atol(num.c_str()));
 	if (suffix == 'K' || suffix == 'k')
 		val *= 1024;
 	else if (suffix == 'M' || suffix == 'm')
 		val *= 1024 * 1024;
 	else if (suffix != 0)
-		throwError("Unknown suffix");
+		throwError("Unknown suffix", true);
 	return (val);
 }
 
@@ -226,11 +225,11 @@ std::vector<std::string>	Parser::parseMethods(const std::vector<std::string>& ar
 	std::vector<std::string>	res;
 
 	if (args.size() == 0)
-		throwError("Missing arguments for 'methods'");
+		throwError("Missing arguments for 'methods'", true);
 	for (size_t i = 0; i < args.size(); i++) {
 		std::string	m = args[i];
 		if (m != "GET" && m != "POST" && m != "DELETE")
-			throwError("Unsupported method '" + m + "'");
+			throwError("Unsupported method '" + m + "'", true);
 		res.push_back(m);
 	}
 	return (res);
@@ -238,7 +237,7 @@ std::vector<std::string>	Parser::parseMethods(const std::vector<std::string>& ar
 
 void	Parser::parseCgi(LocationConfig& loc, const std::vector<std::string>& args) {
 	if (args.size() % 2 != 0)
-		throwError("extension and executable expected by 'cgi'");
+		throwError("extension and executable expected by 'cgi'", true);
 	for (size_t i = 0; i < args.size(); i += 2) {
 		const std::string &ext = args[i];
 		const std::string &exec = args[i+1];
@@ -248,10 +247,10 @@ void	Parser::parseCgi(LocationConfig& loc, const std::vector<std::string>& args)
 
 void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &args) {
 	if (args.size() != 2)
-		throwError("'return' expects status and target");
+		throwError("'return' expects status and target", true);
 	const std::string &s = args[0];
 	if (!isNumber(s))
-		throwError("Invalid return status");
+		throwError("Invalid return status", true);
 	int st = atoi(s.c_str());
 	loc.return_code = st;
 	loc.return_url = args[1];
@@ -259,8 +258,8 @@ void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &ar
 
 /////////////////////////////////////
 
-void Parser::throwError(const std::string &msg) const {
-	const Token &t = _ts.peek();
+void Parser::throwError(const std::string &msg, bool flg) const {
+	const Token &t = flg ? _ts.peekLast() : _ts.peek();
 	std::ostringstream oss;
 	if (t.l > 0)
 		oss << "ligne " << t.l << " " << "col " << t.c << ": " << msg;
@@ -279,10 +278,10 @@ std::vector<std::string>	Parser::collectArgs() {
 			_ts.next();
 		}
 		else
-			throwError("Unexpected token inside directive");
+			throwError("Unexpected token inside directive", false);
 	}
 	if (_ts.eof())
-		throwError("Unterminated directive block");
+		throwError("Unterminated directive block", false);
 	_ts.next();
 	return (args);
 }

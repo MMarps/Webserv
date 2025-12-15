@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 18:15:56 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/15 14:13:40 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,13 +17,11 @@
 # include "Lexer.hpp"
 # include "Config.hpp"
 
-class Lexer; // forward declaration to avoid include cycle
-
-// forward declare config structs (defined in Config.hpp)
-struct Listen;
-struct LocationConfig;
-struct ServerConfig;
-class Config;
+class	Lexer;
+struct	Listen;
+struct	LocationConfig;
+struct	ServerConfig;
+class	Config;
 
 class	Parser {
 public:
@@ -34,7 +32,7 @@ public:
 private:
 	Lexer&	_ts;
 
-	void	throwError(const std::string& msg) const;
+	void	throwError(const std::string& msg, bool flg) const;
 
 	std::vector<std::string>	collectArgs();
 

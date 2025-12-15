@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/12 16:58:42 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/15 13:40:57 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include "Config.hpp"
 # include "Parser.hpp"
 
-class Config;
+class	Config;
 
 class	ServerError : public std::exception {
 public:
