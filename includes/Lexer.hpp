@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:55:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 14:10:08 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/18 17:09:22 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,8 @@ public:
 	Lexer(const std::string& path);
 	~Lexer();
 
+	void	makeTokenStream();
+
 	const std::list<Token>&	getTokens() const;
 	void					printTokens();
 
@@ -68,7 +70,7 @@ public:
 	void			restore(Iter newIt);
 
 private:
-	std::string			_path;
+	const std::string	_path;
 	std::string			_f;
 	std::list<Token>	_tok;
 	size_t				_l;

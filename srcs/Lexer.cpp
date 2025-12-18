@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 14:10:07 by mmarps           ###   ########.fr       */
+/*   Updated: 2025/12/18 17:05:40 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,12 @@ Token::Token()
 	  c(1) {}
 
 Lexer::Lexer(const std::string& path)
-	: _path(path), _f(), _tok(), _l(1), _c(1), i(0) {
-	std::ifstream	file(path.c_str(), std::ios::binary);
+	: _path(path), _f(), _tok(), _l(1), _c(1), i(0) {}
+
+Lexer::~Lexer() {}
+
+void	Lexer::makeTokenStream() {
+	std::ifstream	file(_path.c_str(), std::ios::binary);
 	if (!file.is_open())
 		throw ParserError("Cannot open " + _path);
 	std::ostringstream	ss;
@@ -74,8 +78,6 @@ Lexer::Lexer(const std::string& path)
 
 	it = _tok.begin();
 }
-
-Lexer::~Lexer() {}
 
 ////////////////////////////////////////////
 
