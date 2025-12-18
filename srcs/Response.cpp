@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/15 17:54:40 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/18 14:47:52 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,9 +50,13 @@ void Response::getDoc(std::string docPath)
 }
 
 
-std::string Response::getRep()
+std::string Response::getRep() const
 {
     return (this->_response);
 }
 
-
+std::ostream &operator<<(std::ostream &o, Response const &response)
+{
+    o << BYELLOW << response.getRep() << NC << std::endl;
+    return (o);
+}

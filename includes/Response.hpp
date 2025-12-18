@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/13 02:49:44 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/18 14:34:56 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,10 +30,9 @@ public:
 	Response(std::string docPath);
 	~Response();
 	void getDoc(std::string docPath);
-	std::string getRep();
+	std::string getRep() const;
 };
 
-
-
+std::ostream &operator<<(std::ostream &o, Response const &response);
 
 #endif

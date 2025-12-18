@@ -22,7 +22,9 @@ FILES :=	main.cpp \
 			Parser.cpp \
 			Server.cpp \
 			Config.cpp \
-			ConfigPrint.cpp
+			ConfigPrint.cpp \
+			Request.cpp \
+			Response.cpp \
 
 # Source and object files
 SRCS := $(addprefix $(SRC_DIR)/, $(FILES))

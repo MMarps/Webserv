@@ -6,35 +6,80 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/15 16:06:45 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/18 17:38:01 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
-Request::Request(char *buffer)
+Request::Request()
 {
-	std::istringstream request(buffer);
-	std::string line;
-	std::string get;
-	getline(request, line);
-	std::istringstream cut(line);
-	getline(cut, get, '/');
-	this->_methode = get;
-	getline(cut, get, ' ');
-	this->_path = get;
-	if (!this->_path.length())
-	{
-		this->_path = "index.html";
-	}
-	
-	
-	getline(cut, get, ' ');
-	this->_version = get;
+	// std::istringstream request(buffer);
+	// std::string line;
+	// std::string get;
+	// while (line != "\r\n\r\n")
+	// {
+	// 	std::cout << "ok" << std::endl;
+	// 	getline(request, line);
+	// }
+	// std::cout << "ok" << std::endl;
+	//
+	// getline(cut, get, '/');
+	// this->_methode = get;
+	// getline(cut, get, ' ');
+	// this->_path = get;
+	// if (!this->_path.length())
+	// {
+	// 	this->_path = "index.html";
+	// }
+	// getline(cut, get, ' ');
+	// this->_version = get;
 }
 
 Request::~Request()
 {
+}
+
+void Request::parse(std::string buffer)
+{
+	std::istringstream request(buffer.c_str());
+	std::string line;
+	while (getline(request, line))
+	{
+		std::istringstream cut(line);
+		std::string res;
+		getline(cut, res, ' ');
+		if (res == "GET")
+			parseMethode(line);
+		else
+			parseAttribut(line);
+	}
+}
+
+void Request::parseMethode(std::string line)
+{
+	std::istringstream cut(line);
+	std::string res;
+	std::vector<std::string> parsedLine;
+	while (getline(cut, res, ' '))
+	{
+		parsedLine.push_back(res);
+	}
+	for (std::vector<std::string>::iterator it = parsedLine.begin(); it < parsedLine.end(); it++)
+		std::cout << *it << std::endl;
+	if (parsedLine.size() != 3)
+	{
+		this->_errorCode = 400;
+		return ;
+	}
+	this->setMethode(parsedLine[0]);
+	this->setPath("./test_doc" + parsedLine[1]);
+	this->setVersion(parsedLine[2]);
+}
+
+void Request::parseAttribut(std::string line)
+{
+	(void)line;
 }
 
 std::string Request::getMethode() const
@@ -52,8 +97,82 @@ std::string Request::getVersion() const
 	return (this->_version);
 }
 
+std::string Request::getHeader() const
+{
+	return (this->_header);
+}
+
+std::string Request::getHost() const
+{
+	return (this->_host);
+}
+
+bool Request::getIsComplete(void) const
+{
+	return (this->_isComplete);
+}
+
+int Request::getErrorCode(void) const
+{
+	return (this->_errorCode);
+}
+
+void Request::setMethode(std::string methode)
+{
+	if (methode == "GET" || methode == "POST" || methode == "DELETE")
+		this->_methode = methode;
+	else
+		this->_errorCode = 400;
+}
+
+void Request::setPath(std::string path)
+{
+	// if (access(this->_path.c_str(), F_OK) == -1)
+	// {
+	// 	this->_errorCode = 404;
+	// 	return ;
+	// }
+	// else if (access(this->_path.c_str(), R_OK) == -1)
+	// {
+	// 	this->_errorCode = 403;
+	// 	return ;
+	// }
+	// else
+	// {
+		this->_path = path;
+	// }
+}
+
+void Request::setVersion(std::string version)
+{
+	if (version != "HTTP/1.1\r")
+		this->_errorCode = 400;
+	else
+		this->_version = version;
+}
+
+void Request::setHeader(std::string header)
+{
+	(void)header;
+}
+
+void Request::setHost(std::string host)
+{
+	(void)host;
+}
+
+void Request::setIsComplete(bool isComplet)
+{
+	(void)isComplet;
+}
+
+void Request::setErrorCode(int errorCode)
+{
+	(void)errorCode;
+}
+
 std::ostream &operator<<(std::ostream &o, Request const &request)
 {
-	o << BGREEN << request.getMethode() << request.getPath() <<  request.getVersion() << NC << std::endl;
+	o << BGREEN << "mode : " <<request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " <<request.getVersion() << NC << std::endl;
 	return (o);
 }

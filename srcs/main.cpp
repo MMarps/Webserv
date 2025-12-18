@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 17:47:45 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/18 17:34:18 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,8 +73,11 @@ int	main(int ac, char **av)
 				int clientFd = accept(serverFd, NULL, NULL);
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 				buffer[r] = '\0';
-				Request req(buffer);
+				Request req;
+				req.parse(buffer);
+				std::cout << buffer << std::endl;
 				std::cout << req;
+				std::cout << req.getErrorCode();
 				Response response(req.getPath());
 				
 				std::cout << response.getRep() << std::endl << std::endl;
