@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/18 17:05:40 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2025/12/19 17:56:30 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,13 @@ Token::Token()
 	  c(1) {}
 
 Lexer::Lexer(const std::string& path)
-	: _path(path), _f(), _tok(), _l(1), _c(1), i(0) {}
+	: _path(path), _f(), _tok(), _l(1), _c(1), i(0) {
+	makeTokenStream();
+}
 
 Lexer::~Lexer() {}
+
+////////////////////////////////////////////
 
 void	Lexer::makeTokenStream() {
 	std::ifstream	file(_path.c_str(), std::ios::binary);
