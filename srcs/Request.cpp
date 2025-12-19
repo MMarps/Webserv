@@ -6,34 +6,14 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/18 17:38:01 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/19 17:44:59 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
-Request::Request()
+Request::Request() : _isComplete(false), _errorCode(0)
 {
-	// std::istringstream request(buffer);
-	// std::string line;
-	// std::string get;
-	// while (line != "\r\n\r\n")
-	// {
-	// 	std::cout << "ok" << std::endl;
-	// 	getline(request, line);
-	// }
-	// std::cout << "ok" << std::endl;
-	//
-	// getline(cut, get, '/');
-	// this->_methode = get;
-	// getline(cut, get, ' ');
-	// this->_path = get;
-	// if (!this->_path.length())
-	// {
-	// 	this->_path = "index.html";
-	// }
-	// getline(cut, get, ' ');
-	// this->_version = get;
 }
 
 Request::~Request()
@@ -54,6 +34,11 @@ void Request::parse(std::string buffer)
 		else
 			parseAttribut(line);
 	}
+	if (this->_errorCode == 0)
+	{
+		this->_errorCode = 200;
+	}
+	
 }
 
 void Request::parseMethode(std::string line)
@@ -65,21 +50,26 @@ void Request::parseMethode(std::string line)
 	{
 		parsedLine.push_back(res);
 	}
-	for (std::vector<std::string>::iterator it = parsedLine.begin(); it < parsedLine.end(); it++)
-		std::cout << *it << std::endl;
 	if (parsedLine.size() != 3)
 	{
 		this->_errorCode = 400;
 		return ;
 	}
 	this->setMethode(parsedLine[0]);
-	this->setPath("./test_doc" + parsedLine[1]);
+	this->setPath("test_doc" + parsedLine[1]);
 	this->setVersion(parsedLine[2]);
 }
 
 void Request::parseAttribut(std::string line)
 {
-	(void)line;
+	std::istringstream cut(line);
+	std::string res;
+	getline(cut, res, ' ');
+	if (res == "Host:")
+	{
+		getline(cut, res, ' ');
+		this->_host = res;
+	}
 }
 
 std::string Request::getMethode() const
@@ -127,20 +117,20 @@ void Request::setMethode(std::string methode)
 
 void Request::setPath(std::string path)
 {
-	// if (access(this->_path.c_str(), F_OK) == -1)
-	// {
-	// 	this->_errorCode = 404;
-	// 	return ;
-	// }
-	// else if (access(this->_path.c_str(), R_OK) == -1)
-	// {
-	// 	this->_errorCode = 403;
-	// 	return ;
-	// }
-	// else
-	// {
+	if (access(path.c_str(), F_OK) == -1)
+	{
+		this->_errorCode = 404;
+		return ;
+	}
+	else if (access(path.c_str(), R_OK) == -1)
+	{
+		this->_errorCode = 403;
+		return ;
+	}
+	else
+	{
 		this->_path = path;
-	// }
+	}
 }
 
 void Request::setVersion(std::string version)
@@ -173,6 +163,6 @@ void Request::setErrorCode(int errorCode)
 
 std::ostream &operator<<(std::ostream &o, Request const &request)
 {
-	o << BGREEN << "mode : " <<request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " <<request.getVersion() << NC << std::endl;
+	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC ;
 	return (o);
 }

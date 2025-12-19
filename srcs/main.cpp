@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/18 17:34:18 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/19 17:43:08 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,6 @@ int	main(int ac, char **av)
 	(void)ac;
 	(void)av;
 	int serverFd = socket(AF_INET, SOCK_STREAM, 0);
-	// int clientFd;
-	// socklen_t addrSize;
 	struct sockaddr_in myAddr;
 
 	if (serverFd == -1)
@@ -74,13 +72,14 @@ int	main(int ac, char **av)
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 				buffer[r] = '\0';
 				Request req;
-				req.parse(buffer);
-				std::cout << buffer << std::endl;
-				std::cout << req;
-				std::cout << req.getErrorCode();
-				Response response(req.getPath());
-				
-				std::cout << response.getRep() << std::endl << std::endl;
+				Response response;
+				req.parse(buffer); 
+				response.makeRep(req);
+				std::cout << "-------------------------" << std::endl;
+				std::cout << "request : " << std::endl << buffer << std::endl;
+				std::cout << "-------------------------" << std::endl;
+				std::cout << "reponse : " << std::endl << response.getRep() << std::endl << std::endl;
+				std::cout << "-------------------------" << std::endl;
 				if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1)
 				{
 					perror("send");

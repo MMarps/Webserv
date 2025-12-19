@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/18 14:44:22 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/19 17:23:21 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,9 @@
 # define WEBSERV_HPP
 
 //////* Libraries *//////
+
+
+
 
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -45,10 +48,10 @@
 
 # include <stdexcept>
 
-
-
 # include "color.h" 
 # include "Request.hpp"
 # include "Response.hpp"
+
+
 
 #endif
