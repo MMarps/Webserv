@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/19 17:43:08 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/20 18:34:09 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,9 +72,9 @@ int	main(int ac, char **av)
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 				buffer[r] = '\0';
 				Request req;
-				Response response;
-				req.parse(buffer); 
-				response.makeRep(req);
+				req.parse(buffer);
+				Response response(req);
+				response.makeRep();
 				std::cout << "-------------------------" << std::endl;
 				std::cout << "request : " << std::endl << buffer << std::endl;
 				std::cout << "-------------------------" << std::endl;

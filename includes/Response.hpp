@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/19 17:39:38 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/20 18:35:49 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,26 +15,34 @@
 
 # include "Webserv.hpp"
 
-class Request;
+class	Request;
 
 class Response
 {
   private:
-	std::string _version;
-	std::string _contentType;
-	std::string _contentLength;
+	Request _req;
+
+	std::string _contentPath;
+	std::string _contentExtention;
 	std::string _content;
+	std::string _contentLength;
 	std::string _response;
 	std::map<int, std::string> _statutMessage;
+	std::map<std::string, std::string> _contentType;
 
   public:
-	Response();
+	Response(Request req);
 	~Response();
 
 	std::string getRep() const;
 
-	void getDoc(std::string docPath);
-	void makeRep(Request request);
+	void getText();
+	void getDoc();
+	void makeRep();
+	void getContentExtention();
+	void getDefaultResponse();
+	void getFullResponse();
+	void getResponseCode();
 };
 
 std::ostream &operator<<(std::ostream &o, Response const &response);
