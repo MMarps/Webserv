@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/20 18:34:09 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/21 18:41:47 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,7 +80,7 @@ int	main(int ac, char **av)
 				std::cout << "-------------------------" << std::endl;
 				std::cout << "reponse : " << std::endl << response.getRep() << std::endl << std::endl;
 				std::cout << "-------------------------" << std::endl;
-				if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1)
+				if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1 || send(clientFd, response.getContent().data(), response.getContent().size(), 0) == -1)
 				{
 					perror("send");
 				}

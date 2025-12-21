@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/20 18:35:49 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/21 18:38:50 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ class Response
 
 	std::string _contentPath;
 	std::string _contentExtention;
-	std::string _content;
+	std::vector<char> _content;
 	std::string _contentLength;
 	std::string _response;
 	std::map<int, std::string> _statutMessage;
@@ -43,6 +43,9 @@ class Response
 	void getDefaultResponse();
 	void getFullResponse();
 	void getResponseCode();
+	void getImage();
+
+	std::vector<char> getContent();
 };
 
 std::ostream &operator<<(std::ostream &o, Response const &response);

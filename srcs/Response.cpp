@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/20 18:40:49 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/21 18:39:42 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,13 +44,29 @@ std::string Response::getRep() const
 
 void Response::getDoc()
 {
-	std::ifstream file(this->_req.getPath().c_str());
+	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
+	if (!file.is_open())
+	{
+		this->_req.setErrorCode(404);
+		return ;
+	}
+	std::istreambuf_iterator<char> it(file);
+	std::istreambuf_iterator<char> end;
+	std::vector<char> buffer(it, end);
+
 	std::stringstream ss;
-	std::string line;
-	while (getline(file, line))
-		this->_content += line;
-	ss << this->_content.length();
+	ss << buffer.size();
 	this->_contentLength = ss.str();
+	this->_content.swap(buffer);
+}
+
+std::vector<char> Response::getContent()
+{
+	return (this->_content);
+}
+
+void Response::getImage()
+{
 }
 
 void Response::makeRep()
@@ -68,7 +84,7 @@ void Response::getContentExtention()
 	std::stringstream path(this->_req.getPath());
 	std::string get;
 	getline(path, get, '.');
-    getline(path, get);
+	getline(path, get);
 	this->_contentExtention = get;
 }
 
@@ -84,7 +100,7 @@ void Response::getFullResponse()
 	this->_response += "\nContent-Type: "
 		+ this->_contentType[this->_contentExtention];
 	this->_response += "\nContent-Length: " + this->_contentLength;
-	this->_response += "\n\n" + this->_content;
+	this->_response += "\n\n";
 }
 
 void Response::getResponseCode()
