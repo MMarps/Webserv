@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/19 17:44:59 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/22 16:56:03 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,11 @@ void Request::setMethode(std::string methode)
 
 void Request::setPath(std::string path)
 {
+	if (path == "test_doc/")
+	{
+		path+= "index.html";
+	}
+	std::cout << path << std::endl;
 	if (access(path.c_str(), F_OK) == -1)
 	{
 		this->_errorCode = 404;

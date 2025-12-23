@@ -6,15 +6,14 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/21 18:39:42 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/22 16:54:14 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response(Request req)
+Response::Response(Request& req) : _req(req)
 {
-	this->_req = req;
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
 	_statutMessage.insert(std::make_pair(302, "Found"));
@@ -65,9 +64,6 @@ std::vector<char> Response::getContent()
 	return (this->_content);
 }
 
-void Response::getImage()
-{
-}
 
 void Response::makeRep()
 {

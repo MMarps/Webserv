@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/21 18:23:05 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/22 16:50:50 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 //////* Libraries *//////
 
 
+# include "color.h"
 
 # include <iterator>
 # include <sys/types.h>
@@ -48,7 +49,6 @@
 
 # include <stdexcept>
 
-# include "color.h" 
 # include "Request.hpp"
 # include "Response.hpp"
 

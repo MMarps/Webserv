@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/21 18:38:50 by jle-doua         ###   ########.fr       */
+/*   Updated: 2025/12/22 16:53:06 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,12 @@
 
 # include "Webserv.hpp"
 
-class	Request;
+class Request;
 
 class Response
 {
   private:
-	Request _req;
-
+	Request& _req;
 	std::string _contentPath;
 	std::string _contentExtention;
 	std::vector<char> _content;
@@ -31,7 +30,7 @@ class Response
 	std::map<std::string, std::string> _contentType;
 
   public:
-	Response(Request req);
+	Response(Request& req);
 	~Response();
 
 	std::string getRep() const;
@@ -43,7 +42,6 @@ class Response
 	void getDefaultResponse();
 	void getFullResponse();
 	void getResponseCode();
-	void getImage();
 
 	std::vector<char> getContent();
 };
