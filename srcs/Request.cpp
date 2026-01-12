@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/22 16:56:03 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/12 16:26:56 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,8 @@ void Request::parse(std::string buffer)
 			parseMethode(line);
 		else
 			parseAttribut(line);
+		if (strcmp(line.c_str(), "\r\n") == 0)
+            break;
 	}
 	if (this->_errorCode == 0)
 	{
