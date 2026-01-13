@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 17:54:36 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/13 18:59:42 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@
 # include <signal.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <cstring>
 
 # include <iostream>
 # include <sstream>
