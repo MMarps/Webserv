@@ -38,6 +38,7 @@ obj
 *.exe
 *.out
 *.app
+webserv
 
 # debug information files
 *.dwo

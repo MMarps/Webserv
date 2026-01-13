@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 14:40:09 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/12 17:35:02 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ Config	Parser::parseConfig() {
 		else
 			throwError("Expected 'server' at top level", false);
 	}
+	putDefaultValues(cfg);
 	return (cfg);
 }
 
@@ -254,6 +255,26 @@ void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &ar
 	int st = atoi(s.c_str());
 	loc.return_code = st;
 	loc.return_url = args[1];
+}
+
+void	Parser::putDefaultValues(Config &cfg) {
+	for (size_t si = 0; si < cfg.servers.size(); si++) {
+		ServerConfig &srv = cfg.servers[si];
+		if (srv.listens.empty()) {
+			Listen l;
+			l.host = "INADDR_ANY";
+			l.port = -1;
+			srv.listens.push_back(l);
+		}
+		if (srv.root.empty())
+			srv.root = "./var";
+		if (srv.index.empty())
+			srv.index.push_back("index.html");
+		// for (size_t li = 0; li < srv.locations.size(); li++) {
+		// 	LocationConfig &loc = srv.locations[li];
+
+		// }
+	}
 }
 
 /////////////////////////////////////
