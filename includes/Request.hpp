@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/19 16:02:10 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/14 16:46:31 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,9 @@
 # define REQUEST_HPP
 
 # include "Webserv.hpp"
+# include "Config.hpp"
+
+struct ServerConfig;
 
 class Request
 {
@@ -31,8 +34,8 @@ class Request
 	Request();
 	~Request();
 
-	void parse(std::string buffer);
-	void parseMethode(std::string line);
+	void parse(ServerConfig server, std::string buffer);
+	void parseMethode(ServerConfig server, std::string line);
 	void parseAttribut(std::string line);
 
 	std::string getMethode() const;
@@ -44,7 +47,7 @@ class Request
 	int getErrorCode() const;
 
 	void setMethode(std::string Methode);
-	void setPath(std::string path);
+	void setPath(ServerConfig server , std::string path);
 	void setVersion(std::string version);
 	void setHeader(std::string header);
 	void setHost(std::string host);

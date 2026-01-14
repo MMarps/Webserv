@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/21 18:41:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/14 17:06:35 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,14 +67,20 @@ int	main(int ac, char **av)
 			if (events[i].data.fd == serverFd)
 			{
 				
+				ServerConfig server;
+				server.index.push_back("index.html");
+				server.root = "var/www";
+
 				std::cout << "Un client arrive !" << std::endl << std::endl;
 				int clientFd = accept(serverFd, NULL, NULL);
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 				buffer[r] = '\0';
 				Request req;
-				req.parse(buffer);
+				req.parse(server ,buffer);
 				Response response(req);
 				response.makeRep();
+				std::cout << RED << " ca passe 6" << NC << std::endl;
+
 				std::cout << "-------------------------" << std::endl;
 				std::cout << "request : " << std::endl << buffer << std::endl;
 				std::cout << "-------------------------" << std::endl;

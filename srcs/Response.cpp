@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/22 16:54:14 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/14 16:59:49 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,15 +43,25 @@ std::string Response::getRep() const
 
 void Response::getDoc()
 {
+	std::cout << this->_req.getPath() << std::endl;
 	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
+	std::cout << RED << " ca passe 4" << NC << std::endl;
+	
 	if (!file.is_open())
 	{
 		this->_req.setErrorCode(404);
 		return ;
 	}
+	std::cout << RED << " ca passe 5 " << this->_req.getPath() << NC << std::endl;
 	std::istreambuf_iterator<char> it(file);
+	std::cout << RED << " ca passe 1200" << NC << std::endl;
+
 	std::istreambuf_iterator<char> end;
+	std::cout << RED << " ca passe 1201" << NC << std::endl;
+
 	std::vector<char> buffer(it, end);
+	std::cout << RED << " ca passe 1202" << NC << std::endl;
+
 
 	std::stringstream ss;
 	ss << buffer.size();
@@ -68,10 +78,15 @@ std::vector<char> Response::getContent()
 void Response::makeRep()
 {
 	getDefaultResponse();
+	std::cout << RED << " ca passe 7" << NC << std::endl;
 	if (this->_req.getErrorCode() == 200)
 	{
 		getContentExtention();
+	std::cout << RED << " ca passe 8" << NC << std::endl;
+
 		getFullResponse();
+	std::cout << RED << " ca passe 9" << NC << std::endl;
+
 	}
 }
 
@@ -93,6 +108,7 @@ void Response::getDefaultResponse()
 void Response::getFullResponse()
 {
 	getDoc();
+	std::cout << RED << " ca passe 10" << NC << std::endl;
 	this->_response += "\nContent-Type: "
 		+ this->_contentType[this->_contentExtention];
 	this->_response += "\nContent-Length: " + this->_contentLength;
