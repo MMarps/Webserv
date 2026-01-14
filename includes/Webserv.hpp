@@ -5,10 +5,11 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/22 16:50:50 by jle-doua         ###   ########.fr       */
+/*   Created: Invalid date        by                   #+#    #+#             */
+/*   Updated: 2026/01/14 16:18:12 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
@@ -51,7 +52,7 @@
 
 # include "Request.hpp"
 # include "Response.hpp"
-
+# include "color.h"
 
 
 #endif
