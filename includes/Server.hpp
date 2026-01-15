@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/13 18:57:32 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/15 19:55:52 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,8 @@ public:
 
 	const Config&	getConfig() const;
 
+	void			run();
+
 private:
 	Config	_conf;
 
@@ -52,7 +54,11 @@ private:
 
 	void				_setupServerSockets();
 	void				_setNonBlocking(int fd);
-	void				_addToEpoll(int fd);
+	void				_addToEpoll(int fd, uint32_t events);
+
+	void				_closeConnection(int fd);
+	void				_addNewClient(int serverFd);
+	void				_handleClientData(int clientFd);
 };
 
 #endif

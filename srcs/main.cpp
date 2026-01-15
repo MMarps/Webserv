@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/19 20:47:15 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/15 20:04:40 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,8 @@ int	main(int ac, char **av) {
 		else if (ac == 2)
 			path = av[1];
 		Server	s(path);
-
 		printConfig(s.getConfig(), std::cout);
+		s.run();
 	}
 	catch (const std::exception& err) {
 		std::cout << err.what() << std::endl;
