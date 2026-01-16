@@ -6,35 +6,81 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/15 16:06:45 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/14 17:12:06 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Request.hpp"
 
-Request::Request(char *buffer)
+#include "Request.hpp"
+#include "Config.hpp"
+
+Request::Request() : _isComplete(false), _errorCode(0)
 {
-	std::istringstream request(buffer);
-	std::string line;
-	std::string get;
-	getline(request, line);
-	std::istringstream cut(line);
-	getline(cut, get, '/');
-	this->_methode = get;
-	getline(cut, get, ' ');
-	this->_path = get;
-	if (!this->_path.length())
-	{
-		this->_path = "index.html";
-	}
-	
-	
-	getline(cut, get, ' ');
-	this->_version = get;
 }
 
 Request::~Request()
 {
+}
+
+void Request::parse(ServerConfig server, std::string buffer)
+{
+	std::istringstream request(buffer.c_str());
+	std::string line;
+	while (getline(request, line))
+	{
+		std::istringstream cut(line);
+		std::string res;
+		getline(cut, res, ' ');
+		if (res == "GET" || res == "POST" || res == "DELETE")
+			parseMethode( server, line);
+		else
+			parseAttribut(line);
+		if (strcmp(line.c_str(), "\r\n") == 0)
+            break;
+	}
+	if (this->_errorCode == 0)
+	{
+		this->_errorCode = 200;
+	}
+	
+}
+
+void Request::parseMethode(ServerConfig server, std::string line)
+{
+	std::istringstream cut(line);
+	std::string res;
+	std::vector<std::string> parsedLine;
+	while (getline(cut, res, ' '))
+	{
+		parsedLine.push_back(res);
+	}
+	if (parsedLine.size() != 3)
+	{
+		this->_errorCode = 400;
+		return ;
+	}
+	std::cout << RED << " ca passe" << NC << std::endl;
+	this->setMethode(parsedLine[0]);
+	std::cout << RED << " ca passe 1 " << NC << std::endl;
+
+	this->setPath(server, parsedLine[1]);
+	std::cout << RED << " ca passe 2 " << NC << std::endl;
+
+	this->setVersion(parsedLine[2]);
+	std::cout << RED << " ca passe 3" << NC << std::endl;
+
+}
+
+void Request::parseAttribut(std::string line)
+{
+	std::istringstream cut(line);
+	std::string res;
+	getline(cut, res, ' ');
+	if (res == "Host:")
+	{
+		getline(cut, res, ' ');
+		this->_host = res;
+	}
 }
 
 std::string Request::getMethode() const
@@ -52,8 +98,100 @@ std::string Request::getVersion() const
 	return (this->_version);
 }
 
+std::string Request::getHeader() const
+{
+	return (this->_header);
+}
+
+std::string Request::getHost() const
+{
+	return (this->_host);
+}
+
+bool Request::getIsComplete(void) const
+{
+	return (this->_isComplete);
+}
+
+int Request::getErrorCode(void) const
+{
+	return (this->_errorCode);
+}
+
+void Request::setMethode(std::string methode)
+{
+	if (methode == "GET" || methode == "POST" || methode == "DELETE")
+		this->_methode = methode;
+	else
+		this->_errorCode = 400;
+}
+
+void Request::setPath(ServerConfig server , std::string path)
+{
+	std::cout << "path : " <<  path << std::endl;
+	std::cout << "root : " <<  server.root << std::endl;
+	std::string cppath;
+	cppath = server.root + path;
+	if (cppath == server.root + "/" && server.index.size() > 0)
+	{
+		for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++)
+		{
+			cppath += *it;
+			if (access(cppath.c_str(), F_OK | R_OK) != -1)
+			{
+				this->_path = cppath;
+				std::cout << "path : " <<  this->_path << std::endl;
+				return ;
+			}
+		}	
+	}
+
+	if (access(cppath.c_str(), F_OK) == -1)
+	{
+		this->_errorCode = 404;
+		return ;
+	}
+	else if (access(cppath.c_str(), R_OK) == -1)
+	{
+		this->_errorCode = 403;
+		return ;
+	}
+	else
+	{
+		this->_path = cppath;
+	}
+}
+
+void Request::setVersion(std::string version)
+{
+	if (version != "HTTP/1.1\r")
+		this->_errorCode = 400;
+	else
+		this->_version = version;
+}
+
+void Request::setHeader(std::string header)
+{
+	(void)header;
+}
+
+void Request::setHost(std::string host)
+{
+	(void)host;
+}
+
+void Request::setIsComplete(bool isComplet)
+{
+	(void)isComplet;
+}
+
+void Request::setErrorCode(int errorCode)
+{
+	(void)errorCode;
+}
+
 std::ostream &operator<<(std::ostream &o, Request const &request)
 {
-	o << BGREEN << request.getMethode() << request.getPath() <<  request.getVersion() << NC << std::endl;
+	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC ;
 	return (o);
 }
