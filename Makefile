@@ -22,6 +22,7 @@ FILES :=	main.cpp \
 			Parser.cpp \
 			Server.cpp \
 			Config.cpp \
+			Client.cpp \
 			ConfigPrint.cpp
 
 # Source and object files

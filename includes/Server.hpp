@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/15 19:55:52 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/16 17:51:24 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include "Webserv.hpp"
 # include "Config.hpp"
 # include "Parser.hpp"
+# include "Client.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 1024
@@ -45,12 +46,14 @@ public:
 	void			run();
 
 private:
-	Config	_conf;
+	Config					_conf;
 
-	int					_epollFd;
-	struct epoll_event	_events[MAX_EVENTS];
+	int						_epollFd;
+	struct epoll_event		_events[MAX_EVENTS];
 
-	std::map<int, int>	_serveurSockets;
+	std::map<int, int>		_serveurSockets;
+
+	std::map<int, Client*>	_clients;
 
 	void				_setupServerSockets();
 	void				_setNonBlocking(int fd);

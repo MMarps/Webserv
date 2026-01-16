@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/15 20:02:38 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/16 17:55:20 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,47 +86,6 @@ void	Server::_setupServerSockets() {
 	}
 }
 
-// void	Server::_setupServerSockets() {
-// 	for (size_t si = 0; si < _conf.servers.size(); si++) {
-// 		std::vector<Listen>::iterator it;
-// 		for (it = _conf.servers[si].listens.begin(); it != _conf.servers[si].listens.end(); it++) {
-// 			int fd = socket(AF_INET, SOCK_STREAM, 0);
-// 			if (fd < 0)
-// 				throw ServerError("Socket: Failed to create socket");
-
-// 			int opt = 1;
-// 			setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-// 			_setNonBlocking(fd);
-
-// 			struct sockaddr_in	addr;
-// 			addr.sin_family = AF_INET;
-// 			if (it->host == "*" || it->host == "INADDR_ANY"
-// 				|| it->host == "0.0.0.0" || it->host.empty())
-// 				addr.sin_addr.s_addr = INADDR_ANY;
-// 			else
-// 				addr.sin_addr.s_addr = inet_addr(it->host.c_str());
-// 			addr.sin_port = htons(it->port);
-
-// 			if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-// 				std::ostringstream msg;
-// 				msg << "Failed to bind, " << it->host << ":" << it->port;
-// 				close(fd);
-// 				throw ServerError(msg.str());
-// 			}
-
-// 			if (listen(fd, SOMAXCONN) < 0) {
-// 				close(fd);
-// 				throw ServerError("Failed to listen");
-// 			}
-
-// 			_addToEpoll(fd);
-// 			_serveurSockets[fd] = si;
-// 			std::cout << "Server listening on port " << it->port << " (epoll)" << std::endl;
-// 		}
-// 	}
-// }
-
 void	Server::_setNonBlocking(int fd) {
 	int flags = fcntl(fd, F_GETFL);
 	if (flags == -1)
@@ -178,6 +137,10 @@ void	Server::run() {
 void	Server::_closeConnection(int fd) {
 	epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
+	if (_clients.count(fd)) {
+		delete _clients[fd];
+		_clients.erase(fd);
+	}
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
@@ -190,20 +153,26 @@ void	Server::_addNewClient(int serverFd) {
 		std::cout << "Error accepting client" << std::endl;
 		return ;
 	}
+	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN | EPOLLOUT);
+	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd]);
 	std::cout << "New connection: " << clientFd << std::endl;
 }
 
 void	Server::_handleClientData(int clientFd) {
 	char buf[BUFFER_SIZE];
+	Client*	client = _clients[clientFd];
 	ssize_t nbytes = recv(clientFd, buf, BUFFER_SIZE - 1, 0);
 	if (nbytes <= 0)
 		_closeConnection(clientFd);
 	else {
 		buf[nbytes] = '\0';
-		std::cout << "Received data from " << clientFd << std::endl;
+		client->getBuffer().append(buf, nbytes);
+		if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
+			client->isRequestFinished = true;
+			std::cout << "Request received from " << clientFd << std::endl;
+		}
 	}
-
 }
 
 /////////////////////////////////////
