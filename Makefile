@@ -23,6 +23,8 @@ FILES :=	main.cpp \
 			Server.cpp \
 			Config.cpp \
 			Client.cpp \
+			Request.cpp \
+			Response.cpp \
 			ConfigPrint.cpp
 
 # Source and object files

@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 18:35:52 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/16 20:24:48 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,8 @@ int	main(int ac, char **av) {
 
 // 				std::cout << "Un client arrive !" << std::endl << std::endl;
 // 				int clientFd = accept(serverFd, NULL, NULL);
+// 				if (clientFd < 0)
+// 					std::cout << "Error accept" << std::endl;
 // 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
 // 				buffer[r] = '\0';
 // 				Request req;

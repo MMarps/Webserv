@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 17:51:24 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/16 18:48:13 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 # include "Config.hpp"
 # include "Parser.hpp"
 # include "Client.hpp"
+# include "Request.hpp"
+# include "Response.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 1024

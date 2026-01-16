@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 17:55:20 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/16 20:29:52 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,6 @@ void	Server::run() {
 				_handleClientData(currentFd);
 		}
 	}
-
 }
 
 void	Server::_closeConnection(int fd) {
@@ -150,7 +149,7 @@ void	Server::_addNewClient(int serverFd) {
 
 	int clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
 	if (clientFd < 0) {
-		std::cout << "Error accepting client" << std::endl;
+		std::cerr << "Error accepting client" << std::endl;
 		return ;
 	}
 	_setNonBlocking(clientFd);
@@ -173,6 +172,24 @@ void	Server::_handleClientData(int clientFd) {
 			std::cout << "Request received from " << clientFd << std::endl;
 		}
 	}
+	// if (client->isRequestFinished == true) {
+	// 	Request 	req;
+	// 	req.parse(_conf.servers[_serveurSockets[clientFd]], client->getBuffer());
+	// 	Response	response(req);
+	// 	response.makeRep();
+
+	// 	std::cout << "=== REQUEST ===" << std::endl;
+	// 	std::cout << client->getBuffer() << std::endl;
+	// 	std::cout << "=== RESPONSE ===" << std::endl;
+	// 	std::cout << response.getRep() << std::endl;
+
+	// 	if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1
+	// 		|| send(clientFd, response.getContent().data(), response.getContent().size(), 0) == -1)
+	// 	{
+	// 		perror("send");
+	// 	}
+	// 	client->isRequestFinished = false;
+	// }
 }
 
 /////////////////////////////////////
