@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/14 17:06:35 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/15 14:48:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,13 @@ int	main(int ac, char **av)
 				ServerConfig server;
 				server.index.push_back("index.html");
 				server.root = "var/www";
+				server.error_pages[404] = "var/errors/404.html";
 
+				if (server.error_pages[404].empty())
+				{
+					std::cout << "nop" << std::endl;
+				}
+				
 				std::cout << "Un client arrive !" << std::endl << std::endl;
 				int clientFd = accept(serverFd, NULL, NULL);
 				int r = recv(clientFd, buffer, sizeof(buffer) - 1, 0);
@@ -78,9 +84,7 @@ int	main(int ac, char **av)
 				Request req;
 				req.parse(server ,buffer);
 				Response response(req);
-				response.makeRep();
-				std::cout << RED << " ca passe 6" << NC << std::endl;
-
+				response.makeRep(server);
 				std::cout << "-------------------------" << std::endl;
 				std::cout << "request : " << std::endl << buffer << std::endl;
 				std::cout << "-------------------------" << std::endl;

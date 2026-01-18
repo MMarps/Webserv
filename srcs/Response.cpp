@@ -6,13 +6,13 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/14 16:59:49 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/15 14:47:55 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response(Request& req) : _req(req)
+Response::Response(Request &req) : _req(req)
 {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
@@ -30,6 +30,8 @@ Response::Response(Request& req) : _req(req)
 	_contentType.insert(std::make_pair("jpeg", "image/jpeg"));
 	_contentType.insert(std::make_pair("gif", "image/gif"));
 	_contentType.insert(std::make_pair("ico", "image/x-icon"));
+	_contentType.insert(std::make_pair("mp4", "video/mp4"));
+	_contentType.insert(std::make_pair("mp3", "audio/mpeg"));
 }
 
 Response::~Response()
@@ -43,28 +45,19 @@ std::string Response::getRep() const
 
 void Response::getDoc()
 {
-	std::cout << this->_req.getPath() << std::endl;
 	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
-	std::cout << RED << " ca passe 4" << NC << std::endl;
-	
 	if (!file.is_open())
 	{
+		std::cout << "fait chiez ca passe : " << this->_req.getPath() << std::endl;
 		this->_req.setErrorCode(404);
 		return ;
 	}
-	std::cout << RED << " ca passe 5 " << this->_req.getPath() << NC << std::endl;
 	std::istreambuf_iterator<char> it(file);
-	std::cout << RED << " ca passe 1200" << NC << std::endl;
-
 	std::istreambuf_iterator<char> end;
-	std::cout << RED << " ca passe 1201" << NC << std::endl;
-
 	std::vector<char> buffer(it, end);
-	std::cout << RED << " ca passe 1202" << NC << std::endl;
-
-
 	std::stringstream ss;
 	ss << buffer.size();
+	std::cout << GREEN << buffer.size() << NC << std::endl;
 	this->_contentLength = ss.str();
 	this->_content.swap(buffer);
 }
@@ -74,19 +67,24 @@ std::vector<char> Response::getContent()
 	return (this->_content);
 }
 
-
-void Response::makeRep()
+void Response::makeRep(ServerConfig server)
 {
 	getDefaultResponse();
-	std::cout << RED << " ca passe 7" << NC << std::endl;
 	if (this->_req.getErrorCode() == 200)
 	{
 		getContentExtention();
-	std::cout << RED << " ca passe 8" << NC << std::endl;
-
 		getFullResponse();
-	std::cout << RED << " ca passe 9" << NC << std::endl;
-
+	}
+	else
+	{
+		if (!server.error_pages[this->_req.getErrorCode()].empty())
+		{
+			this->_req.setPath(server.error_pages[this->_req.getErrorCode()]);
+			
+			getContentExtention();
+			getFullResponse();
+		}
+		
 	}
 }
 
@@ -108,7 +106,6 @@ void Response::getDefaultResponse()
 void Response::getFullResponse()
 {
 	getDoc();
-	std::cout << RED << " ca passe 10" << NC << std::endl;
 	this->_response += "\nContent-Type: "
 		+ this->_contentType[this->_contentExtention];
 	this->_response += "\nContent-Length: " + this->_contentLength;

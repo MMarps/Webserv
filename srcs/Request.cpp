@@ -6,13 +6,12 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/14 17:12:06 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/15 14:38:14 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
-#include "Request.hpp"
 #include "Config.hpp"
+#include "Request.hpp"
 
 Request::Request() : _isComplete(false), _errorCode(0)
 {
@@ -32,17 +31,16 @@ void Request::parse(ServerConfig server, std::string buffer)
 		std::string res;
 		getline(cut, res, ' ');
 		if (res == "GET" || res == "POST" || res == "DELETE")
-			parseMethode( server, line);
+			parseMethode(server, line);
 		else
 			parseAttribut(line);
 		if (strcmp(line.c_str(), "\r\n") == 0)
-            break;
+			break ;
 	}
 	if (this->_errorCode == 0)
 	{
 		this->_errorCode = 200;
 	}
-	
 }
 
 void Request::parseMethode(ServerConfig server, std::string line)
@@ -59,16 +57,9 @@ void Request::parseMethode(ServerConfig server, std::string line)
 		this->_errorCode = 400;
 		return ;
 	}
-	std::cout << RED << " ca passe" << NC << std::endl;
 	this->setMethode(parsedLine[0]);
-	std::cout << RED << " ca passe 1 " << NC << std::endl;
-
 	this->setPath(server, parsedLine[1]);
-	std::cout << RED << " ca passe 2 " << NC << std::endl;
-
 	this->setVersion(parsedLine[2]);
-	std::cout << RED << " ca passe 3" << NC << std::endl;
-
 }
 
 void Request::parseAttribut(std::string line)
@@ -126,10 +117,13 @@ void Request::setMethode(std::string methode)
 		this->_errorCode = 400;
 }
 
-void Request::setPath(ServerConfig server , std::string path)
+void Request::setPath(std::string path)
 {
-	std::cout << "path : " <<  path << std::endl;
-	std::cout << "root : " <<  server.root << std::endl;
+	this->_path = path;
+}
+
+void Request::setPath(ServerConfig server, std::string path)
+{
 	std::string cppath;
 	cppath = server.root + path;
 	if (cppath == server.root + "/" && server.index.size() > 0)
@@ -140,12 +134,10 @@ void Request::setPath(ServerConfig server , std::string path)
 			if (access(cppath.c_str(), F_OK | R_OK) != -1)
 			{
 				this->_path = cppath;
-				std::cout << "path : " <<  this->_path << std::endl;
 				return ;
 			}
-		}	
+		}
 	}
-
 	if (access(cppath.c_str(), F_OK) == -1)
 	{
 		this->_errorCode = 404;
@@ -192,6 +184,6 @@ void Request::setErrorCode(int errorCode)
 
 std::ostream &operator<<(std::ostream &o, Request const &request)
 {
-	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC ;
+	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC;
 	return (o);
 }

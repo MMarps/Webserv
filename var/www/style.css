@@ -1,3 +1,51 @@
+*
+{
+    font-family: "Gill Sans", sans-serif;
+    
+}
+
+nav
+{
+    border: 1px solid red;
+    text-align: center;
+    align-content: center;
+    width: 100%;
+    height: 40px;
+}
+
+body
+{
+    padding: 0px;
+    border: 0px;
+    margin: 0px;
+}
+
+.navButton
+{
+    text-decoration: none;
+    color: rgb(41, 41, 41);
+    
+}
+
+.divNavButton
+{
+    background-color: blueviolet;
+    width: 120px;
+    height: 30px;
+}
+
+.title
+{
+    text-align: center;
+}
+
+.titleDiv
+{
+    border: 1px solid red;
+
+}
+
+
 .test
 {
     color: green;

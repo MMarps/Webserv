@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2025/12/22 16:53:06 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/15 14:35:10 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,9 @@
 # define RESPONSE_HPP
 
 # include "Webserv.hpp"
+#include "Config.hpp"
 
+struct ServerConfig;
 class Request;
 
 class Response
@@ -37,7 +39,7 @@ class Response
 
 	void getText();
 	void getDoc();
-	void makeRep();
+	void makeRep(ServerConfig server);
 	void getContentExtention();
 	void getDefaultResponse();
 	void getFullResponse();
