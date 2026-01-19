@@ -1,7 +1,7 @@
 NAME			:= webserv
 
 CC				:= c++
-CFLAGS			:= -Wall -Werror -Wextra -std=c++98
+CFLAGS			:= -Wall -Werror -Wextra -g3 -std=c++98
 
 # Includes
 INC				:= -Iincludes

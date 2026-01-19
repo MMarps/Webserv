@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:17:46 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 17:53:36 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/19 01:08:43 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,4 +35,17 @@ std::string&	Client::getBuffer() {
 
 std::string&	Client::getResponse() {
 	return (_response);
+}
+
+//////////////////////////////////////
+
+std::ostream &operator<<(std::ostream &o, Client& c) {
+	o << "-------------------------" << std::endl
+	  << "Client <" << c.getFd() << ">" << std::endl
+	  << "Server Idx -> " << c.getServerIdx() << std::endl
+	  << "Buffer:\n" << c.getBuffer().c_str() << std::endl
+	  << "Response:\n" << c.getResponse().c_str() << std::endl
+	  << "-------------------------" << std::endl;
+
+	return o;
 }

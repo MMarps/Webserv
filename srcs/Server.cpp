@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 20:29:52 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/19 01:08:58 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+
+# include <cstdio>
 
 Server::Server(const std::string& confFileName) {
 	Lexer	ts(confFileName);
@@ -49,7 +51,6 @@ void	Server::_setupServerSockets() {
 
 			int status = getaddrinfo(it->host.c_str(), strPort.c_str(), &hints, &res);
 			if (status != 0) {
-				freeaddrinfo(res);
 				throw ServerError(gai_strerror(status));
 			}
 
@@ -79,7 +80,7 @@ void	Server::_setupServerSockets() {
 				throw ServerError("Failed to listen");
 			}
 
-			_addToEpoll(fd, EPOLLIN);
+			_addToEpoll(fd, EPOLLIN, NULL);
 			_serveurSockets[fd] = si;
 			std::cout << "Server listening on port " << it->port << " (epoll)" << std::endl;
 		}
@@ -94,13 +95,15 @@ void	Server::_setNonBlocking(int fd) {
 		throw ServerError("fcntl: failed to set non blocking socket");
 }
 
-void	Server::_addToEpoll(int fd, uint32_t events) {
+void	Server::_addToEpoll(int fd, uint32_t events, void* newClient) {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
 
 	event.events = events;
 	event.data.fd = fd;
+	if (newClient != NULL)
+		event.data.ptr = newClient;
 	
 	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) < 0)
 		throw ServerError("Epoll ctl failed");
@@ -120,15 +123,25 @@ void	Server::run() {
 		for (int i = 0; i < nfds; i++) {
 			int currentFd = _events[i].data.fd;
 			uint32_t currentEvent = _events[i].events;
+			void*	client = _events[i].data.ptr;
 
 			if (currentEvent & (EPOLLHUP | EPOLLERR)) {
 				_closeConnection(currentFd);
 				continue ;
 			}
-			if (_serveurSockets.find(currentFd) != _serveurSockets.end())
+			if (_serveurSockets.find(currentFd) != _serveurSockets.end()) {
 				_addNewClient(currentFd);
-			else if (currentEvent & EPOLLIN)
+				Client c = *(static_cast<Client*>(client));
+				std::cout << c;
+				
+			}
+			else if (currentEvent & EPOLLIN) {
+				// std::cout << "TEST" << std::endl;
 				_handleClientData(currentFd);
+			}
+			// else if (currentEvent & EPOLLOUT) {
+			// 	_sendResponse((Client*)client);
+			// }
 		}
 	}
 }
@@ -149,11 +162,11 @@ void	Server::_addNewClient(int serverFd) {
 
 	int clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
 	if (clientFd < 0) {
-		std::cerr << "Error accepting client" << std::endl;
+		std::cerr << "Error accepting client" << " errno = " << errno << std::endl;
 		return ;
 	}
 	_setNonBlocking(clientFd);
-	_addToEpoll(clientFd, EPOLLIN | EPOLLOUT);
+	_addToEpoll(clientFd, EPOLLIN | EPOLLOUT, NULL);
 	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd]);
 	std::cout << "New connection: " << clientFd << std::endl;
 }
@@ -169,6 +182,7 @@ void	Server::_handleClientData(int clientFd) {
 		client->getBuffer().append(buf, nbytes);
 		if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
 			client->isRequestFinished = true;
+			// std::cout << client->getBuffer() << std::endl;
 			std::cout << "Request received from " << clientFd << std::endl;
 		}
 	}
@@ -177,19 +191,37 @@ void	Server::_handleClientData(int clientFd) {
 	// 	req.parse(_conf.servers[_serveurSockets[clientFd]], client->getBuffer());
 	// 	Response	response(req);
 	// 	response.makeRep();
+	// 	client->getResponse().append(response.getRep());
+	// 	client->getResponse().append(response.getContent().data());
 
-	// 	std::cout << "=== REQUEST ===" << std::endl;
+	// 	std::cout << "=== REQUEST  ===" << std::endl;
 	// 	std::cout << client->getBuffer() << std::endl;
 	// 	std::cout << "=== RESPONSE ===" << std::endl;
 	// 	std::cout << response.getRep() << std::endl;
+	// 	std::cout << "=== DATA     ===" << std::endl;
+	// 	std::cout << response.getContent().data() << std::endl;
 
-	// 	if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1
-	// 		|| send(clientFd, response.getContent().data(), response.getContent().size(), 0) == -1)
-	// 	{
-	// 		perror("send");
-	// 	}
-	// 	client->isRequestFinished = false;
+	// 	// if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1
+	// 	// 	|| send(clientFd, response.getContent().data(), response.getContent().size(), 0) == -1)
+	// 	// {
+	// 	// 	perror("send");
+	// 	// }
+	// 	// client->isRequestFinished = false;
+	// 	// close(clientFd);
 	// }
+}
+
+void	Server::_sendResponse(Client* client) {
+
+	if (client->isRequestFinished == true) {
+		if (send(client->getFd(), client->getResponse().c_str(), client->getResponse().size(), 0) == -1)
+		{
+			perror("send");
+		}
+		client->getBuffer().clear();
+		client->getResponse().clear();
+		client->isRequestFinished = false;
+	}
 }
 
 /////////////////////////////////////

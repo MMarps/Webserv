@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/12 17:35:02 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/18 23:51:49 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,7 @@ Listen			Parser::parseListen(std::vector<std::string>& args) {
 		if (p <= 0 || p > 65535)
 			throwError("Port out of range, must be between [0, 65535]", true);
 		l.port = p;
-		l.host = "*";
+		l.host = "0.0.0.0";
 	}
 	else {
 		l.host = s.substr(0, pos);
