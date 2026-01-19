@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 17:55:20 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/19 20:03:32 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,6 +107,18 @@ void	Server::_addToEpoll(int fd, uint32_t events) {
 	
 }
 
+void	Server::_modEpoll(int fd, uint32_t newEvents) {
+	struct epoll_event	event;
+
+	std::memset(&event, 0, sizeof(event));
+
+	event.events = newEvents;
+	event.data.fd = fd;
+	
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) < 0)
+		throw ServerError("Epoll ctl failed");
+}
+
 /////////////////////////////////////
 
 void	Server::run() {
@@ -129,9 +141,10 @@ void	Server::run() {
 				_addNewClient(currentFd);
 			else if (currentEvent & EPOLLIN)
 				_handleClientData(currentFd);
+			else if (currentEvent & EPOLLOUT)
+				_sendResponse(currentFd);
 		}
 	}
-
 }
 
 void	Server::_closeConnection(int fd) {
@@ -150,28 +163,146 @@ void	Server::_addNewClient(int serverFd) {
 
 	int clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
 	if (clientFd < 0) {
-		std::cout << "Error accepting client" << std::endl;
+		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
 		return ;
 	}
 	_setNonBlocking(clientFd);
-	_addToEpoll(clientFd, EPOLLIN | EPOLLOUT);
+	_addToEpoll(clientFd, EPOLLIN);
 	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd]);
 	std::cout << "New connection: " << clientFd << std::endl;
 }
 
+// void	Server::_handleClientData(int clientFd) {
+// 	char buf[BUFFER_SIZE];
+// 	Client*	client = _clients[clientFd];
+// 	ssize_t nbytes = recv(clientFd, buf, BUFFER_SIZE - 1, 0);
+// 	if (nbytes <= 0)
+// 		_closeConnection(clientFd);
+// 	else {
+// 		buf[nbytes] = '\0';
+// 		client->getBuffer().append(buf, nbytes);
+// 		if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
+// 			client->isRequestFinished = true;
+// 			std::cout << "Request received from " << clientFd << std::endl;
+// 		}
+// 	}
+// 	if (client->isRequestFinished) {
+// 		_parseResponse(client);
+// 		_modEpoll(clientFd, EPOLLOUT);
+// 	}
+// 	// if (client->isRequestFinished == true) {
+// 	// 	Request 	req;
+// 	// 	req.parse(_conf.servers[_serveurSockets[clientFd]], client->getBuffer());
+// 	// 	Response	response(req);
+// 	// 	response.makeRep();
+// 	// 	client->getResponse().append(response.getRep());
+// 	// 	client->getResponse().append(response.getContent().data());
+
+// 	// 	std::cout << "=== REQUEST  ===" << std::endl;
+// 	// 	std::cout << client->getBuffer() << std::endl;
+// 	// 	std::cout << "=== RESPONSE ===" << std::endl;
+// 	// 	std::cout << response.getRep() << std::endl;
+// 	// 	std::cout << "=== DATA     ===" << std::endl;
+// 	// 	std::cout << response.getContent().data() << std::endl;
+
+// 	// 	// if (send(clientFd, response.getRep().c_str(), response.getRep().size(), 0) == -1
+// 	// 	// 	|| send(clientFd, response.getContent().data(), response.getContent().size(), 0) == -1)
+// 	// 	// {
+// 	// 	// 	perror("send");
+// 	// 	// }
+// 	// 	// client->isRequestFinished = false;
+// 	// 	// close(clientFd);
+// 	// }
+// }
+
 void	Server::_handleClientData(int clientFd) {
 	char buf[BUFFER_SIZE];
-	Client*	client = _clients[clientFd];
+	Client* client = _clients[clientFd];
 	ssize_t nbytes = recv(clientFd, buf, BUFFER_SIZE - 1, 0);
-	if (nbytes <= 0)
+
+	if (nbytes <= 0) {
 		_closeConnection(clientFd);
+		return;
+	}
+
+	buf[nbytes] = '\0';
+	client->getBuffer().append(buf, nbytes);
+
+	if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
+		client->isRequestFinished = true;
+		std::cout << "Request received completely." << std::endl;
+
+		_parseResponse(client);
+
+		_modEpoll(clientFd, EPOLLOUT);
+	}
+}
+
+// void	Server::_parseResponse(Client* c) {
+// 	Request 	req;
+// 	req.parse(_conf.servers[_serveurSockets[c->getFd()]], c->getBuffer());
+// 	Response	response(req);
+// 	response.makeRep();
+// 	// c->getResponse().append(response.getRep());
+// 	c->getResponse().append(response.getContent().data(), response.getContent().size());
+// }
+
+void	Server::_parseResponse(Client* c) {
+	Request req;
+
+	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer());
+
+	Response response(req);
+	response.makeRep();
+
+	c->getResponse().append(response.getRep());
+
+	const std::vector<char>& content = response.getContent();
+	if (!content.empty()) {
+		c->getResponse().append(content.data(), content.size());
+	}
+	// std::cout << "=== REQUEST  ===" << std::endl;
+	// std::cout << c->getBuffer() << std::endl;
+	// std::cout << "=== RESPONSE ===" << std::endl;
+	// std::cout << c->getResponse() << std::endl;
+	// std::cout << "=== DATA     ===" << std::endl;
+	// std::cout << response.getContent().data() << std::endl;
+}
+
+// void	Server::_sendResponse(int clientFd) {
+// 	Client*	client = _clients[clientFd];
+// 	if (send(client->getFd(), client->getResponse().c_str(), client->getResponse().size(), 0) == -1)
+// 	{
+// 		perror("send");
+// 	}
+// 	client->getBuffer().clear();
+// 	client->getResponse().clear();
+// 	client->isRequestFinished = false;
+// 	_modEpoll(clientFd, EPOLLIN);
+// }
+
+void	Server::_sendResponse(int clientFd) {
+	Client* client = _clients[clientFd];
+	std::string& resp = client->getResponse();
+
+	ssize_t sent = send(client->getFd(), resp.c_str(), resp.size(), 0);
+	if (sent == -1) {
+		perror("send");
+		_closeConnection(clientFd);
+		return;
+	}
+
+	if (static_cast<size_t>(sent) >= resp.size()) {
+		std::cout << "Response sent fully." << std::endl;
+		
+		client->getBuffer().clear();
+		client->getResponse().clear();
+		client->isRequestFinished = false;
+
+		_modEpoll(clientFd, EPOLLIN);	
+	}
 	else {
-		buf[nbytes] = '\0';
-		client->getBuffer().append(buf, nbytes);
-		if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
-			client->isRequestFinished = true;
-			std::cout << "Request received from " << clientFd << std::endl;
-		}
+		resp = resp.substr(sent);
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 17:51:24 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/19 18:51:17 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 # include "Config.hpp"
 # include "Parser.hpp"
 # include "Client.hpp"
+# include "Request.hpp"
+# include "Response.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 1024
@@ -58,10 +60,13 @@ private:
 	void				_setupServerSockets();
 	void				_setNonBlocking(int fd);
 	void				_addToEpoll(int fd, uint32_t events);
+	void				_modEpoll(int fd, uint32_t newEvents);
 
 	void				_closeConnection(int fd);
 	void				_addNewClient(int serverFd);
 	void				_handleClientData(int clientFd);
+	void				_parseResponse(Client* c);
+	void				_sendResponse(int clientFd);
 };
 
 #endif
