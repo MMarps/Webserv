@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/20 17:59:06 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 18:23:30 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,13 @@ Request::~Request()
 {
 }
 
-void Request::parse(ServerConfig server, std::string buffer)
+void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 {
+	this->setErrorCode(errorCode);
+	if (this->_errorCode != 0){
+		std::cout << "capasse " << std::endl;
+		return ;
+	}
 	std::istringstream request(buffer.c_str());
 	std::string line;
 	while (getline(request, line))
@@ -179,7 +184,7 @@ void Request::setIsComplete(bool isComplet)
 
 void Request::setErrorCode(int errorCode)
 {
-	(void)errorCode;
+	this->_errorCode = errorCode;
 }
 
 std::ostream &operator<<(std::ostream &o, Request const &request)

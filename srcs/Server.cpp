@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 18:06:23 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 18:26:47 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -214,7 +214,7 @@ void Server::_parseResponse(Client *c)
 {
 	Request	req;
 
-	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer());
+	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer(), 0);
 	Response response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getRep());

@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/20 17:50:19 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 18:21:37 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ class Request
 	Request();
 	~Request();
 
-	void parse(ServerConfig server, std::string buffer);
+	void parse(ServerConfig server, std::string buffer, int errorCode);
 	void parseMethode(ServerConfig server, std::string line);
 	void parseAttribut(std::string line);
 
