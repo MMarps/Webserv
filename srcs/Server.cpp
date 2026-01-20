@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 18:26:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 23:14:26 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,11 @@ Server::~Server()
 
 void Server::_setupServerSockets()
 {
-			struct addrinfo hints;
-			struct addrinfo *res;
-	int	status;
-	int	fd;
-	int	opt;
+	struct addrinfo	hints;
+	struct addrinfo	*res;
+	int				status;
+	int				fd;
+	int				opt;
 
 	for (size_t si = 0; si < _conf.servers.size(); si++)
 	{
@@ -56,69 +56,95 @@ void Server::_setupServerSockets()
 			if (status != 0)
 			{
 				freeaddrinfo(res);
+				_closeSocketFds();
 				throw ServerError(gai_strerror(status));
 			}
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 			if (fd < 0)
 			{
 				freeaddrinfo(res);
+				_closeSocketFds();
 				throw ServerError("Socket: Failed to create socket");
 			}
 			opt = 1;
 			setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-			_setNonBlocking(fd);
+
+			if (_setNonBlocking(fd) != 0) {
+				freeaddrinfo(res);
+				close(fd);
+				continue ;
+			}
+
 			if (bind(fd, res->ai_addr, res->ai_addrlen) < 0)
 			{
 				freeaddrinfo(res);
 				std::ostringstream msg;
 				msg << "Failed to bind, " << it->host << ":" << it->port;
 				close(fd);
+				_closeSocketFds();
 				throw ServerError(msg.str());
 			}
 			freeaddrinfo(res);
 			if (listen(fd, SOMAXCONN) < 0)
 			{
 				close(fd);
+				_closeSocketFds();
 				throw ServerError("Failed to listen");
 			}
 			_addToEpoll(fd, EPOLLIN);
 			_serveurSockets[fd] = si;
-			std::cout << "Server listening on port " << it->port << " (epoll)" << std::endl;
+			std::cout << "Server " << "[" << si << "] listening on port "
+					  << it->port << " (epoll)" << std::endl;
 		}
 	}
 }
 
-void Server::_setNonBlocking(int fd)
+int Server::_setNonBlocking(int fd)
 {
 	int	flags;
 
 	flags = fcntl(fd, F_GETFL);
-	if (flags == -1)
-		throw ServerError("fcntl: Failed to get flags");
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		throw ServerError("fcntl: failed to set non blocking socket");
+	if (flags == -1) {
+		perror("fcntl");
+		return (1);
+		// throw ServerError("fcntl: Failed to get flags");
+	}
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+		perror("fcntl");
+		return (2);
+		// throw ServerError("fcntl: failed to set non blocking socket");
+	}
+	return (0);
 }
 
-void Server::_addToEpoll(int fd, uint32_t events)
+int Server::_addToEpoll(int fd, uint32_t events)
 {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
 	event.events = events;
 	event.data.fd = fd;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) < 0)
-		throw ServerError("Epoll ctl failed");
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) < 0) {
+		perror("epoll_ctl");
+		return (1);
+		// throw ServerError("Epoll ctl failed");
+	}
+	return (0);
 }
 
-void Server::_modEpoll(int fd, uint32_t newEvents)
+int Server::_modEpoll(int fd, uint32_t newEvents)
 {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
 	event.events = newEvents;
 	event.data.fd = fd;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) < 0)
-		throw ServerError("Epoll ctl failed");
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) < 0) {
+		perror("epoll_ctl");
+		return (1);
+		// throw ServerError("Epoll ctl failed");
+	}
+	return (0);
 }
 
 /////////////////////////////////////
@@ -133,8 +159,11 @@ void Server::run()
 	while (true)
 	{
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
-		if (nfds < 0)
-			throw ServerError("Epoll wait failed");
+		if (nfds < 0) {
+			perror("epoll_wait");
+			continue ;
+			// throw ServerError("Epoll wait failed");
+		}
 		for (int i = 0; i < nfds; i++)
 		{
 			currentFd = _events[i].data.fd;
@@ -156,14 +185,15 @@ void Server::run()
 
 void Server::_closeConnection(int fd)
 {
-		delete _clients[fd];
+	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
+		perror("epoll_ctl");
 
-	epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
+	delete _clients[fd];
+
 	if (_clients.count(fd))
-	{
 		_clients.erase(fd);
-	}
+
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
@@ -255,6 +285,34 @@ void Server::_sendResponse(int clientFd)
 	{
 		resp = resp.substr(sent);
 	}
+}
+
+/////////////////////////////////////
+
+void	Server::_closeSocketFds() {
+	typename std::map<int, int>::const_iterator it;
+
+	for (it = _serveurSockets.begin(); it != _serveurSockets.end(); ++it)
+	{
+		int fd = it->first;
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
+		close(fd);
+	}
+	_serveurSockets.clear();
+	std::cout << "All sockets closed" << std::endl;
+}
+
+void	Server::_closeAllClients() {
+	typename std::map<int, Client*>::const_iterator it;
+
+	for (it = _clients.begin(); it != _clients.end(); it++) {
+		int fd = it->first;
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
+		close(fd);
+		delete it->second;
+	}
+	_clients.clear();
+	std::cout << "All clients disconnected" << std::endl;
 }
 
 /////////////////////////////////////

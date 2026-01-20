@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/12 17:35:02 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/20 19:42:51 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -261,13 +261,14 @@ void	Parser::putDefaultValues(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
 		ServerConfig &srv = cfg.servers[si];
 		if (srv.listens.empty()) {
+			std::cout << BRED << "TEST" << NC << std::endl;
 			Listen l;
-			l.host = "INADDR_ANY";
-			l.port = -1;
+			l.host = "0.0.0.0";
+			l.port = 8080;
 			srv.listens.push_back(l);
 		}
 		if (srv.root.empty())
-			srv.root = "./var";
+			srv.root = "var";
 		if (srv.index.empty())
 			srv.index.push_back("index.html");
 		// for (size_t li = 0; li < srv.locations.size(); li++) {

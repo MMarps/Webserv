@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 16:58:45 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 20:15:41 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ int	main(int ac, char **av) {
 		s.run();
 	}
 	catch (const std::exception& err) {
-		std::cout << err.what() << std::endl;
+		std::cerr << err.what() << std::endl;
 	}
 
 	return (0);
