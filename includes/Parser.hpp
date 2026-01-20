@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/15 14:13:40 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/12 17:17:48 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,8 @@ private:
 
 	void			parseCgi(LocationConfig& loc, const std::vector<std::string>& args);
 	void 			parseReturn(LocationConfig& loc, const std::vector<std::string>& args);
+
+	void			putDefaultValues(Config &cfg);
 };
 
 #endif

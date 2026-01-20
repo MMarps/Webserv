@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: Invalid date        by                   #+#    #+#             */
-/*   Updated: 2026/01/14 16:18:12 by jle-doua         ###   ########.fr       */
+/*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
+/*   Updated: 2026/01/16 18:21:25 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@
 # include <signal.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <cstring>
 
 # include <iostream>
 # include <sstream>

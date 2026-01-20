@@ -1,7 +1,7 @@
 NAME			:= webserv
 
 CC				:= c++
-CFLAGS			:= -Wall -Werror -Wextra -std=c++98
+CFLAGS			:= -Wall -Werror -Wextra -g3 -std=c++98
 
 # Includes
 INC				:= -Iincludes
@@ -22,9 +22,10 @@ FILES :=	main.cpp \
 			Parser.cpp \
 			Server.cpp \
 			Config.cpp \
-			ConfigPrint.cpp \
+			Client.cpp \
 			Request.cpp \
 			Response.cpp \
+			ConfigPrint.cpp
 
 # Source and object files
 SRCS := $(addprefix $(SRC_DIR)/, $(FILES))
