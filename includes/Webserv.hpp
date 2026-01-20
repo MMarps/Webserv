@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 18:21:25 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/20 23:52:20 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,10 +35,9 @@
 # include <dirent.h>
 # include <unistd.h>
 # include <errno.h>
-# include <string.h>
-# include <signal.h>
-# include <stdio.h>
-# include <stdlib.h>
+# include <csignal>
+# include <cstdio>
+# include <cstdlib>
 # include <cstring>
 
 # include <iostream>

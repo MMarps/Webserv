@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 23:14:26 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/21 00:03:24 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,12 +21,22 @@ Server::Server(const std::string &confFileName)
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
 		throw ServerError("Epoll create failed");
+
+	signal(SIGINT, signal_handler);
+	signal(SIGTERM, signal_handler);
 }
 
 Server::~Server()
 {
 	if (_epollFd != -1)
 		close(_epollFd);
+}
+
+/////////////////////////////////////
+
+void	signal_handler(int sig) {
+	(void)sig;
+	g_terminate = 1;
 }
 
 /////////////////////////////////////
@@ -160,9 +170,16 @@ void Server::run()
 	{
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
 		if (nfds < 0) {
-			perror("epoll_wait");
-			continue ;
-			// throw ServerError("Epoll wait failed");
+			if (errno == EINTR && g_terminate) {
+				std::cout << "Signal received, shutdown asked" << std::endl;
+				_closeAllClients();
+				_closeSocketFds();
+				break ;
+			}
+			else {
+				perror("epoll_wait");
+				continue ;
+			}
 		}
 		for (int i = 0; i < nfds; i++)
 		{
@@ -181,6 +198,8 @@ void Server::run()
 				_sendResponse(currentFd);
 		}
 	}
+	if (g_terminate)
+		std::cout << "Shutdown complete" << std::endl;
 }
 
 void Server::_closeConnection(int fd)

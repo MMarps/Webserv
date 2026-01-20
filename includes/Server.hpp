@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 23:11:58 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/20 23:55:14 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,10 @@
 # define MAX_EVENTS 1024
 
 class	Config;
+
+static volatile sig_atomic_t g_terminate = 0;
+
+void	signal_handler(int sig);
 
 class	ServerError : public std::exception {
 public:
