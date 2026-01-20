@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/15 14:40:13 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 17:50:19 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class Request
   private:
 	std::string _methode;
 	std::string _path;
+	std::string _incompletPath;
 	std::string _version;
 	std::string _header;
 	std::string _host;
@@ -40,6 +41,8 @@ class Request
 
 	std::string getMethode() const;
 	std::string getPath() const;
+	std::string getIncompletPath() const;
+
 	std::string getVersion() const;
 	std::string getHeader() const;
 	std::string getHost() const;

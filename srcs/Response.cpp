@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/15 14:47:55 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/20 18:13:36 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,16 +22,16 @@ Response::Response(Request &req) : _req(req)
 	_statutMessage.insert(std::make_pair(404, "Not Found"));
 	_statutMessage.insert(std::make_pair(405, "Method Not Allowed"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
-	_contentType.insert(std::make_pair("html", "text/html"));
-	_contentType.insert(std::make_pair("css", "text/css"));
-	_contentType.insert(std::make_pair("js", "text/javascript"));
-	_contentType.insert(std::make_pair("png", "image/png"));
-	_contentType.insert(std::make_pair("jpg", "image/jpeg"));
-	_contentType.insert(std::make_pair("jpeg", "image/jpeg"));
-	_contentType.insert(std::make_pair("gif", "image/gif"));
-	_contentType.insert(std::make_pair("ico", "image/x-icon"));
-	_contentType.insert(std::make_pair("mp4", "video/mp4"));
-	_contentType.insert(std::make_pair("mp3", "audio/mpeg"));
+	_contentType.insert(std::make_pair(".html", "text/html"));
+	_contentType.insert(std::make_pair(".css", "text/css"));
+	_contentType.insert(std::make_pair(".js", "text/javascript"));
+	_contentType.insert(std::make_pair(".png", "image/png"));
+	_contentType.insert(std::make_pair(".jpg", "image/jpeg"));
+	_contentType.insert(std::make_pair(".jpeg", "image/jpeg"));
+	_contentType.insert(std::make_pair(".gif", "image/gif"));
+	_contentType.insert(std::make_pair(".ico", "image/x-icon"));
+	_contentType.insert(std::make_pair(".mp4", "video/mp4"));
+	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
 }
 
 Response::~Response()
@@ -57,7 +57,7 @@ void Response::getDoc()
 	std::vector<char> buffer(it, end);
 	std::stringstream ss;
 	ss << buffer.size();
-	std::cout << GREEN << buffer.size() << NC << std::endl;
+	
 	this->_contentLength = ss.str();
 	this->_content.swap(buffer);
 }
@@ -77,14 +77,19 @@ void Response::makeRep(ServerConfig server)
 	}
 	else
 	{
-		if (!server.error_pages[this->_req.getErrorCode()].empty())
+		if (!server.error_pages[this->_req.getErrorCode()].empty()
+			&& access(server.error_pages[this->_req.getErrorCode()].c_str(),
+				F_OK) != -1)
 		{
 			this->_req.setPath(server.error_pages[this->_req.getErrorCode()]);
-			
 			getContentExtention();
 			getFullResponse();
 		}
-		
+		else
+		{
+			this->_response += "\nContent-Length: 0";
+			this->_response += "\n\n";
+		}
 	}
 }
 
@@ -92,9 +97,13 @@ void Response::getContentExtention()
 {
 	std::stringstream path(this->_req.getPath());
 	std::string get;
-	getline(path, get, '.');
-	getline(path, get);
-	this->_contentExtention = get;
+	// std::substr
+	// getline(path, get, '.');
+	// getline(path, get);
+	std::cout << BYELLOW <<  this->_req.getPath().substr(this->_req.getPath().rfind('.')) << NC << std::endl;
+
+	this->_contentExtention = this->_req.getPath().substr(this->_req.getPath().rfind('.'));
+
 }
 
 void Response::getDefaultResponse()
