@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/20 18:23:30 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/21 18:00:36 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 {
 	this->setErrorCode(errorCode);
 	if (this->_errorCode != 0){
-		std::cout << "capasse " << std::endl;
 		return ;
 	}
 	std::istringstream request(buffer.c_str());
@@ -35,7 +34,7 @@ void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 		std::istringstream cut(line);
 		std::string res;
 		getline(cut, res, ' ');
-		if (res == "GET" || res == "POST" || res == "DELETE")
+		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
 			parseMethode(server, line);
 		else
 			parseAttribut(line);
@@ -64,6 +63,7 @@ void Request::parseMethode(ServerConfig server, std::string line)
 	}
 	this->setMethode(parsedLine[0]);
 	this->setPath(server, parsedLine[1]);
+
 	this->setVersion(parsedLine[2]);
 }
 
@@ -116,7 +116,7 @@ int Request::getErrorCode(void) const
 
 void Request::setMethode(std::string methode)
 {
-	if (methode == "GET" || methode == "POST" || methode == "DELETE")
+	if (methode == "GET" || methode == "POST" || methode == "DELETE" || methode == "HEAD")
 		this->_methode = methode;
 	else
 		this->_errorCode = 400;
@@ -130,6 +130,7 @@ void Request::setPath(std::string path)
 void Request::setPath(ServerConfig server, std::string path)
 {
 	std::string cppath;
+	std::cout << BRED << path << NC << std::endl;
 	cppath = server.root + path;
 	if (cppath == server.root + "/" && server.index.size() > 0)
 	{

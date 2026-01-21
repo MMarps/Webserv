@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/20 18:13:36 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/21 17:42:27 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,6 @@ void Response::getDoc()
 	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
-		std::cout << "fait chiez ca passe : " << this->_req.getPath() << std::endl;
 		this->_req.setErrorCode(404);
 		return ;
 	}
@@ -57,9 +56,24 @@ void Response::getDoc()
 	std::vector<char> buffer(it, end);
 	std::stringstream ss;
 	ss << buffer.size();
-	
 	this->_contentLength = ss.str();
 	this->_content.swap(buffer);
+}
+
+void Response::checkDoc()
+{
+	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
+	if (!file.is_open())
+	{
+		this->_req.setErrorCode(404);
+		return ;
+	}
+	std::istreambuf_iterator<char> it(file);
+	std::istreambuf_iterator<char> end;
+	std::vector<char> buffer(it, end);
+	std::stringstream ss;
+	ss << buffer.size();
+	this->_contentLength = ss.str();
 }
 
 std::vector<char> Response::getContent()
@@ -97,13 +111,7 @@ void Response::getContentExtention()
 {
 	std::stringstream path(this->_req.getPath());
 	std::string get;
-	// std::substr
-	// getline(path, get, '.');
-	// getline(path, get);
-	std::cout << BYELLOW <<  this->_req.getPath().substr(this->_req.getPath().rfind('.')) << NC << std::endl;
-
 	this->_contentExtention = this->_req.getPath().substr(this->_req.getPath().rfind('.'));
-
 }
 
 void Response::getDefaultResponse()
@@ -114,7 +122,10 @@ void Response::getDefaultResponse()
 
 void Response::getFullResponse()
 {
-	getDoc();
+	if (this->_req.getMethode() == "HEAD")
+		checkDoc();
+	else
+		getDoc();
 	this->_response += "\nContent-Type: "
 		+ this->_contentType[this->_contentExtention];
 	this->_response += "\nContent-Length: " + this->_contentLength;

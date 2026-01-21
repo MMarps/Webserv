@@ -6,23 +6,23 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/15 14:35:10 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/21 16:19:57 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
+# include "Config.hpp"
 # include "Webserv.hpp"
-#include "Config.hpp"
 
 struct ServerConfig;
-class Request;
+class	Request;
 
 class Response
 {
   private:
-	Request& _req;
+	Request &_req;
 	std::string _contentPath;
 	std::string _contentExtention;
 	std::vector<char> _content;
@@ -32,13 +32,14 @@ class Response
 	std::map<std::string, std::string> _contentType;
 
   public:
-	Response(Request& req);
+	Response(Request &req);
 	~Response();
 
 	std::string getRep() const;
 
 	void getText();
 	void getDoc();
+	void checkDoc();
 	void makeRep(ServerConfig server);
 	void getContentExtention();
 	void getDefaultResponse();
