@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/27 17:02:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 17:19:58 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,8 @@ void	Parser::parseDirective(ServerConfig& srv) {
 			srv.index.push_back(args[i]);
 	else if (name == "error_page")
 		parseErrorPage(srv, args);
+	else if (name == "cgi")
+		parseCgi(srv, args);
 	else if (name == "cgi")
 		parseCgi(srv, args);
 	else if (name == "client_max_body_size") {
@@ -243,12 +245,7 @@ void	Parser::parseCgi(ServerConfig& srv, const std::vector<std::string>& args) {
 		throwError("extension and executable expected by 'cgi'", true);
 	for (size_t i = 0; i < args.size(); i += 2) {
 		const std::string &ext = args[i];
-		if (ext[0] != '.') {
-			std::ostringstream	oss;
-			oss << "\'" << ext << "\' " << "is not a valide extension";
-			throwError(oss.str(), true);
-		}
-		const std::string &exec = args[i + 1];
+		const std::string &exec = args[i+1];
 		srv.cgi[ext] = exec;
 	}
 }
