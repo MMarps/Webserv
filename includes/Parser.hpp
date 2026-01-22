@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/12 17:17:48 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/22 19:24:02 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ private:
 
 	std::vector<std::string>	parseMethods(const std::vector<std::string>& args);
 
+	void			parseCgi(ServerConfig& srv, const std::vector<std::string>& args);
 	void			parseCgi(LocationConfig& loc, const std::vector<std::string>& args);
 	void 			parseReturn(LocationConfig& loc, const std::vector<std::string>& args);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/21 22:15:54 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/22 18:26:25 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -322,7 +322,7 @@ void Server::_sendResponse(int clientFd)
 /////////////////////////////////////
 
 void	Server::_closeSocketFds() {
-	typename std::map<int, std::vector<int> >::const_iterator it;
+	std::map<int, std::vector<int> >::const_iterator it;
 
 	if (_serveurSockets.empty())
 		return ;
@@ -337,7 +337,7 @@ void	Server::_closeSocketFds() {
 }
 
 void	Server::_closeAllClients() {
-	typename std::map<int, Client*>::const_iterator it;
+	std::map<int, Client*>::const_iterator it;
 
 	if (_clients.empty())
 		return ;

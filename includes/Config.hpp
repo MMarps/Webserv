@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:15:18 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/21 21:42:17 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/22 19:21:51 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,14 +43,15 @@ struct LocationConfig {
 };
 
 struct ServerConfig {
-	std::vector<Listen>			listens;
-	std::vector<std::string>	server_names;
-	std::string					root;
-	std::vector<std::string>	index;
-	std::map<int, std::string>	error_pages;
-	size_t 						client_max_body_size;
-	bool 						has_client_max_body_size;
-	std::vector<LocationConfig>	locations;
+	std::vector<Listen>					listens;
+	std::vector<std::string>			server_names;
+	std::string							root;
+	std::vector<std::string>			index;
+	std::map<int, std::string>			error_pages;
+	std::map<std::string, std::string>	cgi;
+	size_t 								client_max_body_size;
+	bool 								has_client_max_body_size;
+	std::vector<LocationConfig>			locations;
 
 	ServerConfig();
 };
