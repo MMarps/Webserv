@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/21 18:00:36 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/22 16:18:52 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@ Request::~Request()
 void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 {
 	this->setErrorCode(errorCode);
-	if (this->_errorCode != 0){
+	if (this->_errorCode != 0)
+	{
 		return ;
 	}
 	std::istringstream request(buffer.c_str());
@@ -63,7 +64,6 @@ void Request::parseMethode(ServerConfig server, std::string line)
 	}
 	this->setMethode(parsedLine[0]);
 	this->setPath(server, parsedLine[1]);
-
 	this->setVersion(parsedLine[2]);
 }
 
@@ -116,7 +116,8 @@ int Request::getErrorCode(void) const
 
 void Request::setMethode(std::string methode)
 {
-	if (methode == "GET" || methode == "POST" || methode == "DELETE" || methode == "HEAD")
+	if (methode == "GET" || methode == "POST" || methode == "DELETE"
+		|| methode == "HEAD")
 		this->_methode = methode;
 	else
 		this->_errorCode = 400;
@@ -127,36 +128,99 @@ void Request::setPath(std::string path)
 	this->_path = path;
 }
 
-void Request::setPath(ServerConfig server, std::string path)
+std::string Request::cutPathVariable(std::string path)
 {
-	std::string cppath;
-	std::cout << BRED << path << NC << std::endl;
-	cppath = server.root + path;
-	if (cppath == server.root + "/" && server.index.size() > 0)
+	size_t	findVar;
+
+	std::string cutPath;
+	std::string cutVar;
+	findVar = path.find('?');
+	if (findVar == std::string::npos)
+		return (path);
+	cutPath = path.substr(0, findVar);
+	this->_var = path.substr(findVar + 1);
+	while (this->_var[0] == '?')
 	{
+		findVar++;
+		this->_var = path.substr(findVar + 1);
+	}
+	std::cout << this->_var << std::endl;
+	return (cutPath);
+}
+
+int Request::getPathType(std::string cpPath)
+{
+	struct stat	st;
+
+	if (stat(cpPath.c_str(), &st) == -1)
+		return (-1);
+	if (S_ISREG(st.st_mode))
+		return (FILE_PATH);
+	if (S_ISDIR(st.st_mode))
+	{
+		if (cpPath[cpPath.size() - 1] == '/')
+		{
+			return (DIR_WITH_SLASH);
+		}
+		return (DIR_NO_SLASH);
+	}
+	return (0);
+}
+
+void Request::getfilePath(ServerConfig server, std::string cpPath, int mod)
+{
+	if ((cpPath == server.root + "/" && server.index.size() > 0) || mod)
+	{
+		std::cout << BGREEN << cpPath << std::endl;
 		for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++)
 		{
-			cppath += *it;
-			if (access(cppath.c_str(), F_OK | R_OK) != -1)
+			cpPath += *it;
+			if (access(cpPath.c_str(), F_OK | R_OK) != -1)
 			{
-				this->_path = cppath;
+				this->_path = cpPath;
 				return ;
 			}
 		}
 	}
-	if (access(cppath.c_str(), F_OK) == -1)
+	if (access(cpPath.c_str(), F_OK) == -1)
 	{
 		this->_errorCode = 404;
 		return ;
 	}
-	else if (access(cppath.c_str(), R_OK) == -1)
+	else if (access(cpPath.c_str(), R_OK) == -1)
 	{
 		this->_errorCode = 403;
 		return ;
 	}
 	else
+		this->_path = cpPath;
+}
+
+
+
+void Request::setPath(ServerConfig server, std::string path)
+{
+	int	fileType;
+
+	std::string cpPath;
+	std::cout << BRED << path << NC << std::endl;
+	cpPath = server.root + cutPathVariable(path);
+	fileType = getPathType(cpPath);
+	switch (fileType)
 	{
-		this->_path = cppath;
+		case -1:
+			this->_errorCode = 404;
+			break ;
+		case FILE_PATH:
+			getfilePath(server, cpPath, 0);
+			break ;
+		case DIR_WITH_SLASH:
+			getfilePath(server, cpPath, 1);
+			break ;
+		case DIR_NO_SLASH:
+			this->setPath(path + "/");
+			this->_errorCode = 301;
+			break ;
 	}
 }
 

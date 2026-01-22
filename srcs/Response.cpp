@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/21 17:42:27 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/22 16:17:10 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,15 @@ std::vector<char> Response::getContent()
 	return (this->_content);
 }
 
+void Response::makeRedirect()
+{
+	this->_response += "\nLocation: " + this->_req.getPath();
+	this->_response += "\nConnection: close";
+	this->_response += "\nContent-Length: 0";
+	this->_response += "\n\n";
+
+}
+
 void Response::makeRep(ServerConfig server)
 {
 	getDefaultResponse();
@@ -88,6 +97,10 @@ void Response::makeRep(ServerConfig server)
 	{
 		getContentExtention();
 		getFullResponse();
+	}
+	else if(this->_req.getErrorCode() == 301)
+	{
+		makeRedirect();
 	}
 	else
 	{
