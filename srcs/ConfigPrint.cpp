@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigPrint.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 16:44:36 by mmarps            #+#    #+#             */
-/*   Updated: 2025/12/12 16:45:20 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/23 14:10:26 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,19 @@ void	printConfig(Config const &cfg, std::ostream &os) {
 		// error pages
 		indent(os, 1); os << "error_pages: ";
 		if (srv.error_pages.empty()) os << "(none)"; else printErrorPages(os, srv.error_pages);
+		os << "\n";
+
+		// cgi
+		indent(os, 1); os << "cgi: ";
+		if (srv.cgi.empty()) os << "(none)";
+		else {
+			bool first = true;
+			for (std::map<std::string, std::string>::const_iterator it = srv.cgi.begin(); it != srv.cgi.end(); ++it) {
+				if (!first) os << ", ";
+				os << it->first << "->" << it->second;
+				first = false;
+			}
+		}
 		os << "\n";
 
 		// client max body size
