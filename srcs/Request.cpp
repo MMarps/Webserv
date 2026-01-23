@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/22 17:21:31 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/23 16:48:09 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,10 +42,13 @@ void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 		if (strcmp(line.c_str(), "\r\n") == 0)
 			break ;
 	}
-	if (this->_errorCode == 0 && (!this->_methode.empty() && !this->_path.empty() && !this->_host.empty()))
+	if (this->_errorCode == 0)
+	{
+		std::cout << "ca passe" << std::endl;
 		this->_errorCode = 200;
-	else
-		this->_errorCode = 400;
+	}
+	// else
+	// 	this->_errorCode = 400;
 }
 
 void Request::parseMethode(ServerConfig server, std::string line)
