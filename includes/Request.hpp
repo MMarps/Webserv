@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/25 16:16:31 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/25 18:01:31 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,13 @@
 
 struct ServerConfig;
 
-enum PathType {
-    FILE_PATH,
-    DIR_WITH_SLASH,
-    DIR_NO_SLASH
+enum	PathType
+{
+	FILE_PATH,
+	DIR_WITH_SLASH,
+	DIR_NO_SLASH,
+	SERVER_LOCATION_NO_SLASH,
+	SERVER_LOCATION_WI_SLASH,
 };
 
 class Request
@@ -34,7 +37,7 @@ class Request
 	std::string _version;
 	std::string _header;
 	std::string _host;
-	std::map<std::string, std::string> _varLst; 
+	std::map<std::string, std::string> _varLst;
 	bool _isComplete;
 	int _errorCode;
 
@@ -49,15 +52,17 @@ class Request
 	std::string getMethode() const;
 	std::string getPath() const;
 	std::string getIncompletPath() const;
-
+	
 	std::string getVersion() const;
 	std::string getHeader() const;
 	std::string getHost() const;
 	std::string getVar() const;
 	bool getIsComplete() const;
 	int getErrorCode() const;
-	int getPathType(std::string cpPath);
-	void getfilePath( ServerConfig server, std::string cpPath, int mod);
+	int getPathType(ServerConfig server, std::string cpPath);
+	
+	void getfilePath(ServerConfig server, std::string cpPath, int mod);
+	void getServerLocationPath(ServerConfig server, std::string path);
 
 	void setMethode(std::string Methode);
 	void setPath(ServerConfig server, std::string path);
@@ -67,7 +72,6 @@ class Request
 	void setHost(std::string host);
 	void setIsComplete(bool isComplet);
 	void setErrorCode(int errorCode);
-
 
 	std::string cutPathVariable(std::string path);
 };
