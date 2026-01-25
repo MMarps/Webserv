@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/22 16:17:10 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/25 15:53:40 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,14 @@
 Response::Response(Request &req) : _req(req)
 {
 	_statutMessage.insert(std::make_pair(200, "OK"));
+	_statutMessage.insert(std::make_pair(201, "Created"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
 	_statutMessage.insert(std::make_pair(302, "Found"));
 	_statutMessage.insert(std::make_pair(400, "Bad Request"));
 	_statutMessage.insert(std::make_pair(403, "Forbidden"));
 	_statutMessage.insert(std::make_pair(404, "Not Found"));
 	_statutMessage.insert(std::make_pair(405, "Method Not Allowed"));
+	_statutMessage.insert(std::make_pair(409, "Conflict"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));

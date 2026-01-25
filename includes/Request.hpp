@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/22 16:04:31 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/25 16:16:31 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ class Request
 	std::string _version;
 	std::string _header;
 	std::string _host;
+	std::map<std::string, std::string> _varLst; 
 	bool _isComplete;
 	int _errorCode;
 

@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/22 15:55:43 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/25 16:16:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ class Response
 	std::string _response;
 	std::map<int, std::string> _statutMessage;
 	std::map<std::string, std::string> _contentType;
+	
 
   public:
 	Response(Request &req);
