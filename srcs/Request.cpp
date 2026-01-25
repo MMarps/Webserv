@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/25 17:21:15 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/25 18:10:59 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,7 +159,7 @@ std::string Request::cutPathVariable(std::string path)
 	return (cutPath);
 }
 
-int Request::getPathType(std::string cpPath)
+int Request::getPathType(ServerConfig server ,std::string cpPath)
 {
 	struct stat	st;
 
@@ -169,6 +169,13 @@ int Request::getPathType(std::string cpPath)
 		return (FILE_PATH);
 	if (S_ISDIR(st.st_mode))
 	{
+		for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++)
+		{
+			if (server.root + it->path == cpPath)
+				return (SERVER_LOCATION_NO_SLASH);
+			else if (server.root + it->path == cpPath + '/')
+				return (SERVER_LOCATION_WI_SLASH);
+		}
 		if (cpPath[cpPath.size() - 1] == '/')
 		{
 			return (DIR_WITH_SLASH);
@@ -209,6 +216,26 @@ void Request::getfilePath(ServerConfig server, std::string cpPath, int mod)
 		
 }
 
+void Request::getServerLocationPath(ServerConfig server, std::string path)
+{
+	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++)
+	{
+		if (it->path == path || it->path == path + '/')
+		{
+			if (it->autoindex)
+			{
+				/*case auto index a gerer, generation d'une page auto*/
+				this->_path = "/autoindexon.html";
+			}
+			else
+			{
+				this->_path ="/servelocation.html";
+			}
+			
+		}
+	}
+}
+
 void Request::setPath(ServerConfig server, std::string path)
 {
 	int	fileType;
@@ -216,12 +243,7 @@ void Request::setPath(ServerConfig server, std::string path)
 	std::string cpPath;
 	std::cout << BRED << path << NC << std::endl;
 	cpPath = server.root + cutPathVariable(path);
-	for (std::map<std::string,
-		std::string>::iterator it = this->_varLst.begin(); it != this->_varLst.end(); it++)
-	{
-		std::cout << BGREEN << "keys = " << it->first << " value = " << it->second << NC << std::endl;
-	}
-	fileType = getPathType(cpPath);
+	fileType = getPathType(server, cpPath);
 	switch (fileType)
 	{
 	case -1:
@@ -238,6 +260,12 @@ void Request::setPath(ServerConfig server, std::string path)
 		this->setPath(path + "/");
 		this->_errorCode = 301;
 		break ;
+	case SERVER_LOCATION_NO_SLASH:
+		getServerLocationPath(server, path);
+		this->_errorCode = 301;
+	case SERVER_LOCATION_WI_SLASH:
+		getServerLocationPath(server, path);
+		this->_errorCode = 301;
 	}
 }
 
