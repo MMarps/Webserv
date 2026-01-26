@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/27 17:00:33 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 17:18:25 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,22 +95,22 @@ void Response::makeRedirect()
 void Response::makeRep(ServerConfig server)
 {
 	getDefaultResponse();
-	if (this->_req.getErrorCode() == 200)
+	if (this->_req.getCode() == 200)
 	{
 		getContentExtention();
 		getFullResponse();
 	}
-	else if(this->_req.getErrorCode() == 301)
+	else if(this->_req.getCode() == 301)
 	{
 		makeRedirect();
 	}
 	else
 	{
-		if (!server.error_pages[this->_req.getErrorCode()].empty()
-			&& access(server.error_pages[this->_req.getErrorCode()].c_str(),
+		if (!server.error_pages[this->_req.getCode()].empty()
+			&& access(server.error_pages[this->_req.getCode()].c_str(),
 				F_OK) != -1)
 		{
-			this->_req.setPath(server.error_pages[this->_req.getErrorCode()]);
+			this->_req.setPath(server.error_pages[this->_req.getCode()]);
 			getContentExtention();
 			getFullResponse();
 		}
@@ -150,9 +150,9 @@ void Response::getFullResponse()
 void Response::getResponseCode()
 {
 	std::stringstream errorCode;
-	errorCode << this->_req.getErrorCode();
+	errorCode << this->_req.getCode();
 	this->_response += errorCode.str() + " "
-		+ this->_statutMessage[this->_req.getErrorCode()];
+		+ this->_statutMessage[this->_req.getCode()];
 }
 
 std::ostream &operator<<(std::ostream &o, Response const &response)
