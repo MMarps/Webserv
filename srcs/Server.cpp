@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/25 16:11:55 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/26 15:16:16 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,10 +297,10 @@ void Server::_sendResponse(int clientFd)
 		_closeConnection(clientFd);
 		return ;
 	}
-	if (!client->getBody().empty())
+	if (static_cast<size_t>(sent) >= resp.size() && !client->getBody().empty())
 	{
 		sent2 = send(client->getFd(), client->getBody().data(), client->getBody().size(), 0);
-		if (sent == -1)
+		if (sent2 == -1)
 		{
 			perror("send");
 			_closeConnection(clientFd);
