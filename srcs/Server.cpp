@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/27 17:18:05 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 17:19:12 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@ Server::Server(const std::string &confFileName)
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
 		throw ServerError("Epoll create failed");
+
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 }
@@ -33,8 +34,7 @@ Server::~Server()
 
 /////////////////////////////////////
 
-void	signal_handler(int sig)
-{
+void	signal_handler(int sig) {
 	(void)sig;
 	g_terminate = 1;
 }
@@ -84,8 +84,8 @@ void Server::_setupServerSockets()
 			}
 			opt = 1;
 			setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-			if (_setNonBlocking(fd) != 0)
-			{
+
+			if (_setNonBlocking(fd) != 0) {
 				freeaddrinfo(res);
 				close(fd);
 				continue ;
@@ -130,13 +130,11 @@ int Server::_setNonBlocking(int fd)
 	int	flags;
 
 	flags = fcntl(fd, F_GETFL);
-	if (flags == -1)
-	{
+	if (flags == -1) {
 		perror("fcntl");
 		return (1);
 	}
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-	{
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
 		perror("fcntl");
 		return (2);
 	}
@@ -150,8 +148,7 @@ int Server::_addToEpoll(int fd, uint32_t events)
 	std::memset(&event, 0, sizeof(event));
 	event.events = events;
 	event.data.fd = fd;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) < 0)
-	{
+	if (epoll_ctl(_epollFd, EPOLL_CTL_ADD, fd, &event) < 0) {
 		perror("epoll_ctl");
 		return (1);
 	}
@@ -165,8 +162,7 @@ int Server::_modEpoll(int fd, uint32_t newEvents)
 	std::memset(&event, 0, sizeof(event));
 	event.events = newEvents;
 	event.data.fd = fd;
-	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) < 0)
-	{
+	if (epoll_ctl(_epollFd, EPOLL_CTL_MOD, fd, &event) < 0) {
 		perror("epoll_ctl");
 		return (1);
 	}
@@ -193,8 +189,7 @@ void Server::run()
 				_closeSocketFds();
 				break ;
 			}
-			else
-			{
+			else {
 				perror("epoll_wait");
 				continue ;
 			}
@@ -222,13 +217,15 @@ void Server::run()
 
 void Server::_closeConnection(int fd)
 {
-	delete	_clients[fd];
-
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
+
 	close(fd);
+	delete _clients[fd];
+
 	if (_clients.count(fd))
 		_clients.erase(fd);
+
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
@@ -270,7 +267,6 @@ void Server::_handleClientData(int clientFd)
 	{
 		client->isRequestFinished = true;
 		std::cout << "Request received completely." << std::endl;
-		std::cout << BRED << buf << BBLUE << std::endl;
 		_parseResponse(client);
 		_modEpoll(clientFd, EPOLLOUT);
 	}
@@ -284,12 +280,14 @@ void Server::_parseResponse(Client *c)
 	Response response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getRep());
+
 	std::cout << BRED << req << NC << std::endl;
-	std::cout << BBLUE << response << NC << std::endl;
+	std::cout  << BBLUE << response << NC << std::endl;
+
 	const std::vector<char> &content = response.getContent();
 	if (!content.empty())
 	{
-		c->setBody(content);
+		c->getResponse().append(content.data(), content.size());
 	}
 }
 
@@ -297,11 +295,9 @@ void Server::_sendResponse(int clientFd)
 {
 	Client	*client;
 	ssize_t	sent;
-	ssize_t	sent2;
 
 	client = _clients[clientFd];
 	std::string &resp = client->getResponse();
-	std::cout << BBLUE << client->getBody().data() << NC << std::endl;
 	sent = send(client->getFd(), resp.c_str(), resp.size(), 0);
 	if (sent == -1)
 	{
@@ -309,17 +305,7 @@ void Server::_sendResponse(int clientFd)
 		_closeConnection(clientFd);
 		return ;
 	}
-	if (static_cast<size_t>(sent) >= resp.size() && !client->getBody().empty())
-	{
-		sent2 = send(client->getFd(), client->getBody().data(), client->getBody().size(), 0);
-		if (sent2 == -1)
-		{
-			perror("send");
-			_closeConnection(clientFd);
-			return ;
-		}
-	}
-	if (static_cast<size_t>(sent) >= resp.size() && static_cast<size_t>(sent2) >= client->getBody().size() )
+	if (static_cast<size_t>(sent) >= resp.size())
 	{
 		std::cout << "Response sent fully." << std::endl;
 		client->getBuffer().clear();
