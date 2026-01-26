@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/21 17:24:29 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/26 15:18:14 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -267,7 +267,7 @@ void	Parser::putDefaultValues(Config &cfg) {
 			srv.listens.push_back(l);
 		}
 		if (srv.root.empty())
-			srv.root = "var";
+			srv.root = "var/www";
 		if (srv.index.empty())
 			srv.index.push_back("index.html");
 		// for (size_t li = 0; li < srv.locations.size(); li++) {

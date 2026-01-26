@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 23:55:14 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/26 15:18:54 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,14 +52,14 @@ public:
 	void			run();
 
 private:
-	Config					_conf;
+	Config								_conf;
 
-	int						_epollFd;
-	struct epoll_event		_events[MAX_EVENTS];
+	int									_epollFd;
+	struct epoll_event					_events[MAX_EVENTS];
 
-	std::map<int, int>		_serveurSockets;
+	std::map<int, std::vector<int> >	_serveurSockets;
 
-	std::map<int, Client*>	_clients;
+	std::map<int, Client*>				_clients;
 
 	void				_setupServerSockets();
 	int					_setNonBlocking(int fd);

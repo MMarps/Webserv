@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:15:18 by mmarpaul          #+#    #+#             */
-/*   Updated: 2025/12/09 18:33:50 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/21 21:42:17 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,10 @@
 struct Listen {
 	std::string	host;
 	int			port;
+
 	Listen();
+	Listen(const std::string& newHost, const int& newPort);
+	bool	operator==(const Listen& other);
 };
 
 struct LocationConfig {
