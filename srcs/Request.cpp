@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 16:26:29 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/26 16:53:09 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,10 +145,6 @@ int Request::getPathType(ServerConfig server)
 		std::vector<LocationConfig>::iterator it;
 		for (it = server.locations.begin(); it < server.locations.end(); it++)
 		{
-			// if (server.root + it->path == this->_path)
-			// {
-			// 	return (SERVER_LOCATION);
-			// }
 			if (server.root + it->path == this->_completPath)
 				return (SERVER_LOCATION_NO_SLASH);
 			else if (server.root + it->path == this->_completPath + '/')
