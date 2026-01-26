@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:47:25 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/20 20:15:41 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/01/26 16:10:48 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,6 @@ int	main(int ac, char **av) {
 // 				req.parse(server ,buffer);
 // 				Response response(req);
 // 				response.makeRep();
-// 				std::cout << RED << " ca passe 6" << NC << std::endl;
 
 // 				std::cout << "-------------------------" << std::endl;
 // 				std::cout << "request : " << std::endl << buffer << std::endl;

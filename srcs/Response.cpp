@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 14:43:36 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/26 16:03:01 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ std::string Response::getRep() const
 
 void Response::getDoc()
 {
-	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
+	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
 		this->_req.setErrorCode(404);
@@ -64,7 +64,7 @@ void Response::getDoc()
 
 void Response::checkDoc()
 {
-	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
+	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
 		this->_req.setErrorCode(404);
@@ -124,9 +124,9 @@ void Response::makeRep(ServerConfig server)
 
 void Response::getContentExtention()
 {
-	std::stringstream path(this->_req.getPath());
+	std::stringstream path(this->_req.getCompletPath());
 	std::string get;
-	this->_contentExtention = this->_req.getPath().substr(this->_req.getPath().rfind('.'));
+	this->_contentExtention = this->_req.getCompletPath().substr(this->_req.getCompletPath().rfind('.'));
 }
 
 void Response::getDefaultResponse()
