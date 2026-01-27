@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/23 14:25:07 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/27 17:02:47 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,7 +284,6 @@ void	Parser::putDefaultValues(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
 		ServerConfig &srv = cfg.servers[si];
 		if (srv.listens.empty()) {
-			std::cout << BRED << "TEST" << NC << std::endl;
 			Listen l;
 			l.host = "0.0.0.0";
 			l.port = 8080;

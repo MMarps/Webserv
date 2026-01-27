@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/20 18:23:30 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/25 17:21:15 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ Request::~Request()
 void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 {
 	this->setErrorCode(errorCode);
-	if (this->_errorCode != 0){
-		std::cout << "capasse " << std::endl;
+	if (this->_errorCode != 0)
+	{
 		return ;
 	}
 	std::istringstream request(buffer.c_str());
@@ -35,17 +35,18 @@ void Request::parse(ServerConfig server, std::string buffer, int errorCode)
 		std::istringstream cut(line);
 		std::string res;
 		getline(cut, res, ' ');
-		if (res == "GET" || res == "POST" || res == "DELETE")
+		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
 			parseMethode(server, line);
 		else
 			parseAttribut(line);
 		if (strcmp(line.c_str(), "\r\n") == 0)
 			break ;
 	}
+	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
+		|| this->_host.empty())
+		this->_errorCode = 400;
 	if (this->_errorCode == 0)
-	{
 		this->_errorCode = 200;
-	}
 }
 
 void Request::parseMethode(ServerConfig server, std::string line)
@@ -116,10 +117,11 @@ int Request::getErrorCode(void) const
 
 void Request::setMethode(std::string methode)
 {
-	if (methode == "GET" || methode == "POST" || methode == "DELETE")
+	if (methode == "GET" || methode == "POST" || methode == "DELETE"
+		|| methode == "HEAD")
 		this->_methode = methode;
 	else
-		this->_errorCode = 400;
+		this->_errorCode = 405;
 }
 
 void Request::setPath(std::string path)
@@ -127,35 +129,115 @@ void Request::setPath(std::string path)
 	this->_path = path;
 }
 
-void Request::setPath(ServerConfig server, std::string path)
+std::string Request::cutPathVariable(std::string path)
 {
-	std::string cppath;
-	cppath = server.root + path;
-	if (cppath == server.root + "/" && server.index.size() > 0)
+	size_t	findVar;
+
+	std::string cutPath;
+	std::string cutVar;
+	findVar = path.find('?');
+	if (findVar == std::string::npos)
+		return (path);
+	cutPath = path.substr(0, findVar);
+	this->_var = path.substr(findVar + 1);
+	while (this->_var[0] == '?')
 	{
+		findVar++;
+		this->_var = path.substr(findVar + 1);
+	}
+	std::stringstream varLine(this->_var);
+	std::string buff;
+	while (getline(varLine, buff, '?'))
+	{
+		std::stringstream varCut(buff);
+		std::string nameBuff;
+		std::string valueBuff;
+		getline(varCut, nameBuff, '=');
+		getline(varCut, valueBuff);
+		this->_varLst[nameBuff] = valueBuff;
+	}
+	return (cutPath);
+}
+
+int Request::getPathType(std::string cpPath)
+{
+	struct stat	st;
+
+	if (stat(cpPath.c_str(), &st) == -1)
+		return (-1);
+	if (S_ISREG(st.st_mode))
+		return (FILE_PATH);
+	if (S_ISDIR(st.st_mode))
+	{
+		if (cpPath[cpPath.size() - 1] == '/')
+		{
+			return (DIR_WITH_SLASH);
+		}
+		return (DIR_NO_SLASH);
+	}
+	return (0);
+}
+
+void Request::getfilePath(ServerConfig server, std::string cpPath, int mod)
+{
+	if ((cpPath == server.root + "/" && server.index.size() > 0) || mod)
+	{
+		std::cout << BGREEN << cpPath << std::endl;
 		for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++)
 		{
-			cppath += *it;
-			if (access(cppath.c_str(), F_OK | R_OK) != -1)
+			cpPath += *it;
+			if (access(cpPath.c_str(), F_OK | R_OK) != -1)
 			{
-				this->_path = cppath;
+				this->_path = cpPath;
 				return ;
 			}
 		}
 	}
-	if (access(cppath.c_str(), F_OK) == -1)
+	this->_path = cpPath;
+	if (access(cpPath.c_str(), F_OK) == -1)
 	{
+		
 		this->_errorCode = 404;
 		return ;
 	}
-	else if (access(cppath.c_str(), R_OK) == -1)
+	else if (access(cpPath.c_str(), R_OK) == -1)
 	{
 		this->_errorCode = 403;
 		return ;
 	}
-	else
+	
+		
+}
+
+void Request::setPath(ServerConfig server, std::string path)
+{
+	int	fileType;
+
+	std::string cpPath;
+	std::cout << BRED << path << NC << std::endl;
+	cpPath = server.root + cutPathVariable(path);
+	for (std::map<std::string,
+		std::string>::iterator it = this->_varLst.begin(); it != this->_varLst.end(); it++)
 	{
-		this->_path = cppath;
+		std::cout << BGREEN << "keys = " << it->first << " value = " << it->second << NC << std::endl;
+	}
+	fileType = getPathType(cpPath);
+	switch (fileType)
+	{
+	case -1:
+		this->_path = path;
+		this->_errorCode = 404;
+		break ;
+	case FILE_PATH:
+		getfilePath(server, cpPath, 0);
+		break ;
+	case DIR_WITH_SLASH:
+		getfilePath(server, cpPath, 1);
+		break ;
+	case DIR_NO_SLASH:
+		this->setPath(path + "/");
+		this->_errorCode = 301;
+		break ;
 	}
 }
 
