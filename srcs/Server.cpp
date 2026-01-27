@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/27 17:03:24 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 17:07:17 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -342,7 +342,7 @@ void	Server::_closeSocketFds() {
 		return ;
 	for (it = _serveurSockets.begin(); it != _serveurSockets.end(); ++it)
 	{
-		fd = it->first;
+		int fd = it->first;
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 		close(fd);
 	}
