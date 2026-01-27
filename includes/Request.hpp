@@ -6,19 +6,19 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 16:29:25 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 18:30:10 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_HPP
-# define REQUEST_HPP
+#define REQUEST_HPP
 
-# include "Config.hpp"
-# include "Webserv.hpp"
+#include "Config.hpp"
+#include "Webserv.hpp"
 
 struct ServerConfig;
 
-enum	PathType
+enum PathType
 {
 	FILE_PATH,
 	DIR_WITH_SLASH,
@@ -30,7 +30,7 @@ enum	PathType
 
 class Request
 {
-  private:
+private:
 	std::string _methode;
 	std::string _path;
 	std::string _completPath;
@@ -42,7 +42,7 @@ class Request
 	bool _isComplete;
 	int _code;
 
-  public:
+public:
 	Request();
 	~Request();
 
@@ -83,6 +83,7 @@ class Request
 	/*classic setter*/
 	void setMethode(std::string Methode);
 	void setPath(std::string path);
+	void setCompletPath(std::string completPath);
 	void setVersion(std::string version);
 	void setErrorCode(int errorCode);
 

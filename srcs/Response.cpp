@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 16:03:01 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 18:49:37 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,12 +51,14 @@ void Response::getDoc()
 	if (!file.is_open())
 	{
 		this->_req.setErrorCode(404);
-		return ;
+		return;
 	}
+
 	std::istreambuf_iterator<char> it(file);
 	std::istreambuf_iterator<char> end;
 	std::vector<char> buffer(it, end);
 	std::stringstream ss;
+
 	ss << buffer.size();
 	this->_contentLength = ss.str();
 	this->_content.swap(buffer);
@@ -68,7 +70,7 @@ void Response::checkDoc()
 	if (!file.is_open())
 	{
 		this->_req.setErrorCode(404);
-		return ;
+		return;
 	}
 	std::istreambuf_iterator<char> it(file);
 	std::istreambuf_iterator<char> end;
@@ -89,7 +91,6 @@ void Response::makeRedirect()
 	this->_response += "\nConnection: close";
 	this->_response += "\nContent-Length: 0";
 	this->_response += "\n\n";
-
 }
 
 void Response::makeRep(ServerConfig server)
@@ -100,17 +101,18 @@ void Response::makeRep(ServerConfig server)
 		getContentExtention();
 		getFullResponse();
 	}
-	else if(this->_req.getCode() == 301)
+	else if (this->_req.getCode() == 301)
 	{
 		makeRedirect();
 	}
 	else
 	{
-		if (!server.error_pages[this->_req.getCode()].empty()
-			&& access(server.error_pages[this->_req.getCode()].c_str(),
-				F_OK) != -1)
+
+		if (!server.error_pages[this->_req.getCode()].empty())
 		{
+
 			this->_req.setPath(server.error_pages[this->_req.getCode()]);
+			this->_req.setCompletPath(this->_req.getPath());
 			getContentExtention();
 			getFullResponse();
 		}
@@ -141,8 +143,8 @@ void Response::getFullResponse()
 		checkDoc();
 	else
 		getDoc();
-	this->_response += "\nContent-Type: "
-		+ this->_contentType[this->_contentExtention];
+	this->_response += "\nContent-Type: " + this->_contentType[this->_contentExtention];
+
 	this->_response += "\nContent-Length: " + this->_contentLength;
 	this->_response += "\n\n";
 }
@@ -151,8 +153,7 @@ void Response::getResponseCode()
 {
 	std::stringstream errorCode;
 	errorCode << this->_req.getCode();
-	this->_response += errorCode.str() + " "
-		+ this->_statutMessage[this->_req.getCode()];
+	this->_response += errorCode.str() + " " + this->_statutMessage[this->_req.getCode()];
 }
 
 std::ostream &operator<<(std::ostream &o, Response const &response)

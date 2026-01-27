@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 16:53:09 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 18:49:57 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ void Request::parse(ServerConfig server, std::string buffer, int code)
 {
 	this->_code = code;
 	if (this->_code != 0)
-		return ;
+		return;
 	makeRequest(server, buffer);
 	checkRequest();
 }
@@ -48,14 +48,13 @@ void Request::makeRequest(ServerConfig server, std::string buffer)
 			parseAttribut(line);
 		}
 		if (strcmp(line.c_str(), "\r\n") == 0)
-			break ;
+			break;
 	}
 }
 
 void Request::checkRequest()
 {
-	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
-		|| this->_host.empty())
+	if (this->_methode.empty() || this->_path.empty() || this->_version.empty() || this->_host.empty())
 		this->_code = 400;
 	if (this->_code == 0)
 		this->_code = 200;
@@ -71,7 +70,7 @@ void Request::parseMethode(ServerConfig server, std::string line)
 	if (parsedLine.size() != 3)
 	{
 		this->_code = 400;
-		return ;
+		return;
 	}
 	this->setMethode(parsedLine[0]);
 	this->setAndCheckPath(server, parsedLine[1]);
@@ -90,9 +89,9 @@ void Request::parseAttribut(std::string line)
 	}
 }
 
-size_t	haveVariable(std::string path)
+size_t haveVariable(std::string path)
 {
-	size_t	findVar;
+	size_t findVar;
 
 	std::string cutPath;
 	findVar = path.find('?');
@@ -112,7 +111,7 @@ void Request::getVariable(std::string path)
 {
 	std::string variableQuery;
 	if (haveVariable(path) == std::string::npos)
-		return ;
+		return;
 	variableQuery = path.substr(haveVariable(path) + 1);
 	// while (variableQuery[0] == '?')
 	// {
@@ -134,10 +133,13 @@ void Request::getVariable(std::string path)
 
 int Request::getPathType(ServerConfig server)
 {
-	struct stat	st;
+	struct stat st;
 
 	if (stat(this->_completPath.c_str(), &st) == -1)
+	{
+		verifFile();
 		return (-1);
+	}
 	if (S_ISREG(st.st_mode))
 		return (FILE_PATH);
 	if (S_ISDIR(st.st_mode))
@@ -161,8 +163,7 @@ int Request::getPathType(ServerConfig server)
 
 void Request::verifFile()
 {
-	struct stat	st;
-
+	struct stat st;
 	if (stat(this->_completPath.c_str(), &st) == -1)
 	{
 		if (errno == ENOENT || errno == ENOTDIR)
@@ -171,7 +172,7 @@ void Request::verifFile()
 			this->_code = 403;
 		else
 			this->_code = 500;
-		return ;
+		return;
 	}
 }
 
@@ -182,25 +183,24 @@ void Request::getIndex(ServerConfig server)
 		this->_completPath += *it;
 		verifFile();
 		if (this->_code == 0)
-			return ;
+			return;
 	}
 }
 
 void Request::getfilePath(ServerConfig server, int searchIndex)
 {
-	if ((this->_completPath == server.root + "/" && server.index.size() > 0)
-		|| searchIndex)
+	if ((this->_completPath == server.root + "/" && server.index.size() > 0) || searchIndex)
 	{
 		getIndex(server);
-		return ;
+		return;
 	}
 	verifFile();
 }
 
 void Request::getServerLocationPath(ServerConfig server)
 {
-	DIR				*folder;
-	struct dirent	*readFolder;
+	DIR *folder;
+	struct dirent *readFolder;
 
 	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++)
 	{
@@ -208,11 +208,13 @@ void Request::getServerLocationPath(ServerConfig server)
 		{
 			if (this->_path[this->_path.size() - 1] == '/')
 				this->_path[this->_path.size() - 1] = '\0';
+
+			this->_completPath = server.root + it->path;
+			verifFile();
 			if (it->autoindex)
 			{
 				/*case auto index a gerer, generation d'une page auto*/
-				std::string dirPath = server.root + it->path;
-				folder = opendir(dirPath.c_str());
+				folder = opendir(this->_completPath.c_str());
 				if (!folder)
 				{
 					std::cout << BRED << "NOP" << NC << std::endl;
@@ -241,7 +243,7 @@ void Request::getServerLocationPath(ServerConfig server)
 
 void Request::setAndCheckPath(ServerConfig server, std::string path)
 {
-	int	fileType;
+	int fileType;
 
 	getVariable(path);
 	this->_path = getPathVariable(path);
@@ -250,21 +252,21 @@ void Request::setAndCheckPath(ServerConfig server, std::string path)
 	switch (fileType)
 	{
 	case -1:
-		break ;
+		break;
 	case FILE_PATH:
 		getfilePath(server, 0);
-		break ;
+		break;
 	case DIR_WITH_SLASH:
 		getfilePath(server, 1);
-		break ;
+		break;
 	case DIR_NO_SLASH:
 		this->_path = path + "/";
 		this->_code = 301;
-		break ;
+		break;
 	case SERVER_LOCATION_NO_SLASH:
 		getServerLocationPath(server);
 		// this->_code = 301;
-		break ;
+		break;
 	case SERVER_LOCATION_WI_SLASH:
 		getServerLocationPath(server);
 		// this->_code = 301;
@@ -273,7 +275,11 @@ void Request::setAndCheckPath(ServerConfig server, std::string path)
 
 std::ostream &operator<<(std::ostream &o, Request const &request)
 {
-	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC;
+	o << BGREEN << "mode : " << request.getMethode() << std::endl
+	  << "path : " << request.getPath() << std::endl
+	  << "version : " << request.getVersion() << std::endl
+	  << "host : " << request.getHost() << std::endl
+	  << NC;
 	return (o);
 }
 
@@ -319,8 +325,7 @@ int Request::getCode(void) const
 
 void Request::setMethode(std::string methode)
 {
-	if (methode == "GET" || methode == "POST" || methode == "DELETE"
-		|| methode == "HEAD")
+	if (methode == "GET" || methode == "POST" || methode == "DELETE" || methode == "HEAD")
 		this->_methode = methode;
 	else
 		this->_code = 405;
@@ -329,6 +334,11 @@ void Request::setMethode(std::string methode)
 void Request::setPath(std::string path)
 {
 	this->_path = path;
+}
+
+void Request::setCompletPath(std::string completPath)
+{
+	this->_completPath = completPath;
 }
 
 void Request::setVersion(std::string version)
