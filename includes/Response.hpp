@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/25 16:16:20 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/28 16:30:49 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class Response
 	void getFullResponse();
 	void getResponseCode();
 	void makeRedirect();
+	void generateAutoindex();
 
 	std::vector<char> getContent();
 };

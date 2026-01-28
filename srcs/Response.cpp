@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/27 18:49:37 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/28 18:11:33 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,13 +93,88 @@ void Response::makeRedirect()
 	this->_response += "\n\n";
 }
 
+void Response::generateAutoindex()
+{
+	DIR *folder;
+	struct dirent *readFolder;
+	folder = opendir(this->_req.getCompletPath().c_str());
+	if (!folder)
+	{
+		std::cout << BRED << "NOP" << NC << std::endl;
+		this->_req.setErrorCode(404);
+	}
+	else
+	{
+		std::string htmlpage;
+		std::vector<std::string> lstFiles;
+		htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
+
+		readFolder = readdir(folder);
+		while (readFolder)
+		{
+			if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
+				lstFiles.push_back(readFolder->d_name);
+			readFolder = readdir(folder);
+		}
+		std::sort(lstFiles.begin(), lstFiles.end());
+
+		for (long unsigned int i = 0; i < lstFiles.size(); i++)
+		{
+			htmlpage += "<a href=\"" + this->_req.getPath()+ "/" + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
+		}
+		htmlpage += "</body></html>";
+		std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
+		this->_content.swap(tmp);
+		std::stringstream ss;
+
+		ss << htmlpage.size();
+		this->_contentLength = ss.str();
+		std::cout << BBLUE << this->_contentLength << NC << std::endl;
+	}
+}
+
 void Response::makeRep(ServerConfig server)
 {
 	getDefaultResponse();
 	if (this->_req.getCode() == 200)
 	{
-		getContentExtention();
-		getFullResponse();
+		if (this->_req.getIsLocation())
+		{
+			std::cout << "ca passe" << std::endl;
+			std::vector<LocationConfig>::iterator location = server.locations.begin();
+			std::cout << location->path << " " << this->_req.getPath() << std::endl;
+			for (; location < server.locations.end(); location++)
+				if (location->path == this->_req.getPath())
+					break;
+			if (location == server.locations.end())
+			{
+				std::cout << " ca passe 2" << std::endl;
+				if (!server.error_pages[this->_req.getCode()].empty())
+				{
+
+					this->_req.setPath(server.error_pages[this->_req.getCode()]);
+					this->_req.setCompletPath(this->_req.getPath());
+					getContentExtention();
+					getFullResponse();
+				}
+				else
+				{
+					this->_response += "\nContent-Length: 0";
+					this->_response += "\n\n";
+				}
+				return;
+			}
+
+			generateAutoindex();
+			this->_response += "\nContent-Type: " + this->_contentType[".html"];
+			this->_response += "\nContent-Length: " + this->_contentLength;
+			this->_response += "\n\n";
+		}
+		else
+		{
+			getContentExtention();
+			getFullResponse();
+		}
 	}
 	else if (this->_req.getCode() == 301)
 	{

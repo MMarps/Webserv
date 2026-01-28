@@ -6,14 +6,14 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/27 18:49:57 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:51:58 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _isComplete(false), _code(0)
+Request::Request() : _isLocation(false), _isComplete(false), _code(0)
 {
 }
 
@@ -202,6 +202,8 @@ void Request::getServerLocationPath(ServerConfig server)
 	DIR *folder;
 	struct dirent *readFolder;
 
+	(void)folder;
+	(void)readFolder;
 	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++)
 	{
 		if (it->path == this->_path)
@@ -211,32 +213,9 @@ void Request::getServerLocationPath(ServerConfig server)
 
 			this->_completPath = server.root + it->path;
 			verifFile();
-			if (it->autoindex)
-			{
-				/*case auto index a gerer, generation d'une page auto*/
-				folder = opendir(this->_completPath.c_str());
-				if (!folder)
-				{
-					std::cout << BRED << "NOP" << NC << std::endl;
-					this->_code = 404;
-				}
-				else
-				{
-					readFolder = readdir(folder);
-					while (readFolder)
-					{
-						std::cout << GREEN << readFolder->d_name << NC << std::endl;
-						readFolder = readdir(folder);
-					}
-				}
-				this->_path = "/autoindexon.html";
-				this->_completPath = server.root + "/autoindexon.html";
-			}
-			else
-			{
-				this->_path = "/servelocation.html";
-				this->_completPath = server.root + "/servelocation.html";
-			}
+			/*case auto index a gerer, generation d'une page auto*/
+
+			this->_path = it->path;
 		}
 	}
 }
@@ -265,10 +244,12 @@ void Request::setAndCheckPath(ServerConfig server, std::string path)
 		break;
 	case SERVER_LOCATION_NO_SLASH:
 		getServerLocationPath(server);
+		_isLocation = true;
 		// this->_code = 301;
 		break;
 	case SERVER_LOCATION_WI_SLASH:
 		getServerLocationPath(server);
+		_isLocation = true;
 		// this->_code = 301;
 	}
 }
@@ -311,6 +292,11 @@ std::string Request::getHeader() const
 std::string Request::getHost() const
 {
 	return (this->_host);
+}
+
+bool Request::getIsLocation() const
+{
+	return (this->_isLocation);
 }
 
 bool Request::getIsComplete(void) const

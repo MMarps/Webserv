@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/27 18:30:10 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:45:06 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ private:
 	std::string _header;
 	std::string _host;
 	std::map<std::string, std::string> _varLst;
-	bool _autoindex;
+	bool _isLocation;
 	bool _isComplete;
 	int _code;
 
@@ -47,7 +47,6 @@ public:
 	~Request();
 
 	// refactor
-
 	/* parsing request*/
 	void parse(ServerConfig server, std::string buffer, int code);
 	void makeRequest(ServerConfig server, std::string buffer);
@@ -64,6 +63,7 @@ public:
 	std::string getVersion() const;
 	std::string getHeader() const;
 	std::string getHost() const;
+	bool getIsLocation() const;
 	bool getIsComplete() const;
 	int getCode() const;
 
