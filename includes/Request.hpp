@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 16:29:25 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:51:13 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class Request
 	std::string _header;
 	std::string _host;
 	std::map<std::string, std::string> _varLst;
-	bool _autoindex;
+	// bool _autoindex;
 	bool _isComplete;
 	int _code;
 

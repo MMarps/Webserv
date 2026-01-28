@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/27 17:21:05 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:50:27 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,6 @@ private:
 	void 			parseReturn(LocationConfig& loc, const std::vector<std::string>& args);
 
 	void			putDefaultValues(Config &cfg);
-	void			addAllCgi(Config &cfg);
 	void			checkCgi(Config &cfg);
 };
 
