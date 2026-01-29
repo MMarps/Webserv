@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/28 18:11:33 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/29 16:57:07 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,12 @@ Response::Response(Request &req) : _req(req)
 	_contentType.insert(std::make_pair(".ico", "image/x-icon"));
 	_contentType.insert(std::make_pair(".mp4", "video/mp4"));
 	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
-}
+	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
+	_contentType.insert(std::make_pair("nodotdetected", "text/plain"));
 
+	/*telecharge automatiquement la ressource !!!*/
+	// _contentType.insert(std::make_pair("...", "application/octet-stream"));
+}
 Response::~Response()
 {
 }
@@ -93,78 +97,73 @@ void Response::makeRedirect()
 	this->_response += "\n\n";
 }
 
-void Response::generateAutoindex()
+std::vector<std::string> Response::getLstDir()
 {
 	DIR *folder;
 	struct dirent *readFolder;
+	std::vector<std::string> lstFiles;
+
 	folder = opendir(this->_req.getCompletPath().c_str());
 	if (!folder)
 	{
-		std::cout << BRED << "NOP" << NC << std::endl;
 		this->_req.setErrorCode(404);
+		return (lstFiles);
+	}
+	readFolder = readdir(folder);
+	while (readFolder)
+	{
+		if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
+			lstFiles.push_back(readFolder->d_name);
+		readFolder = readdir(folder);
+	}
+	std::sort(lstFiles.begin(), lstFiles.end());
+	return (lstFiles);
+}
+
+void Response::generateAutoindex()
+{
+	std::string htmlpage;
+	std::vector<std::string> lstFiles;
+
+	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
+	lstFiles = getLstDir();
+	for (long unsigned int i = 0; i < lstFiles.size(); i++)
+	{
+		htmlpage += "<a href=\"" + this->_req.getPath() + "/" + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
+	}
+	htmlpage += "</body></html>";
+	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
+	this->_content.swap(tmp);
+	std::stringstream ss;
+	ss << htmlpage.size();
+	this->_contentLength = ss.str();
+	std::cout << BBLUE << this->_contentLength << NC << std::endl;
+}
+
+void Response::getErrorPage(ServerConfig server)
+{
+	if (!server.error_pages[this->_req.getCode()].empty())
+	{
+		this->_req.setPath(server.error_pages[this->_req.getCode()]);
+		this->_req.setCompletPath(this->_req.getPath());
+		getContentExtention();
+		getFullResponse();
 	}
 	else
 	{
-		std::string htmlpage;
-		std::vector<std::string> lstFiles;
-		htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
-
-		readFolder = readdir(folder);
-		while (readFolder)
-		{
-			if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
-				lstFiles.push_back(readFolder->d_name);
-			readFolder = readdir(folder);
-		}
-		std::sort(lstFiles.begin(), lstFiles.end());
-
-		for (long unsigned int i = 0; i < lstFiles.size(); i++)
-		{
-			htmlpage += "<a href=\"" + this->_req.getPath()+ "/" + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
-		}
-		htmlpage += "</body></html>";
-		std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
-		this->_content.swap(tmp);
-		std::stringstream ss;
-
-		ss << htmlpage.size();
-		this->_contentLength = ss.str();
-		std::cout << BBLUE << this->_contentLength << NC << std::endl;
+		this->_response += "\nContent-Length: 0";
+		this->_response += "\n\n";
 	}
 }
 
 void Response::makeRep(ServerConfig server)
 {
+	std::cout << "debut parsing response" << std::endl;
 	getDefaultResponse();
 	if (this->_req.getCode() == 200)
 	{
-		if (this->_req.getIsLocation())
+		if (this->_req.getIsLocation() && this->_req.getLocation().autoindex)
 		{
-			std::cout << "ca passe" << std::endl;
-			std::vector<LocationConfig>::iterator location = server.locations.begin();
-			std::cout << location->path << " " << this->_req.getPath() << std::endl;
-			for (; location < server.locations.end(); location++)
-				if (location->path == this->_req.getPath())
-					break;
-			if (location == server.locations.end())
-			{
-				std::cout << " ca passe 2" << std::endl;
-				if (!server.error_pages[this->_req.getCode()].empty())
-				{
-
-					this->_req.setPath(server.error_pages[this->_req.getCode()]);
-					this->_req.setCompletPath(this->_req.getPath());
-					getContentExtention();
-					getFullResponse();
-				}
-				else
-				{
-					this->_response += "\nContent-Length: 0";
-					this->_response += "\n\n";
-				}
-				return;
-			}
-
 			generateAutoindex();
 			this->_response += "\nContent-Type: " + this->_contentType[".html"];
 			this->_response += "\nContent-Length: " + this->_contentLength;
@@ -177,33 +176,23 @@ void Response::makeRep(ServerConfig server)
 		}
 	}
 	else if (this->_req.getCode() == 301)
-	{
 		makeRedirect();
-	}
 	else
-	{
-
-		if (!server.error_pages[this->_req.getCode()].empty())
-		{
-
-			this->_req.setPath(server.error_pages[this->_req.getCode()]);
-			this->_req.setCompletPath(this->_req.getPath());
-			getContentExtention();
-			getFullResponse();
-		}
-		else
-		{
-			this->_response += "\nContent-Length: 0";
-			this->_response += "\n\n";
-		}
-	}
+		getErrorPage(server);
+	std::cout << "fin parsing request" << std::endl;
 }
 
 void Response::getContentExtention()
 {
 	std::stringstream path(this->_req.getCompletPath());
-	std::string get;
-	this->_contentExtention = this->_req.getCompletPath().substr(this->_req.getCompletPath().rfind('.'));
+	size_t dotPos = this->_req.getCompletPath().rfind('.');
+	if (dotPos == std::string::npos)
+	{
+
+		this->_contentExtention = "nodotdetected";
+		return;
+	}
+	this->_contentExtention = this->_req.getCompletPath().substr(dotPos);
 }
 
 void Response::getDefaultResponse()

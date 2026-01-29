@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/28 17:45:06 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/29 17:02:33 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include "Webserv.hpp"
 
 struct ServerConfig;
+// struct LocationConfig;
 
 enum PathType
 {
@@ -38,6 +39,7 @@ private:
 	std::string _header;
 	std::string _host;
 	std::map<std::string, std::string> _varLst;
+	LocationConfig  _location;
 	bool _isLocation;
 	bool _isComplete;
 	int _code;
@@ -63,6 +65,7 @@ public:
 	std::string getVersion() const;
 	std::string getHeader() const;
 	std::string getHost() const;
+	struct LocationConfig getLocation();
 	bool getIsLocation() const;
 	bool getIsComplete() const;
 	int getCode() const;

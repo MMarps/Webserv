@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/26 15:22:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/29 16:01:07 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -267,6 +267,7 @@ void Server::_handleClientData(int clientFd)
 	{
 		client->isRequestFinished = true;
 		std::cout << "Request received completely." << std::endl;
+		std::cout << BGREEN << buf << NC << std::endl;
 		_parseResponse(client);
 		_modEpoll(clientFd, EPOLLOUT);
 	}

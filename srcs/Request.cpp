@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/28 17:51:58 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/29 16:40:59 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,14 @@ Request::~Request()
 
 void Request::parse(ServerConfig server, std::string buffer, int code)
 {
+	std::cout << "debut parsing request" << std::endl;
+
 	this->_code = code;
 	if (this->_code != 0)
 		return;
 	makeRequest(server, buffer);
 	checkRequest();
+	std::cout << "fin parsing request" << std::endl;
 }
 
 void Request::makeRequest(ServerConfig server, std::string buffer)
@@ -40,13 +43,9 @@ void Request::makeRequest(ServerConfig server, std::string buffer)
 		std::string res;
 		getline(cut, res, ' ');
 		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
-		{
 			parseMethode(server, line);
-		}
 		else
-		{
 			parseAttribut(line);
-		}
 		if (strcmp(line.c_str(), "\r\n") == 0)
 			break;
 	}
@@ -199,11 +198,7 @@ void Request::getfilePath(ServerConfig server, int searchIndex)
 
 void Request::getServerLocationPath(ServerConfig server)
 {
-	DIR *folder;
-	struct dirent *readFolder;
 
-	(void)folder;
-	(void)readFolder;
 	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++)
 	{
 		if (it->path == this->_path)
@@ -212,10 +207,10 @@ void Request::getServerLocationPath(ServerConfig server)
 				this->_path[this->_path.size() - 1] = '\0';
 
 			this->_completPath = server.root + it->path;
-			verifFile();
-			/*case auto index a gerer, generation d'une page auto*/
-
 			this->_path = it->path;
+			verifFile();
+			this->_isLocation = true;
+			this->_location = *it;
 		}
 	}
 }
@@ -233,21 +228,28 @@ void Request::setAndCheckPath(ServerConfig server, std::string path)
 	case -1:
 		break;
 	case FILE_PATH:
+		std::cout << "cest un file" << std::endl;
 		getfilePath(server, 0);
 		break;
 	case DIR_WITH_SLASH:
+		std::cout << "cest un dir /" << std::endl;
+
 		getfilePath(server, 1);
 		break;
 	case DIR_NO_SLASH:
+		std::cout << "cest un dir" << std::endl;
+
 		this->_path = path + "/";
 		this->_code = 301;
 		break;
 	case SERVER_LOCATION_NO_SLASH:
+		std::cout << "cest une location" << std::endl;
 		getServerLocationPath(server);
 		_isLocation = true;
 		// this->_code = 301;
 		break;
 	case SERVER_LOCATION_WI_SLASH:
+		std::cout << "cest une location" << std::endl;
 		getServerLocationPath(server);
 		_isLocation = true;
 		// this->_code = 301;
@@ -292,6 +294,11 @@ std::string Request::getHeader() const
 std::string Request::getHost() const
 {
 	return (this->_host);
+}
+
+LocationConfig Request::getLocation()
+{
+	return (this->_location);
 }
 
 bool Request::getIsLocation() const
