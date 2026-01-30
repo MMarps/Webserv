@@ -1,0 +1,76 @@
+Config: 4 server(s)
+Server[0]
+  listens: *:8080
+  server_names: example.com
+  root: var/www
+  index: index.html
+  error_pages: 404->./var/errors/404.html, 500->./var/errors/500.html
+  cgi: (none)
+  client_max_body_size: (unset)
+  locations: 0
+
+Server[1]
+  listens: *:8080
+  server_names: (none)
+  root: var/www
+  index: index.html
+  error_pages: (none)
+  cgi: (none)
+  client_max_body_size: (unset)
+  locations: 0
+
+Server[2]
+  listens: *:8081
+  server_names: (none)
+  root: var/www
+  index: photo.html
+  error_pages: (none)
+  cgi: (none)
+  client_max_body_size: (unset)
+  locations: 0
+
+Server[3]
+  listens: 127.0.0.1:8081
+  server_names: (none)
+  root: var/www
+  index: photo.html
+  error_pages: (none)
+  cgi: (none)
+  client_max_body_size: (unset)
+  locations: 0
+
+Server [0] listening on port 8080 (fd=4)
+Server [1] listening on port 8080 (fd=4)
+Server [2] listening on port 8081 (fd=5)
+Server [3] listening on port 8081 (fd=6)
+
+Server Ready
+
+New connection: 6
+Request received completely.
+.html
+mode : GET
+path : var/www/index.html
+version : HTTP/1.1
+host : localhost:8080
+
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 443
+
+
+Response sent fully.
+Request received completely.
+mode : GET
+path : var/www/style.css
+version : HTTP/1.1
+host : localhost:8080
+HTTP/1.1 200 OK
+Content-Type: text/css
+Content-Length: 750
+
+Response sent fully.
+Signal received, shutdown asked
+All clients disconnected
+All sockets closed
+Shutdown complete
