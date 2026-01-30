@@ -1,3 +1,0 @@
-HTTP/1.0 200 OK\n
-Content-Type: text/html\n
-Content-Length: 166\n

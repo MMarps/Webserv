@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/23 14:25:07 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/28 17:50:26 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,8 @@ void	Parser::parseDirective(ServerConfig& srv) {
 			srv.index.push_back(args[i]);
 	else if (name == "error_page")
 		parseErrorPage(srv, args);
+	else if (name == "cgi")
+		parseCgi(srv, args);
 	else if (name == "cgi")
 		parseCgi(srv, args);
 	else if (name == "client_max_body_size") {
@@ -284,7 +286,6 @@ void	Parser::putDefaultValues(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
 		ServerConfig &srv = cfg.servers[si];
 		if (srv.listens.empty()) {
-			std::cout << BRED << "TEST" << NC << std::endl;
 			Listen l;
 			l.host = "0.0.0.0";
 			l.port = 8080;
@@ -294,22 +295,6 @@ void	Parser::putDefaultValues(Config &cfg) {
 			srv.root = "var/www";
 		if (srv.index.empty())
 			srv.index.push_back("index.html");
-		addAllCgi(cfg);
-	}
-}
-
-void	Parser::addAllCgi(Config &cfg) {
-	for (size_t si = 0; si < cfg.servers.size(); si++) {
-		ServerConfig& srv = cfg.servers[si];
-		for (size_t li = 0; li < srv.locations.size(); li++) {
-			LocationConfig&	loc = srv.locations[li];
-			std::map<std::string, std::string>::const_iterator	it;
-			for (it = loc.cgi.begin(); it != loc.cgi.end(); it++) {
-				if (!srv.cgi.count(it->first) && !srv.cgi.count(it->second)) {
-					srv.cgi.insert(*it);
-				}
-			}
-		}
 	}
 }
 

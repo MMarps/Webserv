@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/16 18:05:58 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/01/21 17:34:50 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,18 +20,24 @@ public:
 	Client(int clientFd, int serverIdx);
 	~Client();
 
-	int				getFd() const;
-	int				getServerIdx() const;
-	std::string&	getBuffer();
-	std::string&	getResponse();
+	int					getFd() const;
+	int					getServerIdx() const;
+	std::string&		getBuffer();
+	std::string&		getResponse();
+	bool				isRequestFinished;
 
-	bool			isRequestFinished;
+	std::vector<char> 	getBody();
+	void				setBody(std::vector<char> body);
+
 
 private:
 	int			_fd;
 	int			_serverIdx;
 	std::string	_buffer;
 	std::string	_response;
+	
+	//add
+	std::vector<char> _body;
 };
 
 #endif

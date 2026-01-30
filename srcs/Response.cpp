@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/20 18:13:36 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/01/27 17:53:53 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,12 +15,14 @@
 Response::Response(Request &req) : _req(req)
 {
 	_statutMessage.insert(std::make_pair(200, "OK"));
+	_statutMessage.insert(std::make_pair(201, "Created"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
 	_statutMessage.insert(std::make_pair(302, "Found"));
 	_statutMessage.insert(std::make_pair(400, "Bad Request"));
 	_statutMessage.insert(std::make_pair(403, "Forbidden"));
 	_statutMessage.insert(std::make_pair(404, "Not Found"));
 	_statutMessage.insert(std::make_pair(405, "Method Not Allowed"));
+	_statutMessage.insert(std::make_pair(409, "Conflict"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));
@@ -45,10 +47,9 @@ std::string Response::getRep() const
 
 void Response::getDoc()
 {
-	std::ifstream file(this->_req.getPath().c_str(), std::ios::binary);
+	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
 	if (!file.is_open())
 	{
-		std::cout << "fait chiez ca passe : " << this->_req.getPath() << std::endl;
 		this->_req.setErrorCode(404);
 		return ;
 	}
@@ -57,9 +58,24 @@ void Response::getDoc()
 	std::vector<char> buffer(it, end);
 	std::stringstream ss;
 	ss << buffer.size();
-	
 	this->_contentLength = ss.str();
 	this->_content.swap(buffer);
+}
+
+void Response::checkDoc()
+{
+	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
+	if (!file.is_open())
+	{
+		this->_req.setErrorCode(404);
+		return ;
+	}
+	std::istreambuf_iterator<char> it(file);
+	std::istreambuf_iterator<char> end;
+	std::vector<char> buffer(it, end);
+	std::stringstream ss;
+	ss << buffer.size();
+	this->_contentLength = ss.str();
 }
 
 std::vector<char> Response::getContent()
@@ -67,21 +83,34 @@ std::vector<char> Response::getContent()
 	return (this->_content);
 }
 
+void Response::makeRedirect()
+{
+	this->_response += "\nLocation: " + this->_req.getPath();
+	this->_response += "\nConnection: close";
+	this->_response += "\nContent-Length: 0";
+	this->_response += "\n\n";
+
+}
+
 void Response::makeRep(ServerConfig server)
 {
 	getDefaultResponse();
-	if (this->_req.getErrorCode() == 200)
+	if (this->_req.getCode() == 200)
 	{
 		getContentExtention();
 		getFullResponse();
 	}
+	else if(this->_req.getCode() == 301)
+	{
+		makeRedirect();
+	}
 	else
 	{
-		if (!server.error_pages[this->_req.getErrorCode()].empty()
-			&& access(server.error_pages[this->_req.getErrorCode()].c_str(),
+		if (!server.error_pages[this->_req.getCode()].empty()
+			&& access(server.error_pages[this->_req.getCode()].c_str(),
 				F_OK) != -1)
 		{
-			this->_req.setPath(server.error_pages[this->_req.getErrorCode()]);
+			this->_req.setPath(server.error_pages[this->_req.getCode()]);
 			getContentExtention();
 			getFullResponse();
 		}
@@ -95,15 +124,9 @@ void Response::makeRep(ServerConfig server)
 
 void Response::getContentExtention()
 {
-	std::stringstream path(this->_req.getPath());
+	std::stringstream path(this->_req.getCompletPath());
 	std::string get;
-	// std::substr
-	// getline(path, get, '.');
-	// getline(path, get);
-	std::cout << BYELLOW <<  this->_req.getPath().substr(this->_req.getPath().rfind('.')) << NC << std::endl;
-
-	this->_contentExtention = this->_req.getPath().substr(this->_req.getPath().rfind('.'));
-
+	this->_contentExtention = this->_req.getCompletPath().substr(this->_req.getCompletPath().rfind('.'));
 }
 
 void Response::getDefaultResponse()
@@ -114,7 +137,10 @@ void Response::getDefaultResponse()
 
 void Response::getFullResponse()
 {
-	getDoc();
+	if (this->_req.getMethode() == "HEAD")
+		checkDoc();
+	else
+		getDoc();
 	this->_response += "\nContent-Type: "
 		+ this->_contentType[this->_contentExtention];
 	this->_response += "\nContent-Length: " + this->_contentLength;
@@ -124,9 +150,9 @@ void Response::getFullResponse()
 void Response::getResponseCode()
 {
 	std::stringstream errorCode;
-	errorCode << this->_req.getErrorCode();
+	errorCode << this->_req.getCode();
 	this->_response += errorCode.str() + " "
-		+ this->_statutMessage[this->_req.getErrorCode()];
+		+ this->_statutMessage[this->_req.getCode()];
 }
 
 std::ostream &operator<<(std::ostream &o, Response const &response)
