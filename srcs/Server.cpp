@@ -3,17 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 16:48:27 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 18:49:30 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(const std::string &confFileName)
-{
+Server::Server(const std::string &confFileName) {
 	Lexer ts(confFileName);
 	Parser p(ts);
 	// ts.printTokens();
@@ -26,8 +25,7 @@ Server::Server(const std::string &confFileName)
 	signal(SIGTERM, signal_handler);
 }
 
-Server::~Server()
-{
+Server::~Server() {
 	if (_epollFd != -1)
 		close(_epollFd);
 }
@@ -41,8 +39,7 @@ void	signal_handler(int sig) {
 
 /////////////////////////////////////
 
-void Server::_setupServerSockets()
-{
+void Server::_setupServerSockets() {
 	struct addrinfo								hints;
 	struct addrinfo								*res;
 	int											status;
@@ -50,11 +47,9 @@ void Server::_setupServerSockets()
 	int											opt;
 	std::map<std::pair<std::string, int>, int>	bound;
 
-	for (size_t si = 0; si < _conf.servers.size(); si++)
-	{
+	for (size_t si = 0; si < _conf.servers.size(); si++) {
 		std::vector<Listen>::iterator it;
-		for (it = _conf.servers[si].listens.begin(); it != _conf.servers[si].listens.end(); it++)
-		{
+		for (it = _conf.servers[si].listens.begin(); it != _conf.servers[si].listens.end(); it++) {
 			std::pair<std::string, int>	key(it->host, it->port);
 			if (bound.count(key)) {
 				_serveurSockets[bound[key]].push_back(si);
@@ -125,8 +120,7 @@ void Server::_setupServerSockets()
 	}
 }
 
-int Server::_setNonBlocking(int fd)
-{
+int Server::_setNonBlocking(int fd) {
 	int	flags;
 
 	flags = fcntl(fd, F_GETFL);
@@ -141,8 +135,7 @@ int Server::_setNonBlocking(int fd)
 	return (0);
 }
 
-int Server::_addToEpoll(int fd, uint32_t events)
-{
+int Server::_addToEpoll(int fd, uint32_t events) {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
@@ -155,8 +148,7 @@ int Server::_addToEpoll(int fd, uint32_t events)
 	return (0);
 }
 
-int Server::_modEpoll(int fd, uint32_t newEvents)
-{
+int Server::_modEpoll(int fd, uint32_t newEvents) {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
@@ -171,16 +163,14 @@ int Server::_modEpoll(int fd, uint32_t newEvents)
 
 /////////////////////////////////////
 
-void Server::run()
-{
+void Server::run() {
 	int			nfds;
 	int			currentFd;
 	uint32_t	currentEvent;
 
 	_setupServerSockets();
 	std::cout << BGREEN << "\nServer Ready\n" << NC << std::endl; 
-	while (true)
-	{
+	while (true) {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
 		if (nfds < 0) {
 			if (errno == EINTR && g_terminate) {
@@ -198,8 +188,7 @@ void Server::run()
 		{
 			currentFd = _events[i].data.fd;
 			currentEvent = _events[i].events;
-			if (currentEvent & (EPOLLHUP | EPOLLERR))
-			{
+			if (currentEvent & (EPOLLHUP | EPOLLERR)) {
 				_closeConnection(currentFd);
 				continue ;
 			}
@@ -215,8 +204,7 @@ void Server::run()
 		std::cout << BGREEN << "Shutdown complete" << NC << std::endl;
 }
 
-void Server::_closeConnection(int fd)
-{
+void Server::_closeConnection(int fd) {
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
 
@@ -229,16 +217,14 @@ void Server::_closeConnection(int fd)
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
-void Server::_addNewClient(int serverFd)
-{
+void Server::_addNewClient(int serverFd) {
 	struct sockaddr_in	clientAddr;
 	socklen_t			addrLen;
 	int					clientFd;
 
 	addrLen = sizeof(clientAddr);
 	clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
-	if (clientFd < 0)
-	{
+	if (clientFd < 0) {
 		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
 		return ;
 	}
@@ -248,33 +234,39 @@ void Server::_addNewClient(int serverFd)
 	std::cout << "New connection: " << clientFd << std::endl;
 }
 
-void Server::_handleClientData(int clientFd)
-{
+void Server::_handleClientData(int clientFd) {
 	char	buf[BUFFER_SIZE];
 	Client	*client;
 	ssize_t	nbytes;
 
 	client = _clients[clientFd];
 	nbytes = recv(clientFd, buf, BUFFER_SIZE - 1, 0);
-	if (nbytes <= 0)
-	{
+	if (nbytes <= 0) {
 		_closeConnection(clientFd);
 		return ;
 	}
 	buf[nbytes] = '\0';
 	client->getBuffer().append(buf, nbytes);
-	if (client->getBuffer().find("\r\n\r\n") != std::string::npos)
-	{
-		client->isRequestFinished = true;
-		std::cout << "Request received completely." << std::endl;
-		std::cout << BGREEN << buf << NC << std::endl;
-		_parseResponse(client);
-		_modEpoll(clientFd, EPOLLOUT);
+	if (!client->isHeaderFinished) {
+		if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
+			client->isHeaderFinished = true;
+
+			long contentLen = _extractContentLen(client->getBuffer());
+			long maxSize = _getLocationMaxBodySize()
+
+			// std::cout << "Request received completely." << std::endl;
+			// std::cout << BGREEN << buf << NC << std::endl;
+			// _parseResponse(client);
+			// _modEpoll(clientFd, EPOLLOUT);
+		}
+
+	}
+	if (client->isHeaderFinished) {
+
 	}
 }
 
-void Server::_parseResponse(Client *c)
-{
+void Server::_parseResponse(Client *c) {
 	Request	req;
 
 	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer(), 0);
@@ -286,39 +278,59 @@ void Server::_parseResponse(Client *c)
 	std::cout  << BBLUE << response << NC << std::endl;
 
 	const std::vector<char> &content = response.getContent();
-	if (!content.empty())
-	{
+	if (!content.empty()) {
 		c->getResponse().append(content.data(), content.size());
 	}
 }
 
-void Server::_sendResponse(int clientFd)
-{
+void Server::_sendResponse(int clientFd) {
 	Client	*client;
 	ssize_t	sent;
 
 	client = _clients[clientFd];
 	std::string &resp = client->getResponse();
 	sent = send(client->getFd(), resp.c_str(), resp.size(), 0);
-	if (sent == -1)
-	{
+	if (sent == -1) {
 		perror("send");
 		_closeConnection(clientFd);
 		return ;
 	}
-	if (static_cast<size_t>(sent) >= resp.size())
-	{
+	if (static_cast<size_t>(sent) >= resp.size()) {
 		std::cout << "Response sent fully." << std::endl;
 		client->getBuffer().clear();
 		client->getResponse().clear();
 		client->isRequestFinished = false;
 		_modEpoll(clientFd, EPOLLIN);
 	}
-	else
-	{
+	else {
 		resp = resp.substr(sent);
 	}
 }
+
+/////////////////////////////////////
+
+long	Server::_extractContentLen(const std::string& header) {
+	std::string search = "Content-Length: ";
+	size_t pos = header.find(search);
+
+	if (pos == header.npos)
+		return (0);
+
+	size_t start = pos + search.length();
+	size_t end = header.find("\r\n", start);
+
+	if (end == header.npos)
+		return (0);
+	
+	std::string val = header.substr(start, end - start);
+
+	return (std::atol(val.c_str()));
+}
+
+long	Server::_getLocationMaxBodySize() {
+
+}
+
 
 /////////////////////////////////////
 
@@ -327,8 +339,7 @@ void	Server::_closeSocketFds() {
 
 	if (_serveurSockets.empty())
 		return ;
-	for (it = _serveurSockets.begin(); it != _serveurSockets.end(); ++it)
-	{
+	for (it = _serveurSockets.begin(); it != _serveurSockets.end(); ++it) {
 		int fd = it->first;
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 		close(fd);
@@ -354,7 +365,6 @@ void	Server::_closeAllClients() {
 
 /////////////////////////////////////
 
-const Config &Server::getConfig() const
-{
+const Config &Server::getConfig() const {
 	return (_conf);
 }

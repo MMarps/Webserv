@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/21 17:34:50 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 18:10:33 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,11 @@ public:
 	int					getServerIdx() const;
 	std::string&		getBuffer();
 	std::string&		getResponse();
+
+	bool				isHeaderFinished;
 	bool				isRequestFinished;
+
+	size_t				expectedBodySize;
 
 	std::vector<char> 	getBody();
 	void				setBody(std::vector<char> body);

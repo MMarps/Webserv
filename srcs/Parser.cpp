@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 16:47:13 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 18:10:24 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,7 +283,7 @@ void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &ar
 
 void	Parser::putDefaultValues(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
-		ServerConfig &srv = cfg.servers[si];
+		ServerConfig& srv = cfg.servers[si];
 		if (srv.listens.empty()) {
 			Listen l;
 			l.host = "0.0.0.0";
@@ -294,6 +294,17 @@ void	Parser::putDefaultValues(Config &cfg) {
 			srv.root = "var/www";
 		if (srv.index.empty())
 			srv.index.push_back("index.html");
+		if (srv.has_client_max_body_size == false) {
+			srv.client_max_body_size = 1024 * 1024;
+			srv.has_client_max_body_size = true;
+		}
+		for (size_t li = 0; li < srv.locations.size(); li++) {
+			LocationConfig& loc = srv.locations[li];
+			if (loc.has_client_max_body_size == false) {
+				loc.client_max_body_size = 1024 * 1024;
+				loc.has_client_max_body_size = true;
+			}
+		}
 	}
 }
 

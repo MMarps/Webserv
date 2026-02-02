@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/26 15:18:54 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 18:49:32 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,9 @@ private:
 
 	void				_closeSocketFds();
 	void				_closeAllClients();
+
+	long				_extractContentLen(const std::string& header);
+	long				_getLocationMaxBodySize();
 };
 
 #endif
