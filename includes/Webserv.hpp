@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/28 16:49:06 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 11:29:53 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,6 @@
 # include <stdexcept>
 
 # include <algorithm>
-
-# include "Request.hpp"
-# include "Response.hpp"
 # include "color.h"
 
 

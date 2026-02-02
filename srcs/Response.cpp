@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/29 16:57:07 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 16:29:50 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Response::Response(Request &req) : _req(req)
 	_statutMessage.insert(std::make_pair(405, "Method Not Allowed"));
 	_statutMessage.insert(std::make_pair(409, "Conflict"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
+	_statutMessage.insert(std::make_pair(413, "Payload Too Large"));
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));
 	_contentType.insert(std::make_pair(".js", "text/javascript"));
@@ -42,6 +43,56 @@ Response::Response(Request &req) : _req(req)
 }
 Response::~Response()
 {
+}
+
+void Response::makeRep(ServerConfig server)
+{
+	std::cout << "debut parsing response" << std::endl;
+	getDefaultResponse();
+	if (this->_req.getCode() == 200)
+	{
+		if (this->_req.getIsLocation())
+			makeLocation(server);
+		else
+		{
+			getContentExtention();
+			getFullResponse();
+		}
+	}
+	else if (this->_req.getCode() == 301)
+		makeRedirect();
+	else
+		getCodePage(server);
+	std::cout << "fin parsing request" << std::endl;
+}
+
+void Response::makeLocation(const ServerConfig &server)
+{
+	(void) server;
+	
+	if (this->_req.getLocation()->autoindex)
+	{
+		generateAutoindex();
+		this->_response += "\nContent-Type: " + this->_contentType[".html"];
+		this->_response += "\nContent-Length: " + this->_contentLength;
+		this->_response += "\n\n";
+	}
+}
+
+void Response::getCodePage(ServerConfig server)
+{
+	if (!server.error_pages[this->_req.getCode()].empty())
+	{
+		this->_req.setPath(server.error_pages[this->_req.getCode()]);
+		this->_req.setCompletPath(this->_req.getPath());
+		getContentExtention();
+		getFullResponse();
+	}
+	else
+	{
+		this->_response += "\nContent-Length: 0";
+		this->_response += "\n\n";
+	}
 }
 
 std::string Response::getRep() const
@@ -140,48 +191,6 @@ void Response::generateAutoindex()
 	std::cout << BBLUE << this->_contentLength << NC << std::endl;
 }
 
-void Response::getErrorPage(ServerConfig server)
-{
-	if (!server.error_pages[this->_req.getCode()].empty())
-	{
-		this->_req.setPath(server.error_pages[this->_req.getCode()]);
-		this->_req.setCompletPath(this->_req.getPath());
-		getContentExtention();
-		getFullResponse();
-	}
-	else
-	{
-		this->_response += "\nContent-Length: 0";
-		this->_response += "\n\n";
-	}
-}
-
-void Response::makeRep(ServerConfig server)
-{
-	std::cout << "debut parsing response" << std::endl;
-	getDefaultResponse();
-	if (this->_req.getCode() == 200)
-	{
-		if (this->_req.getIsLocation() && this->_req.getLocation().autoindex)
-		{
-			generateAutoindex();
-			this->_response += "\nContent-Type: " + this->_contentType[".html"];
-			this->_response += "\nContent-Length: " + this->_contentLength;
-			this->_response += "\n\n";
-		}
-		else
-		{
-			getContentExtention();
-			getFullResponse();
-		}
-	}
-	else if (this->_req.getCode() == 301)
-		makeRedirect();
-	else
-		getErrorPage(server);
-	std::cout << "fin parsing request" << std::endl;
-}
-
 void Response::getContentExtention()
 {
 	std::stringstream path(this->_req.getCompletPath());
@@ -208,7 +217,6 @@ void Response::getFullResponse()
 	else
 		getDoc();
 	this->_response += "\nContent-Type: " + this->_contentType[this->_contentExtention];
-
 	this->_response += "\nContent-Length: " + this->_contentLength;
 	this->_response += "\n\n";
 }
@@ -223,5 +231,6 @@ void Response::getResponseCode()
 std::ostream &operator<<(std::ostream &o, Response const &response)
 {
 	o << BYELLOW << response.getRep() << NC << std::endl;
+
 	return (o);
 }

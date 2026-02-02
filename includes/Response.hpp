@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/29 16:54:30 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/02 13:53:55 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #define RESPONSE_HPP
 
 #include "Config.hpp"
+#include "Request.hpp"
 #include "Webserv.hpp"
 
 struct ServerConfig;
@@ -35,13 +36,20 @@ public:
 	Response(Request &req);
 	~Response();
 
-	std::string getRep() const;
+	//refacor
+	void makeRep(ServerConfig server);
+	void getCodePage(ServerConfig server);
 
+	//generate response
+	void makeLocation(const ServerConfig &server);
+
+
+
+	//old
+	std::string getRep() const;
 	void getText();
 	void getDoc();
 	void checkDoc();
-	void getErrorPage(ServerConfig server);
-	void makeRep(ServerConfig server);
 	void getContentExtention();
 	void getDefaultResponse();
 	void getFullResponse();
