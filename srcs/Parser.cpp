@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/28 17:50:26 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/02 16:47:13 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "Parser.hpp"
 
@@ -105,8 +106,6 @@ void	Parser::parseDirective(ServerConfig& srv) {
 			srv.index.push_back(args[i]);
 	else if (name == "error_page")
 		parseErrorPage(srv, args);
-	else if (name == "cgi")
-		parseCgi(srv, args);
 	else if (name == "cgi")
 		parseCgi(srv, args);
 	else if (name == "client_max_body_size") {
