@@ -36,9 +36,7 @@ Response::Response(Request &req) : _req(req)
 	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
 }
 
-Response::~Response()
-{
-}
+Response::~Response() {}
 
 std::string Response::getRep() const
 {
@@ -78,8 +76,7 @@ void Response::checkDoc()
 	this->_contentLength = ss.str();
 }
 
-std::vector<char> Response::getContent()
-{
+std::vector<char> Response::getContent() {
 	return (this->_content);
 }
 
@@ -95,27 +92,22 @@ void Response::makeRedirect()
 void Response::makeRep(ServerConfig server)
 {
 	getDefaultResponse();
-	if (this->_req.getCode() == 200)
-	{
+	if (this->_req.getCode() == 200) {
 		getContentExtention();
 		getFullResponse();
 	}
-	else if(this->_req.getCode() == 301)
-	{
+	else if(this->_req.getCode() == 301) {
 		makeRedirect();
 	}
-	else
-	{
+	else {
 		if (!server.error_pages[this->_req.getCode()].empty()
 			&& access(server.error_pages[this->_req.getCode()].c_str(),
-				F_OK) != -1)
-		{
+				F_OK) != -1) {
 			this->_req.setPath(server.error_pages[this->_req.getCode()]);
 			getContentExtention();
 			getFullResponse();
 		}
-		else
-		{
+		else {
 			this->_response += "\nContent-Length: 0";
 			this->_response += "\n\n";
 		}
@@ -129,8 +121,7 @@ void Response::getContentExtention()
 	this->_contentExtention = this->_req.getCompletPath().substr(this->_req.getCompletPath().rfind('.'));
 }
 
-void Response::getDefaultResponse()
-{
+void Response::getDefaultResponse() {
 	this->_response = "HTTP/1.1 ";
 	getResponseCode();
 }
@@ -155,8 +146,7 @@ void Response::getResponseCode()
 		+ this->_statutMessage[this->_req.getCode()];
 }
 
-std::ostream &operator<<(std::ostream &o, Response const &response)
-{
+std::ostream &operator<<(std::ostream &o, Response const &response) {
 	o << BYELLOW << response.getRep() << NC << std::endl;
 	return (o);
 }

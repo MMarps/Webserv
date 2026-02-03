@@ -13,15 +13,11 @@
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _isComplete(false), _code(0)
-{
-}
+Request::Request() : _isComplete(false), _code(0), _bodySize(0) {}
 
-Request::~Request()
-{
-}
+Request::~Request() {}
 
-void Request::parse(ServerConfig server, std::string buffer, int code)
+void	Request::parse(ServerConfig server, std::string buffer, int code)
 {
 	this->_code = code;
 	if (this->_code != 0)
@@ -30,29 +26,34 @@ void Request::parse(ServerConfig server, std::string buffer, int code)
 	checkRequest();
 }
 
-void Request::makeRequest(ServerConfig server, std::string buffer)
+void	Request::makeRequest(ServerConfig server, std::string buffer)
 {
-	std::istringstream request(buffer.c_str());
-	std::string line;
-	while (getline(request, line))
-	{
-		std::istringstream cut(line);
-		std::string res;
-		getline(cut, res, ' ');
-		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
-		{
-			parseMethode(server, line);
+	std::istringstream	request(buffer.c_str());
+	std::string			line;
+	bool				headerFlag = false;
+	
+	while (getline(request, line)) {
+		if (!headerFlag) {
+			std::istringstream	cut(line);
+			std::string			res;
+			getline(cut, res, ' ');
+			if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
+				parseMethode(server, line);
+			else
+				parseAttribut(line);
+			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0)
+				headerFlag = true;
 		}
-		else
-		{
-			parseAttribut(line);
+		else {
+			if (!this->_body.empty())
+				this->_body += "\n";
+			this->_body += line;
 		}
-		if (strcmp(line.c_str(), "\r\n") == 0)
-			break ;
 	}
+	this->_bodySize = this->_body.size();
 }
 
-void Request::checkRequest()
+void	Request::checkRequest()
 {
 	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
 		|| this->_host.empty())
@@ -61,7 +62,7 @@ void Request::checkRequest()
 		this->_code = 200;
 }
 
-void Request::parseMethode(ServerConfig server, std::string line)
+void	Request::parseMethode(ServerConfig server, std::string line)
 {
 	std::istringstream cut(line);
 	std::string res;
@@ -78,20 +79,32 @@ void Request::parseMethode(ServerConfig server, std::string line)
 	this->setVersion(parsedLine[2]);
 }
 
-void Request::parseAttribut(std::string line)
+void	Request::parseAttribut(std::string line)
 {
-	std::istringstream cut(line);
-	std::string res;
+	std::istringstream	cut(line);
+	std::string			res;
+	
 	getline(cut, res, ' ');
-	if (res == "Host:")
-	{
+	if (res == "Host:") {
 		getline(cut, res, ' ');
 		this->_host = res;
 	}
+	else if (res == "Content-Type:") {
+		getline(cut, res);
+		if (!res.empty() && res[0] == ' ')
+			res = res.substr(1);
+		if (!res.empty() && res[res.size() - 1] == '\r')
+			res = res.substr(0, res.size() - 1);
+		this->_contentType = res;
+	}
+	else if (res == "Content-Length:") {
+		getline(cut, res, ' ');
+		std::stringstream ss(res);
+		ss >> this->_bodySize;
+	}
 }
 
-size_t	haveVariable(std::string path)
-{
+size_t	haveVariable(std::string path) {
 	size_t	findVar;
 
 	std::string cutPath;
@@ -99,8 +112,7 @@ size_t	haveVariable(std::string path)
 	return (findVar);
 }
 
-std::string Request::getPathVariable(std::string path)
-{
+std::string	Request::getPathVariable(std::string path) {
 	std::string cutPath;
 	if (haveVariable(path) == std::string::npos)
 		return (path);
@@ -108,8 +120,7 @@ std::string Request::getPathVariable(std::string path)
 	return (cutPath);
 }
 
-void Request::getVariable(std::string path)
-{
+void	Request::getVariable(std::string path) {
 	std::string variableQuery;
 	if (haveVariable(path) == std::string::npos)
 		return ;
@@ -121,8 +132,7 @@ void Request::getVariable(std::string path)
 	// }
 	std::stringstream varLine(variableQuery);
 	std::string buff;
-	while (getline(varLine, buff, '?'))
-	{
+	while (getline(varLine, buff, '?')) {
 		std::stringstream varCut(buff);
 		std::string nameBuff;
 		std::string valueBuff;
@@ -132,7 +142,7 @@ void Request::getVariable(std::string path)
 	}
 }
 
-int Request::getPathType(ServerConfig server)
+int	Request::getPathType(ServerConfig server)
 {
 	struct stat	st;
 
@@ -159,7 +169,7 @@ int Request::getPathType(ServerConfig server)
 	return (0);
 }
 
-void Request::verifFile()
+void	Request::verifFile()
 {
 	struct stat	st;
 
@@ -175,7 +185,7 @@ void Request::verifFile()
 	}
 }
 
-void Request::getIndex(ServerConfig server)
+void	Request::getIndex(ServerConfig server)
 {
 	for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++)
 	{
@@ -186,7 +196,7 @@ void Request::getIndex(ServerConfig server)
 	}
 }
 
-void Request::getfilePath(ServerConfig server, int searchIndex)
+void	Request::getfilePath(ServerConfig server, int searchIndex)
 {
 	if ((this->_completPath == server.root + "/" && server.index.size() > 0)
 		|| searchIndex)
@@ -197,7 +207,7 @@ void Request::getfilePath(ServerConfig server, int searchIndex)
 	verifFile();
 }
 
-void Request::getServerLocationPath(ServerConfig server)
+void	Request::getServerLocationPath(ServerConfig server)
 {
 	DIR				*folder;
 	struct dirent	*readFolder;
@@ -239,7 +249,7 @@ void Request::getServerLocationPath(ServerConfig server)
 	}
 }
 
-void Request::setAndCheckPath(ServerConfig server, std::string path)
+void	Request::setAndCheckPath(ServerConfig server, std::string path)
 {
 	int	fileType;
 
@@ -271,54 +281,45 @@ void Request::setAndCheckPath(ServerConfig server, std::string path)
 	}
 }
 
-std::ostream &operator<<(std::ostream &o, Request const &request)
+std::ostream	&operator<<(std::ostream &o, Request const &request)
 {
 	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC;
 	return (o);
 }
 
-std::string Request::getMethode() const
-{
+std::string	Request::getMethode() const {
 	return (this->_methode);
 }
 
-std::string Request::getPath() const
-{
+std::string	Request::getPath() const {
 	return (this->_path);
 }
 
-std::string Request::getCompletPath() const
-{
+std::string	Request::getCompletPath() const {
 	return (this->_completPath);
 }
 
-std::string Request::getVersion() const
-{
+std::string	Request::getVersion() const {
 	return (this->_version);
 }
 
-std::string Request::getHeader() const
-{
+std::string	Request::getHeader() const {
 	return (this->_header);
 }
 
-std::string Request::getHost() const
-{
+std::string	Request::getHost() const {
 	return (this->_host);
 }
 
-bool Request::getIsComplete(void) const
-{
+bool	Request::getIsComplete(void) const {
 	return (this->_isComplete);
 }
 
-int Request::getCode(void) const
-{
+int	Request::getCode(void) const {
 	return (this->_code);
 }
 
-void Request::setMethode(std::string methode)
-{
+void	Request::setMethode(std::string methode) {
 	if (methode == "GET" || methode == "POST" || methode == "DELETE"
 		|| methode == "HEAD")
 		this->_methode = methode;
@@ -326,20 +327,37 @@ void Request::setMethode(std::string methode)
 		this->_code = 405;
 }
 
-void Request::setPath(std::string path)
-{
+void	Request::setPath(std::string path) {
 	this->_path = path;
 }
 
-void Request::setVersion(std::string version)
-{
+void	Request::setVersion(std::string version) {
 	if (version != "HTTP/1.1\r")
 		this->_code = 400;
 	else
 		this->_version = version;
 }
 
-void Request::setErrorCode(int errorCode)
-{
+void	Request::setErrorCode(int errorCode) {
 	this->_code = errorCode;
+}
+
+std::string	Request::getQueryString() const {
+	return (this->_queryString);
+}
+
+std::string	Request::getBody() const {
+	return (this->_body);
+}
+
+std::string	Request::getContentType() const {
+	return (this->_contentType);
+}
+
+size_t	Request::getBodySize() const {
+	return (this->_bodySize);
+}
+
+const std::map<std::string, std::string>&	Request::getVarLst() const {
+	return (this->_varLst);
 }

@@ -42,6 +42,12 @@ class Request
 	bool _isComplete;
 	int _code;
 
+	// CGI part
+	std::string	_queryString; // partie apres le '?' dans l'URL
+	std::string	_body; // contenu du body pour la requete POST
+	size_t		_bodySize; // taille du body
+	std::string	_contentType; // contentType de la requete
+
   public:
 	Request();
 	~Request();
@@ -85,6 +91,13 @@ class Request
 	void setPath(std::string path);
 	void setVersion(std::string version);
 	void setErrorCode(int errorCode);
+
+	// CGI part
+	std::string	getQueryString() const;
+	std::string	getBody() const;
+	std::string	getContentType() const;
+	size_t		getBodySize() const;
+	const std::map<std::string, std::string> &getVarLst() const;
 
 	// old
 
