@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 18:49:30 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/03 22:06:33 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,30 +246,48 @@ void Server::_handleClientData(int clientFd) {
 		return ;
 	}
 	buf[nbytes] = '\0';
-	client->getBuffer().append(buf, nbytes);
 	if (!client->isHeaderFinished) {
-		if (client->getBuffer().find("\r\n\r\n") != std::string::npos) {
+		client->getHeader().append(buf, nbytes);
+		size_t pos = client->getHeader().find("\r\n\r\n");
+		if (pos != std::string::npos) {
 			client->isHeaderFinished = true;
 
-			long contentLen = _extractContentLen(client->getBuffer());
-			long maxSize = _getLocationMaxBodySize()
+			client->expectedBodySize = _extractContentLen(client->getHeader());
+			long maxSize = _getLocationMaxBodySize(client);
 
-			// std::cout << "Request received completely." << std::endl;
-			// std::cout << BGREEN << buf << NC << std::endl;
-			// _parseResponse(client);
-			// _modEpoll(clientFd, EPOLLOUT);
+			if (client->expectedBodySize > static_cast<size_t>(maxSize)) {
+				_parseResponse(client, 413);
+				_modEpoll(clientFd, EPOLLOUT);
+				return ;
+			}
+
+			size_t headerFullSize = pos + 4;
+			if (client->getHeader().size() > headerFullSize) {
+				size_t extraSize = client->getHeader().size() - headerFullSize;
+				client->appendBody(client->getHeader().data() + headerFullSize, extraSize);
+				client->getHeader().resize(headerFullSize);
+			}
 		}
-
+	}
+	else {
+		client->appendBody(buf, nbytes);
 	}
 	if (client->isHeaderFinished) {
-
+		if (client->getBody().size() >= client->expectedBodySize) {
+			std::cout << "Request received completely." << std::endl;
+			client->isRequestFinished = true;
+            _parseResponse(client, 0);
+            _modEpoll(clientFd, EPOLLOUT);
+		}
 	}
 }
 
-void Server::_parseResponse(Client *c) {
+// std::cout << BGREEN << buf << NC << std::endl;
+
+void Server::_parseResponse(Client *c, int errCode) {
 	Request	req;
 
-	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer(), 0);
+	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 	Response response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getRep());
@@ -297,7 +315,7 @@ void Server::_sendResponse(int clientFd) {
 	}
 	if (static_cast<size_t>(sent) >= resp.size()) {
 		std::cout << "Response sent fully." << std::endl;
-		client->getBuffer().clear();
+		client->getHeader().clear();
 		client->getResponse().clear();
 		client->isRequestFinished = false;
 		_modEpoll(clientFd, EPOLLIN);
@@ -327,10 +345,40 @@ long	Server::_extractContentLen(const std::string& header) {
 	return (std::atol(val.c_str()));
 }
 
-long	Server::_getLocationMaxBodySize() {
+long	Server::_getLocationMaxBodySize(Client* client) {
+	std::string &buf = client->getHeader();
+	size_t firstLineEnd = buf.find("\r\n");
+	if (firstLineEnd == std::string::npos)
+		return (_conf.servers[client->getServerIdx()].client_max_body_size);
 
+	std::string firstLine = buf.substr(0, firstLineEnd);
+	std::stringstream ss(firstLine);
+	std::string method, uri, version;
+	ss >> method >> uri >> version;
+
+	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
+	if (loc)
+		return loc->client_max_body_size;
+	else
+		return (_conf.servers[client->getServerIdx()].client_max_body_size);
+	}
+
+const LocationConfig*	Server::_findBestLocation(const std::string& uri, int serverIdx) {
+	const ServerConfig& conf = _conf.servers[serverIdx];
+	const LocationConfig* bestMatch = NULL;
+	size_t longestMatch = 0;
+
+	for (size_t i = 0; i < conf.locations.size(); ++i) {
+		const std::string& locPath = conf.locations[i].path;
+		if (uri.compare(0, locPath.length(), locPath) == 0) {
+			if (locPath.length() >= longestMatch) {
+				longestMatch = locPath.length();
+				bestMatch = &conf.locations[i];
+			}
+		}
+	}
+	return bestMatch;
 }
-
 
 /////////////////////////////////////
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 18:49:32 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/03 21:53:17 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,22 +61,23 @@ private:
 
 	std::map<int, Client*>				_clients;
 
-	void				_setupServerSockets();
-	int					_setNonBlocking(int fd);
-	int					_addToEpoll(int fd, uint32_t events);
-	int					_modEpoll(int fd, uint32_t newEvents);
+	void						_setupServerSockets();
+	int							_setNonBlocking(int fd);
+	int							_addToEpoll(int fd, uint32_t events);
+	int							_modEpoll(int fd, uint32_t newEvents);
 
-	void				_closeConnection(int fd);
-	void				_addNewClient(int serverFd);
-	void				_handleClientData(int clientFd);
-	void				_parseResponse(Client* c);
-	void				_sendResponse(int clientFd);
+	void						_closeConnection(int fd);
+	void						_addNewClient(int serverFd);
+	void						_handleClientData(int clientFd);
+	void						_parseResponse(Client* c, int errCode);
+	void						_sendResponse(int clientFd);
 
-	void				_closeSocketFds();
-	void				_closeAllClients();
-
-	long				_extractContentLen(const std::string& header);
-	long				_getLocationMaxBodySize();
+	void						_closeSocketFds();
+	void						_closeAllClients();
+ 
+	long						_extractContentLen(const std::string& header);
+	long						_getLocationMaxBodySize(Client* client);
+	const LocationConfig*		_findBestLocation(const std::string& uri, int serverIdx);
 };
 
 #endif
