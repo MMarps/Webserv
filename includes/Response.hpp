@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/02 13:53:55 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/04 16:21:02 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,6 @@ class Response
 {
 private:
 	Request &_req;
-	std::string _contentPath;
-	std::string _contentExtention;
 	std::vector<char> _content;
 	std::string _contentLength;
 	std::string _response;

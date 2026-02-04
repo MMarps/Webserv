@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/02 16:47:43 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/04 16:22:40 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,8 @@ Response::Response(Request &req) : _req(req)
 	_statutMessage.insert(std::make_pair(404, "Not Found"));
 	_statutMessage.insert(std::make_pair(405, "Method Not Allowed"));
 	_statutMessage.insert(std::make_pair(409, "Conflict"));
-	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
 	_statutMessage.insert(std::make_pair(413, "Payload Too Large"));
+	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));
 	_contentType.insert(std::make_pair(".js", "text/javascript"));
@@ -55,7 +55,6 @@ void Response::makeRep(ServerConfig server)
 			makeLocation(server);
 		else
 		{
-			getContentExtention();
 			getFullResponse();
 		}
 	}
@@ -85,7 +84,6 @@ void Response::getCodePage(ServerConfig server)
 	{
 		this->_req.setPath(server.error_pages[this->_req.getCode()]);
 		this->_req.setCompletPath(this->_req.getPath());
-		getContentExtention();
 		getFullResponse();
 	}
 	else
@@ -191,18 +189,7 @@ void Response::generateAutoindex()
 	std::cout << BBLUE << this->_contentLength << NC << std::endl;
 }
 
-void Response::getContentExtention()
-{
-	std::stringstream path(this->_req.getCompletPath());
-	size_t dotPos = this->_req.getCompletPath().rfind('.');
-	if (dotPos == std::string::npos)
-	{
 
-		this->_contentExtention = "nodotdetected";
-		return;
-	}
-	this->_contentExtention = this->_req.getCompletPath().substr(dotPos);
-}
 
 void Response::getDefaultResponse()
 {
@@ -216,7 +203,7 @@ void Response::getFullResponse()
 		checkDoc();
 	else
 		getDoc();
-	this->_response += "\nContent-Type: " + this->_contentType[this->_contentExtention];
+	this->_response += "\nContent-Type: " + this->_contentType[this->_req.getContentExtention()];
 	this->_response += "\nContent-Length: " + this->_contentLength;
 	this->_response += "\n\n";
 }
