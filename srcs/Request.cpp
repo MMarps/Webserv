@@ -130,9 +130,11 @@ void	Request::getVariable(std::string path) {
 	// 	findVar++;
 	// 	variableQuery = path.substr(findVar + 1);
 	// }
+	this->_queryString = variableQuery;
 	std::stringstream varLine(variableQuery);
 	std::string buff;
-	while (getline(varLine, buff, '?')) {
+	// while (getline(varLine, buff, '?')) {
+	while (getline(varLine, buff, '&')) {
 		std::stringstream varCut(buff);
 		std::string nameBuff;
 		std::string valueBuff;
@@ -212,27 +214,21 @@ void	Request::getServerLocationPath(ServerConfig server)
 	DIR				*folder;
 	struct dirent	*readFolder;
 
-	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++)
-	{
-		if (it->path == this->_path)
-		{
+	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++) {
+		if (it->path == this->_path) {
 			if (this->_path[this->_path.size() - 1] == '/')
 				this->_path[this->_path.size() - 1] = '\0';
-			if (it->autoindex)
-			{
+			if (it->autoindex) {
 				/*case auto index a gerer, generation d'une page auto*/
 				std::string dirPath = server.root + it->path;
 				folder = opendir(dirPath.c_str());
-				if (!folder)
-				{
+				if (!folder) {
 					std::cout << BRED << "NOP" << NC << std::endl;
 					this->_code = 404;
 				}
-				else
-				{
+				else {
 					readFolder = readdir(folder);
-					while (readFolder)
-					{
+					while (readFolder) {
 						std::cout << GREEN << readFolder->d_name << NC << std::endl;
 						readFolder = readdir(folder);
 					}
@@ -240,8 +236,7 @@ void	Request::getServerLocationPath(ServerConfig server)
 				this->_path = "/autoindexon.html";
 				this->_completPath = server.root + "/autoindexon.html";
 			}
-			else
-			{
+			else {
 				this->_path = "/servelocation.html";
 				this->_completPath = server.root + "/servelocation.html";
 			}

@@ -31,16 +31,16 @@ enum	PathType
 class Request
 {
   private:
-	std::string _methode;
-	std::string _path;
-	std::string _completPath;
-	std::string _version;
-	std::string _header;
-	std::string _host;
-	std::map<std::string, std::string> _varLst;
+	std::string	_methode;
+	std::string	_path;
+	std::string	_completPath;
+	std::string	_version;
+	std::string	_header;
+	std::string	_host;
+	bool		_isComplete;
+	int			_code;
+	std::map<std::string, std::string>	_varLst;
 	// bool _autoindex;
-	bool _isComplete;
-	int _code;
 
 	// CGI part
 	std::string	_queryString; // partie apres le '?' dans l'URL
@@ -55,55 +55,54 @@ class Request
 	// refactor
 
 	/* parsing request*/
-	void parse(ServerConfig server, std::string buffer, int code);
-	void makeRequest(ServerConfig server, std::string buffer);
-	void parseMethode(ServerConfig server, std::string line);
-	void parseAttribut(std::string line);
+	void		parse(ServerConfig server, std::string buffer, int code);
+	void		makeRequest(ServerConfig server, std::string buffer);
+	void		parseMethode(ServerConfig server, std::string line);
+	void		parseAttribut(std::string line);
 
 	/*check*/
-	void checkRequest();
+	void		checkRequest();
 
 	/*getter*/
-	std::string getMethode() const;
-	std::string getPath() const;
-	std::string getCompletPath() const;
-	std::string getVersion() const;
-	std::string getHeader() const;
-	std::string getHost() const;
-	bool getIsComplete() const;
-	int getCode() const;
+	std::string	getMethode() const;
+	std::string	getPath() const;
+	std::string	getCompletPath() const;
+	std::string	getVersion() const;
+	std::string	getHeader() const;
+	std::string	getHost() const;
+	bool		getIsComplete() const;
+	int			getCode() const;
 
 	/* get && verif path type*/
-	void setAndCheckPath(ServerConfig server, std::string path);
-	int getPathType(ServerConfig seerver);
+	void		setAndCheckPath(ServerConfig server, std::string path);
+	int			getPathType(ServerConfig seerver);
 
 	/*chec path variable query*/
-	std::string getPathVariable(std::string path);
-	void getVariable(std::string path);
+	std::string	getPathVariable(std::string path);
+	void		getVariable(std::string path);
 
 	/* get && verif path file*/
-	void getfilePath(ServerConfig server, int searchIndex);
-	void getIndex(ServerConfig server);
-	void verifFile();
+	void		getfilePath(ServerConfig server, int searchIndex);
+	void		getIndex(ServerConfig server);
+	void		verifFile();
 
 	/*classic setter*/
-	void setMethode(std::string Methode);
-	void setPath(std::string path);
-	void setVersion(std::string version);
-	void setErrorCode(int errorCode);
+	void		setMethode(std::string Methode);
+	void		setPath(std::string path);
+	void		setVersion(std::string version);
+	void		setErrorCode(int errorCode);
 
 	// CGI part
 	std::string	getQueryString() const;
 	std::string	getBody() const;
 	std::string	getContentType() const;
 	size_t		getBodySize() const;
-	const std::map<std::string, std::string> &getVarLst() const;
+	const std::map<std::string, std::string>	&getVarLst() const;
 
 	// old
-
-	void getServerLocationPath(ServerConfig server);
+	void		getServerLocationPath(ServerConfig server);
 };
 
-std::ostream &operator<<(std::ostream &o, Request const &request);
+std::ostream	&operator<<(std::ostream &o, Request const &request);
 
 #endif
