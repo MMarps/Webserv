@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/03 22:06:33 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/04 19:26:13 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,6 +255,9 @@ void Server::_handleClientData(int clientFd) {
 			client->expectedBodySize = _extractContentLen(client->getHeader());
 			long maxSize = _getLocationMaxBodySize(client);
 
+			std::cout << BRED << "expectedBodySize = " << client->expectedBodySize << std::endl
+					  << "maxSize = " << maxSize << NC << std::endl;
+
 			if (client->expectedBodySize > static_cast<size_t>(maxSize)) {
 				_parseResponse(client, 413);
 				_modEpoll(clientFd, EPOLLOUT);
@@ -266,11 +269,18 @@ void Server::_handleClientData(int clientFd) {
 				size_t extraSize = client->getHeader().size() - headerFullSize;
 				client->appendBody(client->getHeader().data() + headerFullSize, extraSize);
 				client->getHeader().resize(headerFullSize);
+				client->actualBodySize += extraSize;
 			}
 		}
 	}
 	else {
+		client->actualBodySize += nbytes;
 		client->appendBody(buf, nbytes);
+		if (client->actualBodySize > client->expectedBodySize) {
+			_parseResponse(client, 413);
+			_modEpoll(clientFd, EPOLLOUT);
+			return ;
+		}
 	}
 	if (client->isHeaderFinished) {
 		if (client->getBody().size() >= client->expectedBodySize) {
@@ -281,8 +291,6 @@ void Server::_handleClientData(int clientFd) {
 		}
 	}
 }
-
-// std::cout << BGREEN << buf << NC << std::endl;
 
 void Server::_parseResponse(Client *c, int errCode) {
 	Request	req;
@@ -317,6 +325,8 @@ void Server::_sendResponse(int clientFd) {
 		std::cout << "Response sent fully." << std::endl;
 		client->getHeader().clear();
 		client->getResponse().clear();
+		client->getBody().clear();
+		client->isHeaderFinished = false;
 		client->isRequestFinished = false;
 		_modEpoll(clientFd, EPOLLIN);
 	}

@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 18:10:24 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/04 19:02:33 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -301,14 +301,14 @@ void	Parser::putDefaultValues(Config &cfg) {
 		for (size_t li = 0; li < srv.locations.size(); li++) {
 			LocationConfig& loc = srv.locations[li];
 			if (loc.has_client_max_body_size == false) {
-				loc.client_max_body_size = 1024 * 1024;
+				loc.client_max_body_size = srv.client_max_body_size;
 				loc.has_client_max_body_size = true;
 			}
 		}
 	}
 }
 
-void			Parser::checkCgi(Config &cfg) {
+void	Parser::checkCgi(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
 		ServerConfig& srv = cfg.servers[si];
 		std::map<std::string, std::string>::const_iterator	it;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/03 19:45:24 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/04 19:22:24 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,13 @@ public:
 	Client(int clientFd, int serverIdx);
 	~Client();
 
-	int					getFd() const;
-	int					getServerIdx() const;
-	std::string&		getHeader();
-	std::string&		getResponse();
+	int				getFd() const;
+	int				getServerIdx() const;
+	std::string&	getHeader();
+	std::string&	getResponse();
 
-	std::vector<char> 	getBody();
+	std::vector<char>&	getBody();
+	size_t				getBodySize() const;
 	void				setBody(std::vector<char> body);
 	void				appendBody(const char* buf, size_t size);
 
@@ -33,6 +34,7 @@ public:
 	bool				isRequestFinished;
 
 	size_t				expectedBodySize;
+	size_t				actualBodySize;
 
 private:
 	int					_fd;
