@@ -39,6 +39,25 @@ void	CGI::addEnv(std::vector<std::string> &env, const std::string &key, const st
 // 		env.push_back(key + "=" + val);
 // }
 
+void	CGI::addHTTPHeaders(std::vector<std::string> &env) {
+	const std::map<std::string, std::string>	&headers = _req.getHttpHeaders();
+	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); it++) {
+		std::string	headerName = it->first;
+		std::string	headerValue = it->second;
+		if (headerName == "Content-Type" || headerName == "Content-length")
+			continue;
+		std::string	envName = "HTTP_";
+		for (size_t i = 0; i < headerName.size(); i++) {
+			char c = headerName[i];
+			if (c == '-')
+				envName += "_";
+			else
+				envName += std::toupper(c);
+		}
+		addEnv(env, envName, headerValue);
+	}
+}
+
 char	**CGI::setupEnv(const Request &req) {
 	std::vector<std::string>	_envCgi;
 
@@ -81,11 +100,11 @@ void	CGI::freeEnv(char **env) {
 	free(env);
 }
 
-char	**CGI::vectorToEnv(const std::vector<std::string> &env) {
+char	**CGI::vectorToEnv(std::vector<std::string> &env) {
 	int		vecLen = env.size() + 1;
 	char	**envRet = (char **)malloc(sizeof(char *) * vecLen);
 	int		i = 0;
-	for (std::vector<std::string>::iterator it; it != env.end(); it++) {
+	for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++) {
 		envRet[i] = strdup(it->c_str()); // ALLOC HERE
 		if (!envRet[i]) {
 			for (int j = 0; j < i; j++)

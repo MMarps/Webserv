@@ -85,9 +85,13 @@ void	Request::parseAttribut(std::string line)
 	std::string			res;
 	
 	getline(cut, res, ' ');
+	std::string headerName = res;
+	if (!headerName.empty() && headerName[headerName.size() - 1] == ':') // take off ':'
+		headerName = headerName.substr(0, headerName.size() - 1);
 	if (res == "Host:") {
 		getline(cut, res, ' ');
 		this->_host = res;
+		this->_httpHeaders["Host"] = res;
 	}
 	else if (res == "Content-Type:") {
 		getline(cut, res);
@@ -96,11 +100,24 @@ void	Request::parseAttribut(std::string line)
 		if (!res.empty() && res[res.size() - 1] == '\r')
 			res = res.substr(0, res.size() - 1);
 		this->_contentType = res;
+		this->_httpHeaders["Content-Type"] = res;
 	}
 	else if (res == "Content-Length:") {
 		getline(cut, res, ' ');
 		std::stringstream ss(res);
 		ss >> this->_bodySize;
+		this->_httpHeaders["Content-Length"] = res;
+	}
+	else if (!headerName.empty()) { // Pour tous les autres headers, les stocker dans _httpHeaders
+		std::string	headerValue;
+		getline(cut, headerValue);
+		// Nettoyer les espaces et \r
+		if (!headerValue.empty() && headerValue[0] == ' ')
+			headerValue = headerValue.substr(1);
+		if (!headerValue.empty() && headerValue[headerValue.size() - 1] == '\r')
+			headerValue = headerValue.substr(0, headerValue.size() - 1);
+		if (!headerValue.empty())
+			this->_httpHeaders[headerName] = headerValue;
 	}
 }
 
@@ -353,6 +370,10 @@ size_t	Request::getBodySize() const {
 	return (this->_bodySize);
 }
 
-const std::map<std::string, std::string>&	Request::getVarLst() const {
+const std::map<std::string, std::string>	&Request::getVarLst() const {
 	return (this->_varLst);
+}
+
+const std::map<std::string, std::string>	&Request::getHttpHeaders() const {
+	return (this->_httpHeaders);
 }

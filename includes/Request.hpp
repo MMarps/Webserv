@@ -40,6 +40,7 @@ class Request
 	bool		_isComplete;
 	int			_code;
 	std::map<std::string, std::string>	_varLst;
+	std::map<std::string, std::string>	_httpHeaders;
 	// bool _autoindex;
 
 	// CGI part
@@ -98,6 +99,7 @@ class Request
 	std::string	getContentType() const;
 	size_t		getBodySize() const;
 	const std::map<std::string, std::string>	&getVarLst() const;
+	const std::map<std::string, std::string>	&getHttpHeaders() const;
 
 	// old
 	void		getServerLocationPath(ServerConfig server);

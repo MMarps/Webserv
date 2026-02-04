@@ -37,7 +37,7 @@ class CGI {
 		void				addHTTPHeaders(std::vector<std::string> &env);
 		void				freeEnv(char **env);
 		void				parseOutput();
-		char				**vectorToEnv(const std::vector<std::string> &env);
+		char				**vectorToEnv(std::vector<std::string> &env);
 		bool				executeScript(char **env);
 		std::string			findInterpreter();
 
