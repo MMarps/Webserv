@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/04 19:02:33 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/05 20:22:55 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,11 @@ void	Parser::parseDirective(ServerConfig& srv) {
 			throwError("One argument expected for 'root'", true);
 		srv.root = args[0];
 	}
+	else if (name == "log") {
+		if (args.size() != 1)
+			throwError("One argument expected for 'log'", true);
+		srv.log = args[0];
+	}
 	else if (name == "index")
 		for (size_t i = 0; i < args.size(); i++)
 			srv.index.push_back(args[i]);
@@ -157,7 +162,7 @@ void	Parser::parseDirective(LocationConfig& loc) {
 	else if (name == "return")
 		parseReturn(loc, args);
 	else
-		throwError("Directive unknown1", true);
+		throwError("Directive unknown", true);
 }
 
 Listen			Parser::parseListen(std::vector<std::string>& args) {
@@ -298,6 +303,9 @@ void	Parser::putDefaultValues(Config &cfg) {
 			srv.client_max_body_size = 1024 * 1024;
 			srv.has_client_max_body_size = true;
 		}
+		if (srv.log.empty()) {
+			getLogFile(srv);
+		}
 		for (size_t li = 0; li < srv.locations.size(); li++) {
 			LocationConfig& loc = srv.locations[li];
 			if (loc.has_client_max_body_size == false) {
@@ -321,6 +329,14 @@ void	Parser::checkCgi(Config &cfg) {
 			}
 		}
 	}
+}
+
+void	Parser::getLogFile(ServerConfig& srv) {
+	std::string::const_iterator it = srv.root.end() - 1; 
+	if (*it == '/')
+		srv.log = srv.root + "log/webserv.log";
+	else
+		srv.log = srv.root + "/log/webserv.log";
 }
 
 /////////////////////////////////////

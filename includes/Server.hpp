@@ -6,7 +6,7 @@
 /*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/03 21:53:17 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/06 00:05:41 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include "Client.hpp"
 # include "Request.hpp"
 # include "Response.hpp"
+# include "Logger.hpp"
 
 # define BUFFER_SIZE 4096
 # define MAX_EVENTS 1024

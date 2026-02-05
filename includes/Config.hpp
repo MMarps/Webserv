@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:15:18 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 16:46:49 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/05 20:13:44 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,8 @@ struct ServerConfig {
 	size_t 								client_max_body_size;
 	bool 								has_client_max_body_size;
 	std::vector<LocationConfig>			locations;
+
+	std::string							log;
 
 	ServerConfig();
 };

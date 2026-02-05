@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/04 19:26:13 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/06 00:17:26 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,9 @@ Server::Server(const std::string &confFileName) {
 
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
+
+	Logger::init(_conf.servers[0].log);
+	Logger::log("Logger initialised");
 }
 
 Server::~Server() {
@@ -46,6 +49,7 @@ void Server::_setupServerSockets() {
 	int											fd;
 	int											opt;
 	std::map<std::pair<std::string, int>, int>	bound;
+	std::ostringstream oss;
 
 	for (size_t si = 0; si < _conf.servers.size(); si++) {
 		std::vector<Listen>::iterator it;
@@ -53,8 +57,10 @@ void Server::_setupServerSockets() {
 			std::pair<std::string, int>	key(it->host, it->port);
 			if (bound.count(key)) {
 				_serveurSockets[bound[key]].push_back(si);
-				std::cout << "Server " << "[" << si << "] listening on port "
-						  << it->port << " (fd=" << fd << ")" << std::endl;
+				oss << "Server " << "[" << si << "] listening on port "
+					<< it->port << " (fd=" << fd << ")" << std::endl;
+				Logger::info(oss.str());
+				oss.clear();
 				continue ;
 			}
 			std::memset(&hints, 0, sizeof(hints));
@@ -94,8 +100,10 @@ void Server::_setupServerSockets() {
 					std::pair<std::string, int>	wildcardKey("*", it->port);
 					if (bound.count(wildcardKey)) {
 						_serveurSockets[bound[wildcardKey]].push_back(si);
-						std::cout << "Server " << "[" << si << "] listening on port "
-					  			  << it->port << " (fd=" << fd << ")" << std::endl;
+						oss << "Server " << "[" << si << "] listening on port "
+					  		<< it->port << " (fd=" << fd << ")" << std::endl;
+						Logger::info(oss.str());
+						oss.clear();
 						continue ;
 					}
 				}
@@ -113,8 +121,10 @@ void Server::_setupServerSockets() {
 			}
 			_addToEpoll(fd, EPOLLIN);
 			_serveurSockets[fd].push_back(si);
-			std::cout << "Server " << "[" << si << "] listening on port "
-					  << it->port << " (fd=" << fd << ")" << std::endl;
+			oss << "Server " << "[" << si << "] listening on port "
+				<< it->port << " (fd=" << fd << ")" << std::endl;
+			Logger::info(oss.str());
+			oss.clear();
 			bound[key] = fd;
 		}
 	}
