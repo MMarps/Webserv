@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/14 16:32:22 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/14 16:36:40 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,7 +172,8 @@ tokenType	Lexer::findIdentifier(const std::string& str) const {
 		|| str == "autoindex"
 		|| str == "upload_store"
 		|| str == "cgi"
-		|| str == "return")
+		|| str == "return"
+		|| str == "log")
 		return (T_IDENT);
 	else if (str == "{")
 		return (T_LBRACE);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/11 18:00:26 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/14 16:37:36 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,11 @@ void	Parser::parseDirective(ServerConfig& srv) {
 		if (args.size() != 1)
 			throwError("One argument expected for 'root'", true);
 		srv.root = args[0];
+	}
+	else if (name == "log") {
+		if (args.size() != 1)
+			throwError("One argument expected for 'log'", true);
+		srv.log = args[0];
 	}
 	else if (name == "index")
 		for (size_t i = 0; i < args.size(); i++)
