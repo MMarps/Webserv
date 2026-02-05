@@ -30,17 +30,19 @@ class CGI {
 		int					_timeout; // timeout en secondes
 		EnvCGI				_env;
 
-		void				addEnv(std::vector<std::string> &env, const std::string &key, const std::string &value);
-		// void				importEnv(std::vector<std::string> &env, const std::string &key);
 		char				**setupEnv(const Request &req);
-
+		void				addEnv(std::vector<std::string> &env, const std::string &key, const std::string &value);
+		
 		void				addHTTPHeaders(std::vector<std::string> &env);
 		void				freeEnv(char **env);
+		void				freePipes(int *fdIn, int *fdOut);
 		void				parseOutput();
 		char				**vectorToEnv(std::vector<std::string> &env);
-		bool				executeScript(char **env);
+		std::string			integerToString(size_t val);
 		std::string			findInterpreter();
-
+		bool				processScript(char **env);
+		void				executeScript(char **env);
+		void				parentProcess(int *fdIn, int *fdOut);
 	public:
 		CGI(Request &req, ServerConfig &server, EnvCGI &env);
 		~CGI();
@@ -51,6 +53,5 @@ class CGI {
 		std::map<std::string, std::string>	getHeaders(); // recupere les headers CGI
 };
 
-std::string	integerToString(size_t val);
 
 # endif

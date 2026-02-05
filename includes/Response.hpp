@@ -15,22 +15,24 @@
 
 # include "Config.hpp"
 # include "Webserv.hpp"
+# include "CGI.hpp"
 
 struct ServerConfig;
 class	Request;
 
-class Response
-{
+class Response {
   private:
-	Request &_req;
-	std::string _contentPath;
-	std::string _contentExtention;
-	std::vector<char> _content;
-	std::string _contentLength;
-	std::string _response;
-	std::map<int, std::string> _statutMessage;
-	std::map<std::string, std::string> _contentType;
-	
+	Request		&_req;
+	std::string	_contentPath;
+	std::string	_contentExtention;
+	std::string	_response;
+	std::string	_contentLength;
+	std::vector<char>					_content;
+	std::map<int, std::string>			_statutMessage;
+	std::map<std::string, std::string>	_contentType;
+	// CGI
+	bool	_isCGI;
+	std::map<std::string, std::string>	_cgiHeaders;
 
   public:
 	Response(Request &req);

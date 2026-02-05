@@ -12,8 +12,7 @@
 
 #include "Response.hpp"
 
-Response::Response(Request &req) : _req(req)
-{
+Response::Response(Request &req) : _req(req), _isCGI(false) {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
@@ -38,8 +37,7 @@ Response::Response(Request &req) : _req(req)
 
 Response::~Response() {}
 
-std::string Response::getRep() const
-{
+std::string Response::getRep() const {
 	return (this->_response);
 }
 

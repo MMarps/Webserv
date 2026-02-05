@@ -33,12 +33,6 @@ void	CGI::addEnv(std::vector<std::string> &env, const std::string &key, const st
 	env.push_back(key + "=" + value);
 }
 
-// void	CGI::importEnv(std::vector<std::string> &env, const std::string &key) {
-// 	const char	*val = std::getenv(key.c_str());
-// 	if (val)
-// 		env.push_back(key + "=" + val);
-// }
-
 void	CGI::addHTTPHeaders(std::vector<std::string> &env) {
 	const std::map<std::string, std::string>	&headers = _req.getHttpHeaders();
 	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); it++) {
@@ -74,20 +68,155 @@ char	**CGI::setupEnv(const Request &req) {
 	// addEnv(_envCgi, "SERVER_PORT", req.);
 	// addEnv(_envCgi, "REMOTE_ADDR", req.);
 
-	char	**envRet = vectorToEnv(_envCgi);
-	return (envRet);
+	addHTTPHeaders(_envCgi);
+	return (vectorToEnv(_envCgi));
 }
 
-bool	CGI::executeScript(char **env) {
+void	CGI::parseOutput() {
+	std::string	output(_output.begin(), _output.end());
+	size_t		separatorPos = output.find("\r\n\r\n");
+	size_t		separatorSize = 4;
 
+	if (separatorPos == std::string::npos) { // si pas trouve de separateur, chercher \n\n
+		separatorPos = output.find("\n\n");
+		separatorSize = 2;
+	}	
+	if (separatorPos == std::string::npos) { // si pas trouve, pas de header et tout dans le body
+		_body = output;
+		return ;
+	}
+
+	std::string headersSection = output.substr(0, separatorPos);
+	size_t		bodyStart = separatorPos + separatorSize;
+	if (bodyStart < output.size())
+		_body = output.substr(bodyStart);
+
+	std::istringstream	headerStream(headersSection);
+	std::string			line;
+
+	while (std::getline(headerStream, line)) {
+		if (!line.empty() && line[line.size() - 1] == '\r') // Enlever le \r à la fin si présent
+			line = line.substr(0, line.size() - 1);
+		size_t	colonPos = line.find(':');
+		if (colonPos == std::string::npos)
+			continue ;
+
+		std::string	headerName = line.substr(0, colonPos);
+		std::string	headerValue = line.substr(colonPos + 1);
+
+		size_t	valueStart = headerValue.find_first_not_of(" \t");
+		if (valueStart != std::string::npos)
+			headerValue = headerValue.substr(valueStart);
+		else
+			headerValue = "";
+
+		size_t	valueEnd = headerValue.find_last_not_of(" \t\r");
+		if (valueEnd != std::string::npos)
+			headerValue = headerValue.substr(0, valueEnd + 1);
+		else if (!headerValue.empty())
+			headerValue = "";
+
+		_cgiHeaders[headerName] = headerValue;
+		if (headerName == "Status") {
+			std::istringstream statusStream(headerValue);
+			statusStream >> _statusCode;
+		}
+	}
+}
+
+void	CGI::freePipes(int *fdIn, int *fdOut) {
+	if (fdIn) {
+		close(fdIn[0]);
+		close(fdIn[1]);
+	}
+	if (fdOut) {
+		close(fdOut[0]);
+		close(fdOut[1]);
+	}
+}
+
+void	CGI::executeScript(char **env) {
+	std::string interpreterPath = _server.cgi[_interpreter];
+	char		*argv[3];
+
+	argv[0] = strdup(interpreterPath.c_str());
+	argv[1] = strdup(_scriptPath.c_str());
+	argv[2] = NULL;
+
+	execve(argv[0], argv, env);
+	
+	free(argv[0]);
+	free(argv[1]);
+	exit(1);
+}
+
+void	CGI::parentProcess(int *fdIn, int *fdOut) {
+	close(fdIn[0]);
+	close(fdOut[1]);
+	// Si POST : écrire le body dans le pipe d'entrée
+	if (_req.getMethode() == "POST") {
+		std::string body = _req.getBody();
+		write(fdIn[1], body.c_str(), body.size());
+	}
+	close(fdIn[1]);
+
+	char buffer[4096];
+	ssize_t bytesRead;
+	while ((bytesRead = read(fdOut[0], buffer, sizeof(buffer))) > 0) {
+		_output.insert(_output.end(), buffer, buffer + bytesRead);
+	}
+	close(fdOut[0]);
+}
+
+bool	CGI::processScript(char **env) {
+	int		pipeIn[2];
+	int		pipeOut[2];
+
+	if (pipe(pipeIn) < 0)
+		return (false);
+	if (pipe(pipeOut) < 0)
+		return (false);
+	
+	pid_t	pid = fork();
+	if (pid < 0)
+		return (false);
+	if (pid == 0) {
+		close(pipeIn[1]);
+		close(pipeOut[0]);
+		if (dup2(pipeIn[0], STDIN_FILENO) < 0) {
+			freePipes(pipeIn, pipeOut);
+			exit(false);
+		}
+		close(pipeIn[0]);
+		if (dup2(pipeOut[1], STDOUT_FILENO) < 0) {
+			freePipes(pipeIn, pipeOut);
+			exit(false);
+		}
+		dup2(pipeOut[1], STDERR_FILENO);
+		close(pipeOut[1]);
+		executeScript(env);
+	}
+	parentProcess(pipeIn, pipeOut);
+
+	int	status;
+
+	waitpid(pid, &status, 0);
+	if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+		return (true);
+	return (false);
 }
 
 bool	CGI::execute(const Request &req) {
 	this->_interpreter = findInterpreter();
+	if (this->_interpreter.empty())
+		return (false);
+	if (open(_scriptPath.c_str(), O_RDONLY, O_EXCL) < 0)
+		return (false);
+
 	char	**cgiEnv = setupEnv(req);
-	if (executeScript(cgiEnv)) {
+	if (processScript(cgiEnv)) {
+		freeEnv(cgiEnv);
 		parseOutput();
-		// freeEnv(cgiEnv);
 		return (true);
 	}
 	freeEnv(cgiEnv);
@@ -117,7 +246,7 @@ char	**CGI::vectorToEnv(std::vector<std::string> &env) {
 	return (envRet);
 }
 
-std::string	integerToString(size_t val) {
+std::string	CGI::integerToString(size_t val) {
 	std::ostringstream	oss;
 	oss << val;
 	return (oss.str());
