@@ -27,6 +27,7 @@
 # include <sys/epoll.h>    // Linux epoll
 # include <sys/time.h>
 # include <sys/wait.h>
+# include <signal.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include <netdb.h>

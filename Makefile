@@ -18,6 +18,7 @@ OBJ_DIR			:= obj
 
 # Source files (without .c)
 FILES :=	main.cpp \
+			CGI.cpp \
 			Lexer.cpp \
 			Parser.cpp \
 			Server.cpp \

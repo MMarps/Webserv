@@ -1,7 +1,7 @@
 #include "CGI.hpp"
 
-CGI::CGI(Request &req, ServerConfig &server, EnvCGI	&env) 
-	: _req(req), _server(server), _statusCode(200), _timeout(30), _env(env) {
+CGI::CGI(Request &req, ServerConfig &server) 
+	: _req(req), _server(server), _statusCode(200), _timeout(30) {
 	_scriptPath = _req.getCompletPath();
 }
 
@@ -38,8 +38,11 @@ void	CGI::addHTTPHeaders(std::vector<std::string> &env) {
 	for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); it++) {
 		std::string	headerName = it->first;
 		std::string	headerValue = it->second;
-		if (headerName == "Content-Type" || headerName == "Content-length")
+		if (headerName == "Content-Type" || headerName == "Content-Length")
 			continue;
+		if (headerName == "Transfer-Encoding")
+			continue;
+			
 		std::string	envName = "HTTP_";
 		for (size_t i = 0; i < headerName.size(); i++) {
 			char c = headerName[i];
@@ -56,10 +59,10 @@ char	**CGI::setupEnv(const Request &req) {
 	std::vector<std::string>	_envCgi;
 
 	addEnv(_envCgi, "GATEWAY_INTERFACE", "CGI/1.1");
-	addEnv(_envCgi, "SERVER_PROTOCOLE", "HTTP/1.1");
+	addEnv(_envCgi, "SERVER_PROTOCOL", "HTTP/1.1");
 	addEnv(_envCgi, "REQUEST_METHOD", req.getMethode());
-	addEnv(_envCgi, "REQUEST_URI", req.getQueryString());
-	addEnv(_envCgi, "SCRIPT_FILENAME", req.getCompletPath());
+	addEnv(_envCgi, "REQUEST_URI", req.getPath());
+	addEnv(_envCgi, "SCRIPT_FILENAME", _scriptPath);
 	addEnv(_envCgi, "SCRIPT_NAME", req.getPath());
 	addEnv(_envCgi, "QUERY_STRING", req.getQueryString());
 	addEnv(_envCgi, "CONTENT_TYPE", req.getContentType());
@@ -136,36 +139,68 @@ void	CGI::freePipes(int *fdIn, int *fdOut) {
 }
 
 void	CGI::executeScript(char **env) {
-	std::string interpreterPath = _server.cgi[_interpreter];
-	char		*argv[3];
+	std::string	interpreterPath = _server.cgi[_interpreter];
+	std::string	scriptName = _scriptPath.substr(_scriptPath.find_last_of('/') + 1);
+	char		**argv = new char*[3];
+	argv[0] = new char[interpreterPath.length() + 1];
+	argv[1] = new char[scriptName.length() + 1];
 
-	argv[0] = strdup(interpreterPath.c_str());
-	argv[1] = strdup(_scriptPath.c_str());
+	std::strcpy(argv[0], interpreterPath.c_str());
+	std::strcpy(argv[1], scriptName.c_str());
 	argv[2] = NULL;
 
 	execve(argv[0], argv, env);
-	
-	free(argv[0]);
-	free(argv[1]);
+
+	delete[] argv[0];
+	delete[] argv[1];
+	delete[] argv;
 	exit(1);
 }
 
 void	CGI::parentProcess(int *fdIn, int *fdOut) {
 	close(fdIn[0]);
 	close(fdOut[1]);
-	// Si POST : écrire le body dans le pipe d'entrée
-	if (_req.getMethode() == "POST") {
+	if (_req.getMethode() == "POST") { // Si POST : écrire le body dans le pipe d'entrée
 		std::string body = _req.getBody();
 		write(fdIn[1], body.c_str(), body.size());
 	}
 	close(fdIn[1]);
 
-	char buffer[4096];
-	ssize_t bytesRead;
+	char	buffer[4096];
+	ssize_t	bytesRead;
 	while ((bytesRead = read(fdOut[0], buffer, sizeof(buffer))) > 0) {
 		_output.insert(_output.end(), buffer, buffer + bytesRead);
 	}
 	close(fdOut[0]);
+}
+
+bool	CGI::waitProcess(pid_t pid) {
+	time_t	startTime = time(NULL);
+	int		status;
+	bool	isTimeout = false;
+
+	while (true) {
+		pid_t	ret = waitpid(pid, &status, WNOHANG);
+		if (ret == pid)
+			break ; // process termine
+		else if (ret < 0)
+			return (false); // error
+		time_t	elapsedTime = time(NULL) - startTime;
+		if (elapsedTime >= _timeout) {
+			kill(pid, SIGKILL);
+			waitpid(pid, &status, 0);
+			isTimeout = true;
+			break ;
+		}
+		usleep(100000); // attendre pour pas consommer trop de CPU
+	}
+	if (isTimeout) {
+		_statusCode = 504;
+		return (false);
+	}
+	if (WIFEXITED(status) && !WEXITSTATUS(status)) // script bien exec, pas de timeout
+		return (true);
+	return (false);
 }
 
 bool	CGI::processScript(char **env) {
@@ -176,13 +211,18 @@ bool	CGI::processScript(char **env) {
 		return (false);
 	if (pipe(pipeOut) < 0)
 		return (false);
-	
 	pid_t	pid = fork();
 	if (pid < 0)
 		return (false);
 	if (pid == 0) {
 		close(pipeIn[1]);
 		close(pipeOut[0]);
+
+		std::string	scriptDir = _scriptPath.substr(0, _scriptPath.find_last_of('/')); // on change de dir pour aller ou se trouve le script
+		if (!scriptDir.empty() && chdir(scriptDir.c_str()) != 0) {
+			freePipes(pipeIn, pipeOut);
+			exit(1);
+		}
 		if (dup2(pipeIn[0], STDIN_FILENO) < 0) {
 			freePipes(pipeIn, pipeOut);
 			exit(false);
@@ -197,13 +237,7 @@ bool	CGI::processScript(char **env) {
 		executeScript(env);
 	}
 	parentProcess(pipeIn, pipeOut);
-
-	int	status;
-
-	waitpid(pid, &status, 0);
-	if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
-		return (true);
-	return (false);
+	return (waitProcess(pid));
 }
 
 bool	CGI::execute(const Request &req) {
@@ -225,24 +259,22 @@ bool	CGI::execute(const Request &req) {
 
 void	CGI::freeEnv(char **env) {
 	for (int i = 0; env[i]; i++)
-		free(env[i]);
-	free(env);
+		delete[] env[i];
+	delete[] env;
 }
 
 char	**CGI::vectorToEnv(std::vector<std::string> &env) {
-	int		vecLen = env.size() + 1;
-	char	**envRet = (char **)malloc(sizeof(char *) * vecLen);
+	int		vecLen = env.size();
+	char	**envRet = new char*[vecLen + 1];
 	int		i = 0;
+	
 	for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++) {
-		envRet[i] = strdup(it->c_str()); // ALLOC HERE
-		if (!envRet[i]) {
-			for (int j = 0; j < i; j++)
-				free(envRet[j]);
-			return (NULL);
-		}
+		size_t	len = it->length() + 1;
+		envRet[i] = new char[len];
+		std::strcpy(envRet[i], it->c_str());
 		i++;
 	}
-	envRet[vecLen] = '\0';
+	envRet[vecLen] = NULL;
 	return (envRet);
 }
 
@@ -252,14 +284,18 @@ std::string	CGI::integerToString(size_t val) {
 	return (oss.str());
 }
 
-int	CGI::getStatusCode() {
+int	CGI::getStatusCode() const {
 	return (this->_statusCode);
 }
 
-std::vector<char>	CGI::getOutput() {
+std::vector<char>	CGI::getOutput() const {
 	return (this->_output);
 }
 
-std::map<std::string, std::string>	CGI::getHeaders() {
+std::string	CGI::getBody() const {
+	return (this->_body);
+}
+
+std::map<std::string, std::string>	CGI::getHeaders() const {
 	return (this->_cgiHeaders);
 }

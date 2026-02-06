@@ -78,7 +78,7 @@ class Request
 	void		setAndCheckPath(ServerConfig server, std::string path);
 	int			getPathType(ServerConfig seerver);
 
-	/*chec path variable query*/
+	/*check path variable query*/
 	std::string	getPathVariable(std::string path);
 	void		getVariable(std::string path);
 

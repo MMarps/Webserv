@@ -3,19 +3,11 @@
 
 # include "Webserv.hpp"
 # include "Request.hpp"
+# include "Response.hpp"
 # include "Config.hpp"
 
-class Request;
-struct ServerConfig;
-
-struct EnvCGI {
-	const std::string	&method;
-	const std::string	&scriptName;
-	const std::string	&scriptFilename;
-	const std::string	&queryString;
-	const std::string	&contentType;
-	const std::string	&contentLength;
-};
+class	Request;
+struct	ServerConfig;
 
 class CGI {
 	private:
@@ -28,11 +20,10 @@ class CGI {
 		std::map<std::string, std::string> _cgiHeaders; // header retourne
 		int					_statusCode; // statut de l'output du script
 		int					_timeout; // timeout en secondes
-		EnvCGI				_env;
 
 		char				**setupEnv(const Request &req);
 		void				addEnv(std::vector<std::string> &env, const std::string &key, const std::string &value);
-		
+
 		void				addHTTPHeaders(std::vector<std::string> &env);
 		void				freeEnv(char **env);
 		void				freePipes(int *fdIn, int *fdOut);
@@ -40,18 +31,19 @@ class CGI {
 		char				**vectorToEnv(std::vector<std::string> &env);
 		std::string			integerToString(size_t val);
 		std::string			findInterpreter();
+		bool				waitProcess(pid_t pid);
 		bool				processScript(char **env);
 		void				executeScript(char **env);
 		void				parentProcess(int *fdIn, int *fdOut);
 	public:
-		CGI(Request &req, ServerConfig &server, EnvCGI &env);
+		CGI(Request &req, ServerConfig &server);
 		~CGI();
 		bool				isCGI();
-		bool				execute(const Request &req); 
-		int					getStatusCode();
-		std::vector<char>	getOutput();
-		std::map<std::string, std::string>	getHeaders(); // recupere les headers CGI
+		bool				execute(const Request &req);
+		int					getStatusCode() const;
+		std::vector<char>	getOutput() const;
+		std::string			getBody() const;
+		std::map<std::string, std::string>	getHeaders() const; // recupere les headers CGI
 };
-
 
 # endif
