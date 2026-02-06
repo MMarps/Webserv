@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Logger.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 19:33:12 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 00:10:28 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/06 20:25:49 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,30 +14,30 @@
 # define LOGGER_HPP
 
 # include "Webserv.hpp"
+# include "Config.hpp"
 
 class	Logger {
 public:
 	static Logger&	instance();
 
-	static bool	init(const std::string& filePath);
+	static void	init(const std::vector<ServerConfig> servers);
 
-	static void	log(const std::string& msg);
-	static void	info(const std::string& msg);
-	static void	error(const std::string& msg);
+	static void	log(const std::string& msg, int srvIdx);
+	static void	info(const std::string& msg, int srvIdx);
+	static void	error(const std::string& msg, int srvIdx);
 
 private:
 	Logger();
 	~Logger();
 
-	std::string		_filePath;
-	std::ofstream	_ofs;
-	bool			_active;
+	std::map<size_t, std::ofstream*>	_ofs;
+	std::map<size_t, bool>				_active;
 
-	bool		_initLogger(const std::string& filePath);
-	bool		_isDirForFile();
+	bool		_initLogger(const std::string& filePath, size_t srvIdx);
+	bool		_isDirForFile(const std::string& filePath);
 	bool		_createDir(const std::string& dir);
 
-	void		_generateLog(const std::string& msg);
+	void		_generateLog(const std::string& msg, size_t srvIdx);
 	std::string	_makeTimestamp() const;
 
 	void		_close();

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 00:17:26 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/06 20:17:41 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ Server::Server(const std::string &confFileName) {
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	Logger::init(_conf.servers[0].log);
-	Logger::log("Logger initialised");
+	Logger::init(_conf.servers);
+	Logger::log("Logger initialised", -1);
 }
 
 Server::~Server() {
@@ -59,7 +59,7 @@ void Server::_setupServerSockets() {
 				_serveurSockets[bound[key]].push_back(si);
 				oss << "Server " << "[" << si << "] listening on port "
 					<< it->port << " (fd=" << fd << ")" << std::endl;
-				Logger::info(oss.str());
+				Logger::info(oss.str(), si);
 				oss.clear();
 				continue ;
 			}
@@ -102,7 +102,7 @@ void Server::_setupServerSockets() {
 						_serveurSockets[bound[wildcardKey]].push_back(si);
 						oss << "Server " << "[" << si << "] listening on port "
 					  		<< it->port << " (fd=" << fd << ")" << std::endl;
-						Logger::info(oss.str());
+						Logger::info(oss.str(), si);
 						oss.clear();
 						continue ;
 					}
@@ -123,7 +123,7 @@ void Server::_setupServerSockets() {
 			_serveurSockets[fd].push_back(si);
 			oss << "Server " << "[" << si << "] listening on port "
 				<< it->port << " (fd=" << fd << ")" << std::endl;
-			Logger::info(oss.str());
+			Logger::info(oss.str(), si);
 			oss.clear();
 			bound[key] = fd;
 		}

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Logger.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 19:34:30 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 00:12:53 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/06 20:33:08 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Logger&	Logger::instance() {
 
 ////////////////////////////////////////////
 
-Logger::Logger(): _filePath(""), _ofs(), _active(false) {}
+Logger::Logger(): _ofs(), _active() {}
 
 Logger::~Logger() {
 	_close();
@@ -27,57 +27,70 @@ Logger::~Logger() {
 
 ////////////////////////////////////////////
 
-bool	Logger::init(const std::string& filePath) {
-	return (instance()._initLogger(filePath));
+void	Logger::init(const std::vector<ServerConfig> servers) {
+	for (size_t si = 0; si < servers.size(); si++) {
+		std::string filePath = servers[si].log;
+		instance()._initLogger(filePath, si);
+	}
 }
 
-void	Logger::log(const std::string& msg) {
-	instance()._generateLog(msg);
+void	Logger::log(const std::string& msg, int srvIdx) {
+	if (srvIdx <= -1)
+		std::cout << instance()._makeTimestamp() << " - " << msg << std::endl;
+	else
+		instance()._generateLog(msg, static_cast<size_t>(srvIdx));
 }
 
-void	Logger::info(const std::string& msg) {
-	instance()._generateLog("[INFO] " + msg);
+void	Logger::info(const std::string& msg, int srvIdx) {
+	if (srvIdx <= -1)
+		std::cout << instance()._makeTimestamp() << " - " << msg << std::endl;
+	else
+		instance()._generateLog("[INFO] " + msg, static_cast<size_t>(srvIdx));
 }
 
-void	Logger::error(const std::string& msg) {
-	instance()._generateLog("[ERROR] " + msg);
+void	Logger::error(const std::string& msg, int srvIdx) {
+	if (srvIdx <= -1)
+		std::cout << instance()._makeTimestamp() << " - " << msg << std::endl;
+	else
+		instance()._generateLog("[ERROR] " + msg, static_cast<size_t>(srvIdx));
 }
 
 ////////////////////////////////////////////
 
-bool	Logger::_initLogger(const std::string& filePath) {
-	_filePath = filePath;
-
-	if (!_isDirForFile()) {
-		std::cerr << "Error: Logger: unable to create directory for " << _filePath << std::endl;
-		_active = false;
+bool	Logger::_initLogger(const std::string& filePath, size_t srvIdx) {
+	if (!_isDirForFile(filePath)) {
+		std::cerr << "Error: Logger: unable to create directory for " << filePath << std::endl;
+		_active[srvIdx] = false;
 		return (false);
 	}
 
-	if (access(_filePath.c_str(), F_OK) == 0) {
-		if (access(_filePath.c_str(), W_OK) != 0) {
-			std::cerr << "Error: Logger: file exist but not writable " << _filePath << std::endl;
-			_active = false;
+	if (access(filePath.c_str(), F_OK) == 0) {
+		if (access(filePath.c_str(), W_OK) != 0) {
+			std::cerr << "Error: Logger: file exist but not writable " << filePath << std::endl;
+			_active[srvIdx] = false;
 			return (false);
 		}
 	}
 
-	_ofs.open(_filePath.c_str(), std::ios::out | std::ios::app);
-	if (!_ofs.is_open()) {
-		std::cerr << "Error: Logger: failed to open file " << _filePath << std::endl;
-		_active = false;
+	if (_ofs.find(srvIdx) == _ofs.end() || _ofs[srvIdx] == NULL)
+		_ofs[srvIdx] = new std::ofstream();
+	
+	_ofs[srvIdx]->open(filePath.c_str(), std::ios::out | std::ios::app);
+	if (!_ofs[srvIdx]->is_open()) {
+		std::cerr << "Error: Logger: failed to open file " << filePath << std::endl;
+		_active[srvIdx] = false;
 		return (false);
 	}
 
-	_active = true;
+	_active[srvIdx] = true;
 	return (true);
 }
 
-bool	Logger::_isDirForFile() {
-	size_t pos = _filePath.rfind('/');
-	if (pos == _filePath.npos)
+bool	Logger::_isDirForFile(const std::string& filePath) {
+	size_t pos = filePath.rfind('/');
+	if (pos == filePath.npos)
 		return (true);
-	return (_createDir(_filePath.substr(0, pos)));
+	return (_createDir(filePath.substr(0, pos)));
 }
 
 bool	Logger::_createDir(const std::string& dir) {
@@ -126,13 +139,18 @@ bool	Logger::_createDir(const std::string& dir) {
 
 ////////////////////////////////////////////
 
-void	Logger::_generateLog(const std::string& msg) {
-	std::string log = _makeTimestamp()+ " - " + msg;
+void	Logger::_generateLog(const std::string& msg, size_t srvIdx) {
+	std::stringstream	ss;
+
+	ss << "Server[" << srvIdx << "] " << _makeTimestamp() << " - " << msg;
+
+	std::string log = ss.str();
+	ss.flush();
 
 	std::cout << log << std::endl;
 
-	if (_active && _ofs.is_open())
-		_ofs << log << std::endl;
+	if (_active[srvIdx] && _ofs[srvIdx] && _ofs[srvIdx]->is_open())
+        (*_ofs[srvIdx]) << log << std::endl;
 }
 
 std::string	Logger::_makeTimestamp() const {
@@ -150,9 +168,18 @@ std::string	Logger::_makeTimestamp() const {
 }
 
 void	Logger::_close() {
-	if (_ofs.is_open()) {
-		_ofs.flush();
-		_ofs.close();
+	std::map<size_t, std::ofstream*>::iterator it;
+	for (it = _ofs.begin(); it != _ofs.end(); it++) {
+		std::ofstream* ofs_ptr = it->second;
+		if (ofs_ptr) {
+			if (ofs_ptr->is_open()) {
+				ofs_ptr->flush();
+				ofs_ptr->close();
+			}
+			delete ofs_ptr;
+		}
+		_active[it->first] = false;
 	}
-	_active = false;
+	_ofs.clear();
+	_active.clear();
 }

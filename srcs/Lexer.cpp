@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/05 20:13:44 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/06 19:08:08 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,8 +172,7 @@ tokenType	Lexer::findIdentifier(const std::string& str) const {
 		|| str == "autoindex"
 		|| str == "upload_store"
 		|| str == "cgi"
-		|| str == "return"
-		|| str == "log")
+		|| str == "return")
 		return (T_IDENT);
 	else if (str == "{")
 		return (T_LBRACE);
