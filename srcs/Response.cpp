@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/04 16:22:40 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/06 16:14:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ void Response::makeLocation(const ServerConfig &server)
 {
 	(void) server;
 	
-	if (this->_req.getLocation()->autoindex)
+	if (this->_req.getLocation().autoindex)
 	{
 		generateAutoindex();
 		this->_response += "\nContent-Type: " + this->_contentType[".html"];

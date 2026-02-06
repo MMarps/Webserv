@@ -6,19 +6,19 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/04 16:54:21 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/06 17:29:17 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef REQUEST_HPP
-# define REQUEST_HPP
+#define REQUEST_HPP
 
-# include "Config.hpp"
+#include "Config.hpp"
 
 struct ServerConfig;
 struct LocationConfig;
 
-enum	PathType
+enum PathType
 {
 	FILE_PATH,
 	DIR_WITH_SLASH,
@@ -28,19 +28,20 @@ enum	PathType
 
 class Request
 {
-  private:
+private:
 	std::string _methode;
-	std::string _path;
 	std::string _root;
+	std::string _path;
 	std::string _completPath;
+	std::string _fileName;
+	std::string _fileExtention;
 	std::string _version;
 	std::string _header;
 	std::string _host;
-	std::string _contentExtention;
 	std::vector<std::string> _cutPath;
 	std::map<std::string, std::string> _varLst;
 
-	const LocationConfig *_location;
+	LocationConfig _location;
 	bool _isLocation;
 	bool _isPost;
 	bool _isComplete;
@@ -49,12 +50,12 @@ class Request
 
 	int _code;
 
-  public:
+public:
 	Request();
 	~Request();
 
 	/* parsing request*/
-	void parse(ServerConfig server, std::string buffer, int code);
+	void parse(ServerConfig server, std::string header, int code);
 	void makeRequest(ServerConfig server, std::string buffer);
 	void parseMethode(ServerConfig server, std::string line);
 	void parseAttribut(std::string line);
@@ -88,7 +89,7 @@ class Request
 	std::string getHeader() const;
 	std::string getHost() const;
 	std::string getContentExtention() const;
-	const LocationConfig *getLocation() const;
+	LocationConfig getLocation() const;
 	bool getIsLocation() const;
 	bool getIsComplete() const;
 	bool getMakeAutoindex();
@@ -105,7 +106,11 @@ class Request
 
 	void getServerLocationConfig(const ServerConfig &server, std::string path);
 
-	void getCutPath(const ServerConfig &server, std::string completPath);
+	void getRuleForResponse(const ServerConfig &server, std::string completPath);
+	void setLocationConfig(LocationConfig location);
+	void cutPath(std::string path);
+	std::string getFileName() const;
+	std::string getFileExtention() const;
 };
 
 std::ostream &operator<<(std::ostream &o, Request const &request);
