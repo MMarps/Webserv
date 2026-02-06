@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/06 17:30:54 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/06 18:05:17 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,19 +58,26 @@ void Request::makeRequest(ServerConfig server, std::string buffer)
 
 void Request::parseMethode(ServerConfig server, std::string line)
 {
-	std::istringstream cut(line);
-	std::string res;
-	std::vector<std::string> parsedLine;
-	while (getline(cut, res, ' '))
-		parsedLine.push_back(res);
-	if (parsedLine.size() != 3)
-	{
-		this->_code = 400;
-		return;
-	}
-	this->setMethode(parsedLine[0]);
-	this->setAndCheckPath(server, parsedLine[1]);
-	this->setVersion(parsedLine[2]);
+	(void) server;
+	// std::istringstream cut(line);
+	// std::string res;
+	// std::vector<std::string> parsedLine;
+	// while (getline(cut, res, ' '))
+	// 	parsedLine.push_back(res);
+	// if (parsedLine.size() != 3)
+	// {
+	// 	this->_code = 400;
+	// 	return;
+	// }
+	std::stringstream ss(line);
+	std::string method, uri, version;
+	std::string path; //provisoire
+	ss >> this->_methode >> path >> this->_version;
+	std::cout << this << std::endl;
+
+	// this->setMethode(parsedLine[0]);
+	this->setAndCheckPath(server, path);
+	// this->setVersion(parsedLine[2]);
 }
 
 void Request::cutPath(std::string path)
