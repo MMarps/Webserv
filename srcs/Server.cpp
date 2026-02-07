@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 17:31:30 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/07 16:21:35 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -277,7 +277,7 @@ void Server::_parseResponse(Client *c)
 {
 	Request	req;
 
-	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer(), 0);
+	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer(), 200);
 	std::cout << req << std::endl;
 	Response response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);

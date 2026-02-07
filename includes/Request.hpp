@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/06 17:29:17 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/07 17:52:27 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,20 +66,15 @@ public:
 	/* get && verif path type*/
 	void setAndCheckPath(ServerConfig server, std::string path);
 	void getServerLocationPath(const ServerConfig &server);
-	int getPathType(ServerConfig server);
-	int getPathType(ServerConfig server, std::string path);
 	void setContentExtention();
 
 	/*chec path variable query*/
-	size_t haveVariable(std::string path);
 	std::string getPathVariable(std::string path);
 	void getVariable(std::string path);
 
 	/* get && verif path file*/
 	void getfilePath(ServerConfig server, int searchIndex);
 	void getIndex(ServerConfig server);
-	void verifFile();
-	void verifFile(std::string path);
 
 	/*attribut getter*/
 	std::string getMethode() const;
@@ -108,9 +103,24 @@ public:
 
 	void getRuleForResponse(const ServerConfig &server, std::string completPath);
 	void setLocationConfig(LocationConfig location);
-	void cutPath(std::string path);
 	std::string getFileName() const;
 	std::string getFileExtention() const;
+
+	// new refact
+	void preparePath(ServerConfig server);
+	void cutVariableToPath();
+	void splitVarQuery(std::string variableQuery);
+	void cutPath();
+	void makeAllPathRules(ServerConfig server);
+	void copyLocationRules(ServerConfig server, std::string folder, std::string piecePath);
+	void verifFile(std::string path);
+	void makeExtentionAndNameFile(std::string file);
+
+	int checkPathType(ServerConfig server, std::string piecePath);
+	size_t haveVariable();
+
+	// getter
+	std::map<std::string, std::string> getVarLst() const;
 };
 
 std::ostream &operator<<(std::ostream &o, Request const &request);
