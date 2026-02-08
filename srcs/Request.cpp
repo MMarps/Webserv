@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/08 17:53:52 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/08 18:01:19 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,9 +77,12 @@ void Request::prepareReq(ServerConfig server)
 		makeLocationRules();
 	searchIndex();
 	if (!this->_fileName.empty() && this->_location.autoindex)
+	{
 		this->_makeAutoindex = true;
+		this->_fileExtention = ".html";
+	}
 	checkIsCgi(server);
-	if (this->_code != 20 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
+	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
 		this->_path = server.error_pages[this->_code];
 	this->_completPath = this->_root + this->_path;
 }

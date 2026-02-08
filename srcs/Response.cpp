@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/08 17:54:02 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/08 18:11:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,18 +41,20 @@ Response::Response(Request &req) : _req(req)
 	/*telecharge automatiquement la ressource !!!*/
 	// _contentType.insert(std::make_pair("...", "application/octet-stream"));
 }
+
 Response::~Response()
 {
 }
 
 void Response::makeRep(ServerConfig server)
 {
+	(void) server; //a virer si pas nescessaire
 	std::cout << "debut parsing response" << std::endl;
 	getDefaultResponse();
 	if (this->_req.getCode() == 200)
 	{
 		if (this->_req.getIsLocation())
-			makeLocation(server);
+			makeLocation();
 		else
 		{
 			getFullResponse();
@@ -60,16 +62,27 @@ void Response::makeRep(ServerConfig server)
 	}
 	else if (this->_req.getCode() == 301)
 		makeRedirect();
-	else
-		getCodePage(server);
+	// else
+	// 	getCodePage();
 	std::cout << "fin parsing response" << std::endl;
 }
 
-void Response::makeLocation(const ServerConfig &server)
+void Response::getDefaultResponse()
 {
-	(void) server;
-	
-	if (this->_req.getLocation().autoindex)
+	this->_response = "HTTP/1.1 ";
+	getResponseCode();
+}
+
+void Response::getResponseCode()
+{
+	std::stringstream errorCode;
+	errorCode << this->_req.getCode();
+	this->_response += errorCode.str() + " " + this->_statutMessage[this->_req.getCode()];
+}
+
+void Response::makeLocation()
+{
+	if (this->_req.getMakeAutoindex())
 	{
 		generateAutoindex();
 		this->_response += "\nContent-Type: " + this->_contentType[".html"];
@@ -78,20 +91,20 @@ void Response::makeLocation(const ServerConfig &server)
 	}
 }
 
-void Response::getCodePage(ServerConfig server)
-{
-	if (!server.error_pages[this->_req.getCode()].empty())
-	{
-		this->_req.setPath(server.error_pages[this->_req.getCode()]);
-		this->_req.setCompletPath(this->_req.getPath());
-		getFullResponse();
-	}
-	else
-	{
-		this->_response += "\nContent-Length: 0";
-		this->_response += "\n\n";
-	}
-}
+// void Response::getCodePage()
+// {
+// 	if (this.re)
+// 	{
+// 		this->_req.setPath(server.error_pages[this->_req.getCode()]);
+// 		this->_req.setCompletPath(this->_req.getPath());
+// 		getFullResponse();
+// 	}
+// 	else
+// 	{
+// 		this->_response += "\nContent-Length: 0";
+// 		this->_response += "\n\n";
+// 	}
+// }
 
 std::string Response::getRep() const
 {
@@ -101,11 +114,11 @@ std::string Response::getRep() const
 void Response::getDoc()
 {
 	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
-	if (!file.is_open())
-	{
-		this->_req.setErrorCode(404);
-		return;
-	}
+	// if (!file.is_open())
+	// {
+	// 	this->_req.setErrorCode(404);
+	// 	return;
+	// }
 
 	std::istreambuf_iterator<char> it(file);
 	std::istreambuf_iterator<char> end;
@@ -120,11 +133,11 @@ void Response::getDoc()
 void Response::checkDoc()
 {
 	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
-	if (!file.is_open())
-	{
-		this->_req.setErrorCode(404);
-		return;
-	}
+	// if (!file.is_open())
+	// {
+	// 	this->_req.setErrorCode(404);
+	// 	return;
+	// }
 	std::istreambuf_iterator<char> it(file);
 	std::istreambuf_iterator<char> end;
 	std::vector<char> buffer(it, end);
@@ -153,12 +166,13 @@ std::vector<std::string> Response::getLstDir()
 	std::vector<std::string> lstFiles;
 
 	folder = opendir(this->_req.getCompletPath().c_str());
-	if (!folder)
-	{
-		this->_req.setErrorCode(404);
-		return (lstFiles);
-	}
-	readFolder = readdir(folder);
+	// if (!folder)
+	// {
+	// 	this->_req.setErrorCode(404);
+	// 	return (lstFiles);
+	// }
+	readFolder = readdir(folder); // probleme ici
+	std::cout << BBLUE << "ca passe 2" << std::endl;
 	while (readFolder)
 	{
 		if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
@@ -173,7 +187,7 @@ void Response::generateAutoindex()
 {
 	std::string htmlpage;
 	std::vector<std::string> lstFiles;
-
+	std::cout << BBLUE << "ca passe" << std::endl;
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
@@ -191,11 +205,7 @@ void Response::generateAutoindex()
 
 
 
-void Response::getDefaultResponse()
-{
-	this->_response = "HTTP/1.1 ";
-	getResponseCode();
-}
+
 
 void Response::getFullResponse()
 {
@@ -203,17 +213,12 @@ void Response::getFullResponse()
 		checkDoc();
 	else
 		getDoc();
-	this->_response += "\nContent-Type: " + this->_contentType[this->_req.getContentExtention()];
+	this->_response += "\nContent-Type: " + this->_contentType[this->_req.getFileExtention()];
 	this->_response += "\nContent-Length: " + this->_contentLength;
 	this->_response += "\n\n";
 }
 
-void Response::getResponseCode()
-{
-	std::stringstream errorCode;
-	errorCode << this->_req.getCode();
-	this->_response += errorCode.str() + " " + this->_statutMessage[this->_req.getCode()];
-}
+
 
 std::ostream &operator<<(std::ostream &o, Response const &response)
 {

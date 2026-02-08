@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/04 16:21:02 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/08 18:07:57 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,10 +36,10 @@ public:
 
 	//refacor
 	void makeRep(ServerConfig server);
-	void getCodePage(ServerConfig server);
+	void getCodePage();
 
 	//generate response
-	void makeLocation(const ServerConfig &server);
+	void makeLocation();
 
 
 
@@ -48,7 +48,6 @@ public:
 	void getText();
 	void getDoc();
 	void checkDoc();
-	void getContentExtention();
 	void getDefaultResponse();
 	void getFullResponse();
 	void getResponseCode();
