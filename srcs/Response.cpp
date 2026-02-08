@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/06 16:14:24 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/08 17:54:02 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ void Response::makeRep(ServerConfig server)
 		makeRedirect();
 	else
 		getCodePage(server);
-	std::cout << "fin parsing request" << std::endl;
+	std::cout << "fin parsing response" << std::endl;
 }
 
 void Response::makeLocation(const ServerConfig &server)

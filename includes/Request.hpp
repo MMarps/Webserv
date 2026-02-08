@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/07 17:52:27 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/08 17:50:39 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,9 +38,10 @@ private:
 	std::string _version;
 	std::string _header;
 	std::string _host;
+	std::string _cgiPath;
+	std::vector<std::string> _index;
 	std::vector<std::string> _cutPath;
 	std::map<std::string, std::string> _varLst;
-
 	LocationConfig _location;
 	bool _isLocation;
 	bool _isPost;
@@ -54,73 +55,49 @@ public:
 	Request();
 	~Request();
 
-	/* parsing request*/
 	void parse(ServerConfig server, std::string header, int code);
 	void makeRequest(ServerConfig server, std::string buffer);
 	void parseMethode(ServerConfig server, std::string line);
 	void parseAttribut(std::string line);
-
-	/*check*/
-	void checkRequest();
-
-	/* get && verif path type*/
-	void setAndCheckPath(ServerConfig server, std::string path);
-	void getServerLocationPath(const ServerConfig &server);
-	void setContentExtention();
-
-	/*chec path variable query*/
-	std::string getPathVariable(std::string path);
-	void getVariable(std::string path);
-
-	/* get && verif path file*/
-	void getfilePath(ServerConfig server, int searchIndex);
-	void getIndex(ServerConfig server);
-
-	/*attribut getter*/
-	std::string getMethode() const;
-	std::string getPath() const;
-	std::string getCompletPath() const;
-	std::string getVersion() const;
-	std::string getHeader() const;
-	std::string getHost() const;
-	std::string getContentExtention() const;
-	LocationConfig getLocation() const;
-	bool getIsLocation() const;
-	bool getIsComplete() const;
-	bool getMakeAutoindex();
-	int getCode() const;
-
-	/*attribut setter*/
-	void setMethode(std::string Methode);
-	void setPath(std::string path);
-	void setCompletPath(std::string completPath);
-	void setVersion(std::string version);
-	void setErrorCode(int errorCode);
-
-	void makeLocationRules(const ServerConfig &server);
-
-	void getServerLocationConfig(const ServerConfig &server, std::string path);
-
-	void getRuleForResponse(const ServerConfig &server, std::string completPath);
-	void setLocationConfig(LocationConfig location);
-	std::string getFileName() const;
-	std::string getFileExtention() const;
-
-	// new refact
-	void preparePath(ServerConfig server);
+	void prepareReq(ServerConfig server);
 	void cutVariableToPath();
+	size_t haveVariable();
 	void splitVarQuery(std::string variableQuery);
 	void cutPath();
 	void makeAllPathRules(ServerConfig server);
-	void copyLocationRules(ServerConfig server, std::string folder, std::string piecePath);
-	void verifFile(std::string path);
-	void makeExtentionAndNameFile(std::string file);
-
 	int checkPathType(ServerConfig server, std::string piecePath);
-	size_t haveVariable();
+	void verifFile(std::string path);
+	void copyLocationRules(ServerConfig server, std::string folder, std::string piecePath);
+	void makeExtentionAndNameFile(std::string file);
+	void formatPath();
+	void makeLocationRules();
+	void checkAllowMethods();
+	void searchIndex();
+	void checkIsCgi(ServerConfig server);
+	void getErrorpage(ServerConfig server);
+	void checkRequest();
 
-	// getter
+	std::string getMethode() const;
+	std::string getRoot() const;
+	std::string getPath() const;
+	std::string getCompletPath() const;
+	std::string getFileName() const;
+	std::string getFileExtention() const;
+	std::string getVersion() const;
+	std::string getHeader() const;
+	std::string getHost() const;
+	std::string getCgiPath() const;
+	std::vector<std::string> getIndex() const;
+	std::vector<std::string> getCutPath() const;
 	std::map<std::string, std::string> getVarLst() const;
+	LocationConfig getLocation() const;
+	bool getIsLocation() const;
+	bool getIsPost() const;
+	bool getIsComplete() const;
+	bool getMakeAutoindex() const;
+	bool getIsCgi() const;
+	int getCode() const;
+	
 };
 
 std::ostream &operator<<(std::ostream &o, Request const &request);
