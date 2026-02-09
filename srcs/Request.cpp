@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/14 16:29:29 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/14 16:31:10 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,7 @@ void Request::prepareReq(ServerConfig &server)
 		makeLocationRules();
 	if (this->_code == 200 && this->_fileName.empty() && this->_location.autoindex)
 	{
+		this->_code = 200;
 		this->_makeAutoindex = true;
 		this->_fileExtention = ".html";
 		this->_completPath = this->_root + this->_path;
