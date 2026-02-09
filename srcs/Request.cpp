@@ -13,11 +13,11 @@
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _isComplete(false), _code(0), _bodySize(0) {}
+Request::Request() : _isComplete(false), _isChunked(false), _code(0), _bodySize(0) {}
 
 Request::~Request() {}
 
-void	Request::parse(ServerConfig server, std::string buffer, int code)
+void	Request::parse(ServerConfig &server, std::string &buffer, int code)
 {
 	this->_code = code;
 	if (this->_code != 0)
@@ -26,7 +26,38 @@ void	Request::parse(ServerConfig server, std::string buffer, int code)
 	checkRequest();
 }
 
-void	Request::makeRequest(ServerConfig server, std::string buffer)
+bool hexToDecimal(const std::string &hex, size_t &result)
+{
+    std::istringstream iss(hex);
+    iss >> std::hex >> result;
+    return !iss.fail();
+}
+
+bool	Request::parseChunkedBody(std::string &line) {
+	static std::string	chunkedBody;
+	size_t				pos;
+
+	chunkedBody += line;
+	pos = chunkedBody.find("\r\n");
+	if (pos == std::string::npos)
+		return (false);
+	else {
+		std::string	strChunkSize;
+		for (size_t i = 0; i < pos; i++)
+			strChunkSize += line[i];
+		size_t	chunkSize;
+		if (!hexToDecimal(strChunkSize, chunkSize)) {
+			_code = 400;
+			return (false);
+		}
+		// if (!chunkSize)
+	}
+	if (chunkedBody.find("0\r\n\r\n") != std::string::npos) {
+
+	}
+}
+
+void	Request::makeRequest(ServerConfig &server, std::string &buffer)
 {
 	std::istringstream	request(buffer.c_str());
 	std::string			line;
@@ -45,6 +76,8 @@ void	Request::makeRequest(ServerConfig server, std::string buffer)
 				headerFlag = true;
 		}
 		else {
+			if (!_isChunked && parseChunkedBody(line))
+				break ;
 			if (!this->_body.empty())
 				this->_body += "\n";
 			this->_body += line;
@@ -53,8 +86,7 @@ void	Request::makeRequest(ServerConfig server, std::string buffer)
 	this->_bodySize = this->_body.size();
 }
 
-void	Request::checkRequest()
-{
+void	Request::checkRequest() {
 	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
 		|| this->_host.empty())
 		this->_code = 400;
@@ -62,8 +94,7 @@ void	Request::checkRequest()
 		this->_code = 200;
 }
 
-void	Request::parseMethode(ServerConfig server, std::string line)
-{
+void	Request::parseMethode(ServerConfig &server, std::string &line) {
 	std::istringstream cut(line);
 	std::string res;
 	std::vector<std::string> parsedLine;
@@ -79,11 +110,10 @@ void	Request::parseMethode(ServerConfig server, std::string line)
 	this->setVersion(parsedLine[2]);
 }
 
-void	Request::parseAttribut(std::string line)
-{
+void	Request::parseAttribut(std::string &line) {
 	std::istringstream	cut(line);
 	std::string			res;
-	
+
 	getline(cut, res, ' ');
 	std::string headerName = res;
 	if (!headerName.empty() && headerName[headerName.size() - 1] == ':') // take off ':'
@@ -118,26 +148,30 @@ void	Request::parseAttribut(std::string line)
 			headerValue = headerValue.substr(0, headerValue.size() - 1);
 		if (!headerValue.empty())
 			this->_httpHeaders[headerName] = headerValue;
+		if (headerName == "Transfer-Encoding") {
+			if (headerValue == "chunked")
+				_isChunked = true;
+		}
 	}
 }
 
-size_t	haveVariable(std::string path) {
-	size_t	findVar;
+size_t	haveVariable(std::string &path) {
+	size_t		findVar;
 
-	std::string cutPath;
+	std::string	cutPath;
 	findVar = path.find('?');
 	return (findVar);
 }
 
-std::string	Request::getPathVariable(std::string path) {
-	std::string cutPath;
+std::string	Request::getPathVariable(std::string &path) {
+	std::string	cutPath;
 	if (haveVariable(path) == std::string::npos)
 		return (path);
 	cutPath = path.substr(0, haveVariable(path));
 	return (cutPath);
 }
 
-void	Request::getVariable(std::string path) {
+void	Request::getVariable(std::string &path) {
 	std::string variableQuery;
 	if (haveVariable(path) == std::string::npos)
 		return ;
@@ -161,7 +195,7 @@ void	Request::getVariable(std::string path) {
 	}
 }
 
-int	Request::getPathType(ServerConfig server)
+int	Request::getPathType(ServerConfig &server)
 {
 	struct stat	st;
 
@@ -169,20 +203,16 @@ int	Request::getPathType(ServerConfig server)
 		return (-1);
 	if (S_ISREG(st.st_mode))
 		return (FILE_PATH);
-	if (S_ISDIR(st.st_mode))
-	{
+	if (S_ISDIR(st.st_mode)) {
 		std::vector<LocationConfig>::iterator it;
-		for (it = server.locations.begin(); it < server.locations.end(); it++)
-		{
+		for (it = server.locations.begin(); it < server.locations.end(); it++) {
 			if (server.root + it->path == this->_completPath)
 				return (SERVER_LOCATION_NO_SLASH);
 			else if (server.root + it->path == this->_completPath + '/')
 				return (SERVER_LOCATION_WI_SLASH);
 		}
 		if (this->_path[this->_path.size() - 1] == '/')
-		{
 			return (DIR_WITH_SLASH);
-		}
 		return (DIR_NO_SLASH);
 	}
 	return (0);
@@ -204,7 +234,7 @@ void	Request::verifFile()
 	}
 }
 
-void	Request::getIndex(ServerConfig server)
+void	Request::getIndex(ServerConfig &server)
 {
 	for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++)
 	{
@@ -215,7 +245,7 @@ void	Request::getIndex(ServerConfig server)
 	}
 }
 
-void	Request::getfilePath(ServerConfig server, int searchIndex)
+void	Request::getFilePath(ServerConfig &server, int searchIndex)
 {
 	if ((this->_completPath == server.root + "/" && server.index.size() > 0)
 		|| searchIndex)
@@ -226,7 +256,7 @@ void	Request::getfilePath(ServerConfig server, int searchIndex)
 	verifFile();
 }
 
-void	Request::getServerLocationPath(ServerConfig server)
+void	Request::getServerLocationPath(ServerConfig &server)
 {
 	DIR				*folder;
 	struct dirent	*readFolder;
@@ -261,7 +291,7 @@ void	Request::getServerLocationPath(ServerConfig server)
 	}
 }
 
-void	Request::setAndCheckPath(ServerConfig server, std::string path)
+void	Request::setAndCheckPath(ServerConfig &server, std::string &path)
 {
 	int	fileType;
 
@@ -274,10 +304,10 @@ void	Request::setAndCheckPath(ServerConfig server, std::string path)
 	case -1:
 		break ;
 	case FILE_PATH:
-		getfilePath(server, 0);
+		getFilePath(server, 0);
 		break ;
 	case DIR_WITH_SLASH:
-		getfilePath(server, 1);
+		getFilePath(server, 1);
 		break ;
 	case DIR_NO_SLASH:
 		this->_path = path + "/";
@@ -331,7 +361,7 @@ int	Request::getCode(void) const {
 	return (this->_code);
 }
 
-void	Request::setMethode(std::string methode) {
+void	Request::setMethode(std::string &methode) {
 	if (methode == "GET" || methode == "POST" || methode == "DELETE"
 		|| methode == "HEAD")
 		this->_methode = methode;
@@ -339,11 +369,11 @@ void	Request::setMethode(std::string methode) {
 		this->_code = 405;
 }
 
-void	Request::setPath(std::string path) {
+void	Request::setPath(std::string &path) {
 	this->_path = path;
 }
 
-void	Request::setVersion(std::string version) {
+void	Request::setVersion(std::string &version) {
 	if (version != "HTTP/1.1\r")
 		this->_code = 400;
 	else

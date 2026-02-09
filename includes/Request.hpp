@@ -38,6 +38,7 @@ class Request
 	std::string	_header;
 	std::string	_host;
 	bool		_isComplete;
+	bool		_isChunked;
 	int			_code;
 	std::map<std::string, std::string>	_varLst;
 	std::map<std::string, std::string>	_httpHeaders;
@@ -56,10 +57,11 @@ class Request
 	// refactor
 
 	/* parsing request*/
-	void		parse(ServerConfig server, std::string buffer, int code);
-	void		makeRequest(ServerConfig server, std::string buffer);
-	void		parseMethode(ServerConfig server, std::string line);
-	void		parseAttribut(std::string line);
+	bool		parseChunkedBody(std::string &line);
+	void		parse(ServerConfig &server, std::string &buffer, int code);
+	void		makeRequest(ServerConfig &server, std::string &buffer);
+	void		parseMethode(ServerConfig &server, std::string &line);
+	void		parseAttribut(std::string &line);
 
 	/*check*/
 	void		checkRequest();
@@ -75,22 +77,22 @@ class Request
 	int			getCode() const;
 
 	/* get && verif path type*/
-	void		setAndCheckPath(ServerConfig server, std::string path);
-	int			getPathType(ServerConfig seerver);
+	void		setAndCheckPath(ServerConfig &server, std::string &path);
+	int			getPathType(ServerConfig &server);
 
 	/*check path variable query*/
-	std::string	getPathVariable(std::string path);
-	void		getVariable(std::string path);
+	std::string	getPathVariable(std::string &path);
+	void		getVariable(std::string &path);
 
 	/* get && verif path file*/
-	void		getfilePath(ServerConfig server, int searchIndex);
-	void		getIndex(ServerConfig server);
+	void		getFilePath(ServerConfig &server, int searchIndex);
+	void		getIndex(ServerConfig &server);
 	void		verifFile();
 
 	/*classic setter*/
-	void		setMethode(std::string Methode);
-	void		setPath(std::string path);
-	void		setVersion(std::string version);
+	void		setMethode(std::string &Methode);
+	void		setPath(std::string &path);
+	void		setVersion(std::string &version);
 	void		setErrorCode(int errorCode);
 
 	// CGI part
@@ -102,7 +104,7 @@ class Request
 	const std::map<std::string, std::string>	&getHttpHeaders() const;
 
 	// old
-	void		getServerLocationPath(ServerConfig server);
+	void		getServerLocationPath(ServerConfig &server);
 };
 
 std::ostream	&operator<<(std::ostream &o, Request const &request);
