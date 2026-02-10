@@ -298,9 +298,8 @@ void Server::_parseResponse(Client *c, int errCode) {
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 	Response response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
-	c->getResponse().append(response.getRep());
+	c->getResponse().append(response.getResponse());
 
-	std::cout << BRED << req << NC << std::endl;
 	std::cout  << BBLUE << response << NC << std::endl;
 
 	const std::vector<char> &content = response.getContent();
