@@ -34,7 +34,6 @@ int	main(int ac, char **av) {
 	catch (const std::exception& err) {
 		std::cerr << err.what() << std::endl;
 	}
-
 	return (0);
 }
 

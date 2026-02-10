@@ -53,12 +53,9 @@ public:
 
 private:
 	Config								_conf;
-
 	int									_epollFd;
 	struct epoll_event					_events[MAX_EVENTS];
-
 	std::map<int, std::vector<int> >	_serveurSockets;
-
 	std::map<int, Client*>				_clients;
 
 	void						_setupServerSockets();

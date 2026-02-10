@@ -3,64 +3,61 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/02 13:53:55 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/10 19:42:41 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
-#include "Config.hpp"
-#include "Request.hpp"
-#include "Webserv.hpp"
+# include "Config.hpp"
+# include "Webserv.hpp"
+# include "CGI.hpp"
 
-struct ServerConfig;
-class Request;
+struct	ServerConfig;
+class	Request;
+class	CGI;
 
-class Response
-{
-private:
-	Request &_req;
-	std::string _contentPath;
-	std::string _contentExtention;
-	std::vector<char> _content;
-	std::string _contentLength;
-	std::string _response;
-	std::map<int, std::string> _statutMessage;
-	std::map<std::string, std::string> _contentType;
+class Response {
+	private:
+		Request								&_req;
+		std::string							_contentPath;
+		std::string							_contentExtention;
+		std::string							_response;
+		std::string							_contentLength;
+		std::vector<char>					_content;
+		std::map<int, std::string>			_statutMessage;
+		std::map<std::string, std::string>	_contentType;
+		// CGI
+		bool								_isCGI;
+		std::map<std::string, std::string>	_cgiHeaders;
 
-public:
-	Response(Request &req);
-	~Response();
+	public:
+		Response(Request &req);
+		~Response();
 
-	//refacor
-	void makeRep(ServerConfig server);
-	void getCodePage(ServerConfig server);
+		std::string	getRep() const;
 
-	//generate response
-	void makeLocation(const ServerConfig &server);
+		void		getText();
+		void		getDoc();
+		void		checkDoc();
+		void		makeRep(ServerConfig server);
+		void		getContentExtention();
+		void		getDefaultResponse();
+		void		getFullResponse();
+		void		getResponseCode();
+		void		makeRedirect();
+		std::vector<char>	getContent();
 
-
-
-	//old
-	std::string getRep() const;
-	void getText();
-	void getDoc();
-	void checkDoc();
-	void getContentExtention();
-	void getDefaultResponse();
-	void getFullResponse();
-	void getResponseCode();
-	void makeRedirect();
-	std::vector<std::string> getLstDir();
-	void generateAutoindex();
-
-	std::vector<char> getContent();
+		// CGI
+		bool		isCGIRequest(ServerConfig &server);
+		void		handleCGI(ServerConfig &server);
+		void		buildCGIResponse();
 };
 
-std::ostream &operator<<(std::ostream &o, Response const &response);
+std::ostream	&operator<<(std::ostream &o, Response const &response);
 
 #endif

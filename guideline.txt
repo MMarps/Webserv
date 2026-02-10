@@ -1,9 +1,9 @@
 Voici un plan de route détaillé, pragmatique et ordonné pour mener ton projet webserv (C++98) de zéro à la version livrable. Je suis concis et factuel pour que tu puisses suivre étape par étape.
 
 1) Lecture / préparation (1–3 jours)
-- Lire les RFCs essentiels : RFC7230..7235 (HTTP/1.1), CGI spec, multipart/form-data, chunked transfer.  
-- Tester NGINX et client basiques : curl, telnet, netcat. Comprendre les headers et comportements.  
-- Installer outils : g++ (avec -std=c++98), valgrind, strace, gdb, make, wrk/ab (stress).  
+- Lire les RFCs essentiels : RFC7230..7235 (HTTP/1.1), CGI spec, multipart/form-data, chunked transfer.
+- Tester NGINX et client basiques : curl, telnet, netcat. Comprendre les headers et comportements.
+- Installer outils : g++ (avec -std=c++98), valgrind, strace, gdb, make, wrk/ab (stress).
 
 2) Définir l’architecture et les contraintes (0.5–1 jour)
 - Éviter tout blocage : un seul poll()/select()/epoll()/kqueue() pour tous les IO non‑bloquants.  
@@ -16,14 +16,14 @@ Voici un plan de route détaillé, pragmatique et ordonné pour mener ton projet
 - Exemples de configs dans configs/ (default.conf, tests.conf).
 
 4) Phase 0 — bootstrap et Makefile (0.5 jour)
-- Créer Makefile minimal (all, clean, fclean, re, name).  
-- Compiler un binaire vide ./webserv qui accepte 0 ou 1 argument (config).  
-- Ajouter options de compilation strictes (-std=c++98 -Wall -Wextra -Werror).  
+- Créer Makefile minimal (all, clean, fclean, re, name).
+- Compiler un binaire vide ./webserv qui accepte 0 ou 1 argument (config).
+- Ajouter options de compilation strictes (-std=c++98 -Wall -Wextra -Werror).
 
 5) Parser de configuration (2–4 jours)
-- Parser simple inspiré d’un bloc server/nginx (listen, root, index, error_page, client_max_body_size, location blocks avec allowed_methods, autoindex, upload_path, cgi ext, redirect).  
-- Représenter la config en structures C++ (servers vector, each with vector<listen_endpoints>, locations).  
-- Ajouter validations et messages d’erreur lisibles.  
+- Parser simple inspiré d’un bloc server/nginx (listen, root, index, error_page, client_max_body_size, location blocks avec allowed_methods, autoindex, upload_path, cgi ext, redirect).
+- Représenter la config en structures C++ (servers vector, each with vector<listen_endpoints>, locations).
+- Ajouter validations et messages d’erreur lisibles.
 - Fournir configs de test qui couvrent cas demandés.
 
 6) Conception du cœur réseau — accept et boucle d’évènements (3–6 jours)

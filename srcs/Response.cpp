@@ -3,17 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/02 16:47:43 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/10 19:46:29 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response(Request &req) : _req(req)
-{
+Response::Response(Request &req) : _req(req), _isCGI(false) {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
@@ -24,6 +23,8 @@ Response::Response(Request &req) : _req(req)
 	_statutMessage.insert(std::make_pair(405, "Method Not Allowed"));
 	_statutMessage.insert(std::make_pair(409, "Conflict"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
+	_statutMessage.insert(std::make_pair(502, "Bad Gateway")); // script CGI a crash ou n'a pas pu etre exec
+	_statutMessage.insert(std::make_pair(504, "Gateway Timeout")); // script CGI a pris trop de temps
 	_statutMessage.insert(std::make_pair(413, "Payload Too Large"));
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));
@@ -41,70 +42,17 @@ Response::Response(Request &req) : _req(req)
 	/*telecharge automatiquement la ressource !!!*/
 	// _contentType.insert(std::make_pair("...", "application/octet-stream"));
 }
-Response::~Response()
-{
-}
 
-void Response::makeRep(ServerConfig server)
-{
-	std::cout << "debut parsing response" << std::endl;
-	getDefaultResponse();
-	if (this->_req.getCode() == 200)
-	{
-		if (this->_req.getIsLocation())
-			makeLocation(server);
-		else
-		{
-			getContentExtention();
-			getFullResponse();
-		}
-	}
-	else if (this->_req.getCode() == 301)
-		makeRedirect();
-	else
-		getCodePage(server);
-	std::cout << "fin parsing request" << std::endl;
-}
+Response::~Response() {}
 
-void Response::makeLocation(const ServerConfig &server)
-{
-	(void) server;
-	
-	if (this->_req.getLocation()->autoindex)
-	{
-		generateAutoindex();
-		this->_response += "\nContent-Type: " + this->_contentType[".html"];
-		this->_response += "\nContent-Length: " + this->_contentLength;
-		this->_response += "\n\n";
-	}
-}
-
-void Response::getCodePage(ServerConfig server)
-{
-	if (!server.error_pages[this->_req.getCode()].empty())
-	{
-		this->_req.setPath(server.error_pages[this->_req.getCode()]);
-		this->_req.setCompletPath(this->_req.getPath());
-		getContentExtention();
-		getFullResponse();
-	}
-	else
-	{
-		this->_response += "\nContent-Length: 0";
-		this->_response += "\n\n";
-	}
-}
-
-std::string Response::getRep() const
-{
+std::string	Response::getRep() const {
 	return (this->_response);
 }
 
-void Response::getDoc()
+void	Response::getDoc()
 {
 	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
-	if (!file.is_open())
-	{
+	if (!file.is_open()) {
 		this->_req.setErrorCode(404);
 		return;
 	}
@@ -119,11 +67,10 @@ void Response::getDoc()
 	this->_content.swap(buffer);
 }
 
-void Response::checkDoc()
+void	Response::checkDoc()
 {
 	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
-	if (!file.is_open())
-	{
+	if (!file.is_open()) {
 		this->_req.setErrorCode(404);
 		return;
 	}
@@ -135,64 +82,53 @@ void Response::checkDoc()
 	this->_contentLength = ss.str();
 }
 
-std::vector<char> Response::getContent()
-{
+std::vector<char>	Response::getContent() {
 	return (this->_content);
 }
 
-void Response::makeRedirect()
-{
+void	Response::makeRedirect() {
 	this->_response += "\nLocation: " + this->_req.getPath();
 	this->_response += "\nConnection: close";
 	this->_response += "\nContent-Length: 0";
 	this->_response += "\n\n";
 }
 
-std::vector<std::string> Response::getLstDir()
-{
-	DIR *folder;
-	struct dirent *readFolder;
-	std::vector<std::string> lstFiles;
-
-	folder = opendir(this->_req.getCompletPath().c_str());
-	if (!folder)
-	{
-		this->_req.setErrorCode(404);
-		return (lstFiles);
+void	Response::makeRep(ServerConfig server) {
+	if (isCGIRequest(server)) {
+		_isCGI = true;
+		handleCGI(server);
+		if (_req.getCode() == 502) {
+			getDefaultResponse();
+			_response += "\r\nContent-Length: 0\r\n\r\n";
+			return ;
+		}
+		buildCGIResponse();
+		return ;
 	}
-	readFolder = readdir(folder);
-	while (readFolder)
-	{
-		if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
-			lstFiles.push_back(readFolder->d_name);
-		readFolder = readdir(folder);
+	getDefaultResponse();
+	if (this->_req.getCode() == 200) {
+		getContentExtention();
+		getFullResponse();
 	}
-	std::sort(lstFiles.begin(), lstFiles.end());
-	return (lstFiles);
+	else if(this->_req.getCode() == 301) {
+		makeRedirect();
+	}
+	else {
+		if (!server.error_pages[this->_req.getCode()].empty()
+			&& access(server.error_pages[this->_req.getCode()].c_str(),
+				F_OK) != -1) {
+			this->_req.setPath(server.error_pages[this->_req.getCode()]);
+			getContentExtention();
+			getFullResponse();
+		}
+		else {
+			this->_response += "\nContent-Length: 0";
+			this->_response += "\n\n";
+		}
+	}
 }
 
-void Response::generateAutoindex()
-{
-	std::string htmlpage;
-	std::vector<std::string> lstFiles;
-
-	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
-	lstFiles = getLstDir();
-	for (long unsigned int i = 0; i < lstFiles.size(); i++)
-	{
-		htmlpage += "<a href=\"" + this->_req.getPath() + "/" + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
-	}
-	htmlpage += "</body></html>";
-	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
-	this->_content.swap(tmp);
-	std::stringstream ss;
-	ss << htmlpage.size();
-	this->_contentLength = ss.str();
-	std::cout << BBLUE << this->_contentLength << NC << std::endl;
-}
-
-void Response::getContentExtention()
-{
+void	Response::getContentExtention() {
 	std::stringstream path(this->_req.getCompletPath());
 	size_t dotPos = this->_req.getCompletPath().rfind('.');
 	if (dotPos == std::string::npos)
@@ -204,14 +140,12 @@ void Response::getContentExtention()
 	this->_contentExtention = this->_req.getCompletPath().substr(dotPos);
 }
 
-void Response::getDefaultResponse()
-{
+void	Response::getDefaultResponse() {
 	this->_response = "HTTP/1.1 ";
 	getResponseCode();
 }
 
-void Response::getFullResponse()
-{
+void	Response::getFullResponse() {
 	if (this->_req.getMethode() == "HEAD")
 		checkDoc();
 	else
@@ -221,15 +155,58 @@ void Response::getFullResponse()
 	this->_response += "\n\n";
 }
 
-void Response::getResponseCode()
-{
+void	Response::getResponseCode() {
 	std::stringstream errorCode;
 	errorCode << this->_req.getCode();
 	this->_response += errorCode.str() + " " + this->_statutMessage[this->_req.getCode()];
 }
 
-std::ostream &operator<<(std::ostream &o, Response const &response)
-{
+bool	Response::isCGIRequest(ServerConfig &server) {
+	if (_req.getCode() != 200) // requete incorrecte
+		return (false);
+
+	CGI	tmpCGI(_req, server);
+	return (tmpCGI.isCGI());
+}
+
+void	Response::handleCGI(ServerConfig &server) {
+	CGI	_cgi(_req, server);
+
+	if (!_cgi.execute(_req)) {
+		_req.setErrorCode(502);
+		return ;
+	}
+
+	int	statusCode = _cgi.getStatusCode();
+	if (statusCode != 200)
+		_req.setErrorCode(statusCode);
+
+	_cgiHeaders = _cgi.getHeaders();
+
+	std::string	body = _cgi.getBody();
+	_content.assign(body.begin(), body.end()); // converti body (std::string) en std::vector pour assigner a _content 
+}
+
+void	Response::buildCGIResponse() {
+	std::ostringstream	statusLine;
+	statusLine << "HTTP/1.1 " << _req.getCode() << ' ' << _statutMessage[_req.getCode()] << "\r\n";
+	_response = statusLine.str();
+
+	std::map<std::string, std::string>::iterator	it = _cgiHeaders.begin();
+	while (it != _cgiHeaders.end()) {
+		_response += it->first + ": " + it->second + "\r\n";
+		it++;
+	}
+	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) { // ajouter content-length si pas deja present
+		std::ostringstream	contentLengthStream;
+		contentLengthStream << _content.size();
+		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
+	}
+	_response += "Connection: close\r\n\r\n";
+	_response.append(_content.begin(), _content.end());
+}
+
+std::ostream	&operator<<(std::ostream &o, Response const &response) {
 	o << BYELLOW << response.getRep() << NC << std::endl;
 
 	return (o);
