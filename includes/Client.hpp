@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/21 17:34:50 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/04 19:22:24 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,24 +20,28 @@ public:
 	Client(int clientFd, int serverIdx);
 	~Client();
 
-	int					getFd() const;
-	int					getServerIdx() const;
-	std::string&		getBuffer();
-	std::string&		getResponse();
+	int				getFd() const;
+	int				getServerIdx() const;
+	std::string&	getHeader();
+	std::string&	getResponse();
+
+	std::vector<char>&	getBody();
+	size_t				getBodySize() const;
+	void				setBody(std::vector<char> body);
+	void				appendBody(const char* buf, size_t size);
+
+	bool				isHeaderFinished;
 	bool				isRequestFinished;
 
-	std::vector<char> 	getBody();
-	void				setBody(std::vector<char> body);
-
+	size_t				expectedBodySize;
+	size_t				actualBodySize;
 
 private:
-	int			_fd;
-	int			_serverIdx;
-	std::string	_buffer;
-	std::string	_response;
-	
-	//add
-	std::vector<char> _body;
+	int					_fd;
+	int					_serverIdx;
+	std::string			_header;
+	std::string			_response;
+	std::vector<char>	_body;
 };
 
 #endif
