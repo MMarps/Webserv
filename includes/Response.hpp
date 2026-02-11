@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/09 16:12:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/11 16:57:38 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ public:
 	std::vector<std::string> getLstDir();
 	void generateAutoindex();
 
-	// refacor
+	// refactor
 	void makeRep(ServerConfig &server);
 	void generateHeader();
 	void generateBody();
@@ -58,7 +58,7 @@ public:
 	void makeError();
 	std::string getResponse() const;
 	std::vector<char> getContent() const;
-
+	// void makeError();
 };
 
 std::ostream &operator<<(std::ostream &o, Response const &response);

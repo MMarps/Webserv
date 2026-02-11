@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/11 15:50:09 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/11 17:38:18 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ void Request::parse(ServerConfig server, std::string header, int code)
 	this->_index = server.index;
 	makeRequest(server, header);
 	checkRequest();
+	std::cout << *this << std::endl;
 	std::cout << "fin parsing request" << std::endl;
 }
 
@@ -75,22 +76,21 @@ void Request::prepareReq(ServerConfig server)
 	formatPath();
 	if (this->_isLocation)
 		makeLocationRules();
-	searchIndex();
-	std::cout << BRED << "filename " << this->_fileName.empty() << NC << std::endl;
-
-	if (this->_fileName.empty() && this->_location.autoindex)
+	if (this->_code == 200 && this->_fileName.empty() && this->_location.autoindex)
 	{
-		this->_code = 200;
 		this->_makeAutoindex = true;
 		this->_fileExtention = ".html";
 		this->_completPath = this->_root + this->_path;
-
 		return;
 	}
+	searchIndex();
 	checkIsCgi(server);
+	std::cout << "ca passe" << std::endl;
 	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
 	{
 		this->_completPath = server.error_pages[this->_code];
+		makeExtentionAndNameFile(this->_completPath);
+		return;
 	}
 	this->_completPath = this->_root + this->_path;
 }
@@ -102,7 +102,6 @@ void Request::cutVariableToPath()
 		return;
 	variableQuery = this->_path.substr(haveVariable() + 1);
 	this->_path = this->_path.substr(0, haveVariable());
-	std::cout << variableQuery << std::endl;
 	splitVarQuery(variableQuery);
 }
 
@@ -137,7 +136,6 @@ void Request::cutPath()
 
 	std::string res;
 	std::string path = this->_path;
-	std::cout << path << std::endl;
 	std::istringstream cut(path);
 	if (path.size() != 1)
 	{

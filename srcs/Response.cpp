@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/11 15:50:10 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/11 17:49:35 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,12 @@ void Response::generateHeader()
 	{
 		return;
 	}
+	if (this->_req.getCode() != 200 && this->_req.getFileName().empty())
+	{
+		this->_response += "Content-length: 0\n";
+		this->_response += "\n\n";
+		return ;
+	}
 	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtention()] + "\n";
 	this->_response += "Content-length: " + this->_contentLength + "\n";
 	this->_response += "\n\n";
@@ -77,11 +83,8 @@ void Response::generateBody()
 		return;
 	}
 	else if (this->_req.getMakeAutoindex())
-	{
 		generateAutoindex();
-	}
-	// else
-	// 	makeError();
+	
 }
 
 void Response::checkFile(bool save)
@@ -92,7 +95,6 @@ void Response::checkFile(bool save)
 
 	std::vector<char> buffer(first, last);
 	this->_contentLength = intToString(buffer.size());
-	std::cout << BRED << _contentLength << NC << std::endl;
 	if (save)
 		this->_content.swap(buffer);
 }
@@ -120,7 +122,6 @@ void Response::generateAutoindex()
 	std::stringstream ss;
 	ss << htmlpage.size();
 	this->_contentLength = ss.str();
-	std::cout << BBLUE << this->_contentLength << NC << std::endl;
 }
 
 std::vector<std::string> Response::getLstDir()
@@ -131,10 +132,8 @@ std::vector<std::string> Response::getLstDir()
 
 	folder = opendir(this->_req.getCompletPath().c_str());
 	readFolder = readdir(folder); // probleme ici
-	std::cout << BBLUE << "ca passe 2" << std::endl;
 	while (readFolder)
 	{
-		std::cout << "a" << std::endl;
 		if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
 			lstFiles.push_back(readFolder->d_name);
 		readFolder = readdir(folder);
@@ -146,7 +145,6 @@ std::vector<std::string> Response::getLstDir()
 // void Response::makeRep(ServerConfig server)
 // {<< response.getContent().data() << NC << std::endl;
 // 	(void) server; //a virer si pas nescessaire
-// 	std::cout << "debut parsing response" << std::endl;
 // 	getDefaultResponse();
 // 	if (this->_req.getCode() == 200)
 // 	{
@@ -161,7 +159,6 @@ std::vector<std::string> Response::getLstDir()
 // 		makeRedirect();
 // 	// else
 // 	// 	getCodePage();
-// 	std::cout << "fin parsing response" << std::endl;
 // }
 
 // void Response::getDefaultResponse()
@@ -198,8 +195,7 @@ std::vector<std::string> Response::getLstDir()
 // // 	}
 // // 	else
 // // 	{
-// // 		this->_response += "\nContent-Length: 0";
-// // 		this->_response += "\n\n";
+// //
 // // 	}
 // // }
 
