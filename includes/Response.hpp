@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/02 13:53:55 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/09 16:12:47 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,6 @@ class Response
 {
 private:
 	Request &_req;
-	std::string _contentPath;
-	std::string _contentExtention;
 	std::vector<char> _content;
 	std::string _contentLength;
 	std::string _response;
@@ -36,21 +34,14 @@ public:
 	Response(Request &req);
 	~Response();
 
-	//refacor
-	void makeRep(ServerConfig server);
-	void getCodePage(ServerConfig server);
-
-	//generate response
-	void makeLocation(const ServerConfig &server);
-
-
-
-	//old
+	// generate response
+	void makeLocation();
+	void getCodePage();
+	// old
 	std::string getRep() const;
 	void getText();
 	void getDoc();
 	void checkDoc();
-	void getContentExtention();
 	void getDefaultResponse();
 	void getFullResponse();
 	void getResponseCode();
@@ -58,7 +49,16 @@ public:
 	std::vector<std::string> getLstDir();
 	void generateAutoindex();
 
-	std::vector<char> getContent();
+	// refacor
+	void makeRep(ServerConfig &server);
+	void generateHeader();
+	void generateBody();
+	void checkFile(bool save);
+	std::string intToString(int n);
+	void makeError();
+	std::string getResponse() const;
+	std::vector<char> getContent() const;
+
 };
 
 std::ostream &operator<<(std::ostream &o, Response const &response);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/04 19:26:13 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/11 16:10:32 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -286,7 +286,7 @@ void Server::_handleClientData(int clientFd) {
 		if (client->getBody().size() >= client->expectedBodySize) {
 			std::cout << "Request received completely." << std::endl;
 			client->isRequestFinished = true;
-            _parseResponse(client, 0);
+            _parseResponse(client, 200);
             _modEpoll(clientFd, EPOLLOUT);
 		}
 	}
@@ -298,9 +298,8 @@ void Server::_parseResponse(Client *c, int errCode) {
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 	Response response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
-	c->getResponse().append(response.getRep());
+	c->getResponse().append(response.getResponse());
 
-	std::cout << BRED << req << NC << std::endl;
 	std::cout  << BBLUE << response << NC << std::endl;
 
 	const std::vector<char> &content = response.getContent();
