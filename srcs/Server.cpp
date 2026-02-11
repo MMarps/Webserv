@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 20:17:41 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/11 18:46:10 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ Server::Server(const std::string &confFileName) {
 	signal(SIGTERM, signal_handler);
 
 	Logger::init(_conf.servers);
-	Logger::log("Logger initialised", -1);
+	Logger::log("Logger initialised");
 }
 
 Server::~Server() {
@@ -49,7 +49,7 @@ void Server::_setupServerSockets() {
 	int											fd;
 	int											opt;
 	std::map<std::pair<std::string, int>, int>	bound;
-	std::ostringstream oss;
+	std::ostringstream 							oss;
 
 	for (size_t si = 0; si < _conf.servers.size(); si++) {
 		std::vector<Listen>::iterator it;
@@ -57,16 +57,17 @@ void Server::_setupServerSockets() {
 			std::pair<std::string, int>	key(it->host, it->port);
 			if (bound.count(key)) {
 				_serveurSockets[bound[key]].push_back(si);
-				oss << "Server " << "[" << si << "] listening on port "
-					<< it->port << " (fd=" << fd << ")" << std::endl;
+				oss << "Listening on port " << it->port << " (fd=" << fd << ")";
 				Logger::info(oss.str(), si);
-				oss.clear();
+				oss.str("");
 				continue ;
 			}
+
 			std::memset(&hints, 0, sizeof(hints));
 			hints.ai_family = AF_INET;
 			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_flags = AI_PASSIVE;
+
 			std::stringstream ss;
 			ss << it->port;
 			std::string strPort = ss.str();
@@ -77,6 +78,7 @@ void Server::_setupServerSockets() {
 				_closeSocketFds();
 				throw ServerError(gai_strerror(status));
 			}
+
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 			if (fd < 0) {
 				freeaddrinfo(res);
@@ -100,10 +102,9 @@ void Server::_setupServerSockets() {
 					std::pair<std::string, int>	wildcardKey("*", it->port);
 					if (bound.count(wildcardKey)) {
 						_serveurSockets[bound[wildcardKey]].push_back(si);
-						oss << "Server " << "[" << si << "] listening on port "
-					  		<< it->port << " (fd=" << fd << ")" << std::endl;
+						oss << "Listening on port " << it->port << " (fd=" << fd << ")";
 						Logger::info(oss.str(), si);
-						oss.clear();
+						oss.str("");
 						continue ;
 					}
 				}
@@ -114,17 +115,20 @@ void Server::_setupServerSockets() {
 				throw ServerError(msg.str());
 			}
 			freeaddrinfo(res);
+
 			if (listen(fd, SOMAXCONN) < 0) {
 				close(fd);
 				_closeSocketFds();
 				throw ServerError("Failed to listen");
 			}
+
 			_addToEpoll(fd, EPOLLIN);
 			_serveurSockets[fd].push_back(si);
-			oss << "Server " << "[" << si << "] listening on port "
-				<< it->port << " (fd=" << fd << ")" << std::endl;
+
+			oss << "Listening on port " << it->port << " (fd=" << fd << ")";
 			Logger::info(oss.str(), si);
-			oss.clear();
+			oss.str("");
+
 			bound[key] = fd;
 		}
 	}
@@ -174,12 +178,12 @@ int Server::_modEpoll(int fd, uint32_t newEvents) {
 /////////////////////////////////////
 
 void Server::run() {
-	int			nfds;
-	int			currentFd;
-	uint32_t	currentEvent;
+	int					nfds;
+	int					currentFd;
+	uint32_t			currentEvent;
 
 	_setupServerSockets();
-	std::cout << BGREEN << "\nServer Ready\n" << NC << std::endl; 
+	Logger::log("Server Ready");
 	while (true) {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
 		if (nfds < 0) {
@@ -210,8 +214,9 @@ void Server::run() {
 				_sendResponse(currentFd);
 		}
 	}
-	if (g_terminate)
-		std::cout << BGREEN << "Shutdown complete" << NC << std::endl;
+	if (g_terminate) {
+		Logger::log("Shutdown complete\n");
+	}
 }
 
 void Server::_closeConnection(int fd) {

@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 19:21:15 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/11 18:00:26 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -327,16 +327,31 @@ void	Parser::checkCgi(Config &cfg) {
 }
 
 void	Parser::getLogFile(ServerConfig& srv, int srvIdx) {
-	std::string::const_iterator it = srv.root.end() - 1;
-	std::stringstream			ss;
+	std::string::const_iterator it;
+	const std::string& root = srv.root;
+	std::stringstream ss;
 
-	if (*it != '/')
-		ss << '/';
-	
-	ss << srv.root << "log/webserv" << "[" << srvIdx << "]" << ".log";
+
+	if (root.size() == 1 && root[0] == '/')
+		ss << srv.root;
+	else
+		ss << findRootDir(root);
+
+	it = ss.str().end() - 1;
+	if (*it == '/')
+		ss << "log/Server[" << srvIdx << "].log";
+	else
+		ss << "/log/Server[" << srvIdx << "].log";
 
 	srv.log = ss.str();
-	ss.flush();
+}
+
+std::string	Parser::findRootDir(const std::string& root) {
+	size_t pos = root.find('/', 1);
+	if (pos == root.npos)
+		return (root);
+	else
+		return (root.substr(0, pos));
 }
 
 /////////////////////////////////////

@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 19:33:12 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 20:25:49 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/11 18:38:59 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,11 @@ public:
 
 	static void	init(const std::vector<ServerConfig> servers);
 
+	static void	log(const std::string& msg);
 	static void	log(const std::string& msg, int srvIdx);
+	static void	info(const std::string& msg);
 	static void	info(const std::string& msg, int srvIdx);
+	static void	error(const std::string& msg);
 	static void	error(const std::string& msg, int srvIdx);
 
 private:
@@ -38,6 +41,7 @@ private:
 	bool		_createDir(const std::string& dir);
 
 	void		_generateLog(const std::string& msg, size_t srvIdx);
+	void		_generateLogForAll(const std::string& msg);
 	std::string	_makeTimestamp() const;
 
 	void		_close();

@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 19:21:27 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/11 17:23:20 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,7 @@ private:
 	void			putDefaultValues(Config &cfg);
 	void			checkCgi(Config &cfg);
 	void			getLogFile(ServerConfig& srv, int srvIdx);
+	std::string		findRootDir(const std::string& root);
 };
 
 #endif

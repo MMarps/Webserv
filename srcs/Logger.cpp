@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/04 19:34:30 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 20:33:08 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/11 18:37:16 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,24 +34,32 @@ void	Logger::init(const std::vector<ServerConfig> servers) {
 	}
 }
 
+////////////////////////////////////////////
+
+void	Logger::log(const std::string& msg) {
+	instance()._generateLogForAll(msg);
+}
+
 void	Logger::log(const std::string& msg, int srvIdx) {
-	if (srvIdx <= -1)
-		std::cout << instance()._makeTimestamp() << " - " << msg << std::endl;
-	else
+	if (srvIdx >= 0)
 		instance()._generateLog(msg, static_cast<size_t>(srvIdx));
 }
 
+void	Logger::info(const std::string& msg) {
+	instance()._generateLogForAll("[INFO] " + msg);
+}
+
 void	Logger::info(const std::string& msg, int srvIdx) {
-	if (srvIdx <= -1)
-		std::cout << instance()._makeTimestamp() << " - " << msg << std::endl;
-	else
+	if (srvIdx >= 0)
 		instance()._generateLog("[INFO] " + msg, static_cast<size_t>(srvIdx));
 }
 
+void	Logger::error(const std::string& msg) {
+	instance()._generateLogForAll("[ERROR] " + msg);
+}
+
 void	Logger::error(const std::string& msg, int srvIdx) {
-	if (srvIdx <= -1)
-		std::cout << instance()._makeTimestamp() << " - " << msg << std::endl;
-	else
+	if (srvIdx >= 0)
 		instance()._generateLog("[ERROR] " + msg, static_cast<size_t>(srvIdx));
 }
 
@@ -145,12 +153,31 @@ void	Logger::_generateLog(const std::string& msg, size_t srvIdx) {
 	ss << "Server[" << srvIdx << "] " << _makeTimestamp() << " - " << msg;
 
 	std::string log = ss.str();
-	ss.flush();
 
 	std::cout << log << std::endl;
 
 	if (_active[srvIdx] && _ofs[srvIdx] && _ofs[srvIdx]->is_open())
         (*_ofs[srvIdx]) << log << std::endl;
+}
+
+void	Logger::_generateLogForAll(const std::string& msg) {
+	std::map<size_t, std::ofstream*>::iterator	it;
+	std::stringstream							ss;
+	std::string	ts = _makeTimestamp();
+
+	size_t idx = 0;
+	for (it = _ofs.begin(); it != _ofs.end(); it++) {
+		std::ofstream* ofs_ptr = it->second;
+		if (ofs_ptr && ofs_ptr->is_open()) {
+			ss << "Server[" << idx << "] " << ts << " - " << msg;
+			std::string log = ss.str();
+			*ofs_ptr << log << std::endl;
+			ss.str("");
+		}
+		idx++;
+	}
+
+	std::cout << "Servers   " << ts << " - " << msg << std::endl;
 }
 
 std::string	Logger::_makeTimestamp() const {
