@@ -17,7 +17,7 @@
 
 class	Client {
 public:
-	Client(int clientFd, int serverIdx);
+	Client(int clientFd, int serverIdx, const std::string &remoteAddr, int ServerPort);
 	~Client();
 
 	int					getFd() const;
@@ -28,7 +28,8 @@ public:
 
 	std::vector<char> 	getBody();
 	void				setBody(std::vector<char> body);
-
+	std::string			getRemoteAddr() const;
+	int					getServerPort() const;
 
 private:
 	int			_fd;
@@ -37,7 +38,9 @@ private:
 	std::string	_response;
 	
 	//add
-	std::vector<char> _body;
+	std::vector<char>	_body;
+	std::string			_remoteAddr;
+	int					_serverPort;
 };
 
 #endif

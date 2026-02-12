@@ -38,7 +38,6 @@ class Request
 	std::string	_header;
 	std::string	_host;
 	bool		_isComplete;
-	bool		_isChunked;
 	int			_code;
 	std::map<std::string, std::string>	_varLst;
 	std::map<std::string, std::string>	_httpHeaders;
@@ -50,6 +49,14 @@ class Request
 	size_t		_bodySize; // taille du body
 	std::string	_contentType; // contentType de la requete
 
+	bool		_isChunked;
+	// bool		_headersParser;
+	std::string	_rawBuffer;
+
+	// Network metadata
+	std::string	_remoteAddr; // stocke l'IP du client
+	int			_serverPort; // stocke le port d ecoute du serv
+	
   public:
 	Request();
 	~Request();
@@ -57,7 +64,6 @@ class Request
 	// refactor
 
 	/* parsing request*/
-	bool		parseChunkedBody(std::string &line);
 	void		parse(ServerConfig &server, std::string &buffer, int code);
 	void		makeRequest(ServerConfig &server, std::string &buffer);
 	void		parseMethode(ServerConfig &server, std::string &line);
@@ -96,6 +102,7 @@ class Request
 	void		setErrorCode(int errorCode);
 
 	// CGI part
+	bool		parseChunkedBody(const std::string &newData);
 	std::string	getQueryString() const;
 	std::string	getBody() const;
 	std::string	getContentType() const;
@@ -103,10 +110,17 @@ class Request
 	const std::map<std::string, std::string>	&getVarLst() const;
 	const std::map<std::string, std::string>	&getHttpHeaders() const;
 
+	// Network metadata
+	std::string	getRemoteAddr() const;
+	int			getServerPort() const;
+	void		setRemoteAddr(const std::string &addr);
+	void		setServerPort(int port);
+
 	// old
 	void		getServerLocationPath(ServerConfig &server);
 };
 
 std::ostream	&operator<<(std::ostream &o, Request const &request);
+size_t			hexToDecimal(const std::string &hex);
 
 #endif

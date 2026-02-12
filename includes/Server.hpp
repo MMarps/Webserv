@@ -57,6 +57,7 @@ private:
 	struct epoll_event					_events[MAX_EVENTS];
 	std::map<int, std::vector<int> >	_serveurSockets;
 	std::map<int, Client*>				_clients;
+	std::map<int, std::pair<std::string, int> >	_clientMetadata; // map de metadata, au format: fd, IP client, port serv
 
 	void				_setupServerSockets();
 	int					_setNonBlocking(int fd);

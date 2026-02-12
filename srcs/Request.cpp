@@ -13,12 +13,11 @@
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _isComplete(false), _isChunked(false), _code(0), _bodySize(0) {}
+Request::Request() : _isComplete(false), _code(0), _bodySize(0), _isChunked(false), _serverPort(0) {}
 
 Request::~Request() {}
 
-void	Request::parse(ServerConfig &server, std::string &buffer, int code)
-{
+void	Request::parse(ServerConfig &server, std::string &buffer, int code) {
 	this->_code = code;
 	if (this->_code != 0)
 		return ;
@@ -26,45 +25,75 @@ void	Request::parse(ServerConfig &server, std::string &buffer, int code)
 	checkRequest();
 }
 
-bool hexToDecimal(const std::string &hex, size_t &result)
-{
-    std::istringstream iss(hex);
-    iss >> std::hex >> result;
-    return !iss.fail();
+size_t		hexToDecimal(const std::string &hex) {
+	size_t	value = 0;
+
+	for (size_t i = 0; i < hex.size(); i++) {
+		char	c = hex[i];
+		value *= 16;
+		if (c >= '0' && c <= '9')
+			value += c - '0';
+		else if (c >= 'A' && c <= 'F')
+			value += c - 'A' + 10;
+		else if (c >= 'a' && c <= 'f')
+			value += c - 'a' + 10;
+		else
+			break;
+	}
+	return (value);
 }
 
-bool	Request::parseChunkedBody(std::string &line) {
-	static std::string	chunkedBody;
-	size_t				pos;
-
-	chunkedBody += line;
-	pos = chunkedBody.find("\r\n");
-	if (pos == std::string::npos)
-		return (false);
-	else {
-		std::string	strChunkSize;
-		for (size_t i = 0; i < pos; i++)
-			strChunkSize += line[i];
-		size_t	chunkSize;
-		if (!hexToDecimal(strChunkSize, chunkSize)) {
+bool	Request::parseChunkedBody(const std::string &newData) {
+	_rawBuffer += newData;
+	size_t	pos = 0;
+	
+	while (pos < _rawBuffer.size()) {
+		size_t	lineEnd = _rawBuffer.find("\r\n", pos); // chercher
+		if (lineEnd == std::string::npos)
+			return (false); // donnees incompletes -> attendre
+		std::string	chunkSizeStr = _rawBuffer.substr(pos, lineEnd - pos);
+		size_t		chunkSize = hexToDecimal(chunkSizeStr);
+		if (chunkSize == static_cast<size_t>(-1)) {
 			_code = 400;
 			return (false);
 		}
-		// if (!chunkSize)
-	}
-	if (chunkedBody.find("0\r\n\r\n") != std::string::npos) {
+		if (chunkSize == 0) { // check si chunk final
+			size_t	finalEnd = _rawBuffer.find("\r\n", lineEnd + 2);
+			if (finalEnd == std::string::npos)
+				return (false); // si \r\n final pas trouve -> attendre
+			// dechunking done
+			_bodySize = _body.size();
+			_isComplete = true;
+			_rawBuffer.clear();
+			return (true);
+		}
+		// ÉTAPE 4 : Vérifier qu'on a assez de données pour ce chunk
+		size_t	dataStart = lineEnd + 2; // Position après "\r\n"
+		size_t	dataEnd = dataStart + chunkSize;
+		size_t	nextChunkStart = dataEnd + 2; // Après les données + "\r\n"
 
+		if (nextChunkStart > _rawBuffer.size())
+			return (false); // pas assez de donnees -> attendre
+		std::string	chunkData = _rawBuffer.substr(dataStart, chunkSize);
+
+		_body += chunkData;
+		pos = nextChunkStart;
 	}
+	if (pos > 0)
+		_rawBuffer = _rawBuffer.substr(pos);
+	
+	return (false); // pas fini -> attendre + de donnees
 }
 
 void	Request::makeRequest(ServerConfig &server, std::string &buffer)
 {
 	std::istringstream	request(buffer.c_str());
 	std::string			line;
-	bool				headerFlag = false;
+	std::string			bodyBuffer;
+	bool				headerParsed = false;
 	
 	while (getline(request, line)) {
-		if (!headerFlag) {
+		if (!headerParsed) {
 			std::istringstream	cut(line);
 			std::string			res;
 			getline(cut, res, ' ');
@@ -72,18 +101,38 @@ void	Request::makeRequest(ServerConfig &server, std::string &buffer)
 				parseMethode(server, line);
 			else
 				parseAttribut(line);
-			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0)
-				headerFlag = true;
+			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0) {
+				headerParsed = true;
+			}
 		}
 		else {
-			if (!_isChunked && parseChunkedBody(line))
-				break ;
-			if (!this->_body.empty())
-				this->_body += "\n";
-			this->_body += line;
+			// Accumuler les lignes du body
+			if (!bodyBuffer.empty())
+				bodyBuffer += "\n";
+			bodyBuffer += line;
 		}
 	}
-	this->_bodySize = this->_body.size();
+	
+	// Traiter le body après avoir lu tout le buffer
+	if (headerParsed && !bodyBuffer.empty()) {
+		if (_isChunked) {
+			// Pour les requêtes chunked, parser les chunks
+			parseChunkedBody(bodyBuffer);
+		}
+		else {
+			// Pour les requêtes normales, stocker directement
+			this->_body += bodyBuffer;
+			this->_bodySize = this->_body.size();
+			
+			// Vérifier si le body est complet
+			std::map<std::string, std::string>::iterator	it = _httpHeaders.find("Content-Length");
+			if (it != _httpHeaders.end()) {
+				size_t expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
+				if (this->_bodySize >= expectedSize)
+					_isComplete = true;
+			}
+		}
+	}
 }
 
 void	Request::checkRequest() {
@@ -146,12 +195,16 @@ void	Request::parseAttribut(std::string &line) {
 			headerValue = headerValue.substr(1);
 		if (!headerValue.empty() && headerValue[headerValue.size() - 1] == '\r')
 			headerValue = headerValue.substr(0, headerValue.size() - 1);
-		if (!headerValue.empty())
-			this->_httpHeaders[headerName] = headerValue;
 		if (headerName == "Transfer-Encoding") {
-			if (headerValue == "chunked")
+			std::string	valueLower;
+			for (size_t i = 0; i < headerValue.length(); i++)
+				valueLower += tolower(headerValue[i]);
+			if (valueLower.find("chunked") != std::string::npos)
 				_isChunked = true;
+			this->_httpHeaders["Transfer-Encoding"] = headerValue;
 		}
+		else if (!headerValue.empty())
+			this->_httpHeaders[headerName] = headerValue;
 	}
 }
 
@@ -195,8 +248,7 @@ void	Request::getVariable(std::string &path) {
 	}
 }
 
-int	Request::getPathType(ServerConfig &server)
-{
+int	Request::getPathType(ServerConfig &server) {
 	struct stat	st;
 
 	if (stat(this->_completPath.c_str(), &st) == -1)
@@ -222,8 +274,7 @@ void	Request::verifFile()
 {
 	struct stat	st;
 
-	if (stat(this->_completPath.c_str(), &st) == -1)
-	{
+	if (stat(this->_completPath.c_str(), &st) == -1) {
 		if (errno == ENOENT || errno == ENOTDIR)
 			this->_code = 404;
 		else if (errno == EACCES || errno == ELOOP)
@@ -234,10 +285,8 @@ void	Request::verifFile()
 	}
 }
 
-void	Request::getIndex(ServerConfig &server)
-{
-	for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++)
-	{
+void	Request::getIndex(ServerConfig &server) {
+	for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++) {
 		this->_completPath += *it;
 		verifFile();
 		if (this->_code == 0)
@@ -245,19 +294,16 @@ void	Request::getIndex(ServerConfig &server)
 	}
 }
 
-void	Request::getFilePath(ServerConfig &server, int searchIndex)
-{
+void	Request::getFilePath(ServerConfig &server, int searchIndex) {
 	if ((this->_completPath == server.root + "/" && server.index.size() > 0)
-		|| searchIndex)
-	{
+		|| searchIndex) {
 		getIndex(server);
 		return ;
 	}
 	verifFile();
 }
 
-void	Request::getServerLocationPath(ServerConfig &server)
-{
+void	Request::getServerLocationPath(ServerConfig &server) {
 	DIR				*folder;
 	struct dirent	*readFolder;
 
@@ -291,8 +337,7 @@ void	Request::getServerLocationPath(ServerConfig &server)
 	}
 }
 
-void	Request::setAndCheckPath(ServerConfig &server, std::string &path)
-{
+void	Request::setAndCheckPath(ServerConfig &server, std::string &path) {
 	int	fileType;
 
 	getVariable(path);
@@ -406,4 +451,20 @@ const std::map<std::string, std::string>	&Request::getVarLst() const {
 
 const std::map<std::string, std::string>	&Request::getHttpHeaders() const {
 	return (this->_httpHeaders);
+}
+
+std::string	Request::getRemoteAddr() const {
+	return (this->_remoteAddr);
+}
+
+int	Request::getServerPort() const {
+	return (this->_serverPort);
+}
+
+void	Request::setRemoteAddr(const std::string &addr) {
+	this->_remoteAddr = addr;
+}
+
+void	Request::setServerPort(int port) {
+	this->_serverPort = port;
 }

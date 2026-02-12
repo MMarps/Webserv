@@ -97,12 +97,17 @@ void	CGI::executeScript(char **env) {
 	delete[] argv[0];
 	delete[] argv[1];
 	delete[] argv;
-	exit(1);
+	exit(127);
 }
 
 bool	CGI::execute(const Request &req) {
 	this->_interpreter = findInterpreter();
 	if (this->_interpreter.empty())
+		return (false);
+	if (_server.cgi.find(this->_interpreter) == _server.cgi.end()) // check si dans les interpreter valides dans la config
+		return (false);
+	std::string	interpreterPath = _server.cgi[_interpreter];
+	if (access(interpreterPath.c_str(), X_OK) != 0) // check si executable
 		return (false);
 	if (open(_scriptPath.c_str(), O_RDONLY, O_EXCL) < 0)
 		return (false);
@@ -195,8 +200,16 @@ bool	CGI::waitProcess(pid_t pid) {
 		_statusCode = 504;
 		return (false);
 	}
-	if (WIFEXITED(status) && !WEXITSTATUS(status)) // script bien exec, pas de timeout
-		return (true);
+	if (WIFEXITED(status)) {
+		if (!WEXITSTATUS(status))
+			return (true);
+		_statusCode = 502;
+		return (false);
+	}
+	if (WIFSIGNALED(status)) {
+		_statusCode = 502;
+		return (false);
+	}
 	return (false);
 }
 

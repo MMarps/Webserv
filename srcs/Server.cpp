@@ -226,6 +226,10 @@ void Server::_closeConnection(int fd)
 	if (_clients.count(fd))
 		_clients.erase(fd);
 
+	// Nettoyer les métadonnées réseau
+	if (_clientMetadata.count(fd))
+		_clientMetadata.erase(fd);
+
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
@@ -237,19 +241,23 @@ void Server::_addNewClient(int serverFd)
 
 	addrLen = sizeof(clientAddr);
 	clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
-	if (clientFd < 0)
-	{
+	if (clientFd < 0) {
 		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
 		return ;
 	}
+
+	std::string	remoteAddr = inet_ntoa(clientAddr.sin_addr);
+	int			serverPort = _conf.servers[_serveurSockets[serverFd][0]].listens[0].port;
+
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
-	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0]);
-	std::cout << "New connection: " << clientFd << std::endl;
+	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0], remoteAddr, serverPort);
+	_clientMetadata[clientFd] = std::make_pair(remoteAddr, serverPort); // stocker la map pour la passer a request dans parseResponse
+
+	std::cout << "New connection: " << clientFd <<" from " << remoteAddr << std::endl;
 }
 
-void Server::_handleClientData(int clientFd)
-{
+void	Server::_handleClientData(int clientFd) {
 	char	buf[BUFFER_SIZE];
 	Client	*client;
 	ssize_t	nbytes;
@@ -272,9 +280,14 @@ void Server::_handleClientData(int clientFd)
 	}
 }
 
-void Server::_parseResponse(Client *c)
-{
+void	Server::_parseResponse(Client *c) {
 	Request	req;
+
+	int	clientFd = c->getFd();
+	if (_clientMetadata.find(clientFd) != _clientMetadata.end()) { // transmettre les metadata reseau a Request
+		req.setRemoteAddr(_clientMetadata[clientFd].first);
+		req.setServerPort(_clientMetadata[clientFd].second);
+	}
 
 	req.parse(_conf.servers[c->getServerIdx()], c->getBuffer(), 0);
 	Response response(req);
@@ -285,8 +298,7 @@ void Server::_parseResponse(Client *c)
 	std::cout  << BBLUE << response << NC << std::endl;
 
 	const std::vector<char> &content = response.getContent();
-	if (!content.empty())
-	{
+	if (!content.empty()) {
 		c->getResponse().append(content.data(), content.size());
 	}
 }

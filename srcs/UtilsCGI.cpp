@@ -13,18 +13,24 @@ char	**CGI::setupEnv(const Request &req) {
 	addEnv(_envCgi, "CONTENT_TYPE", req.getContentType());
 	addEnv(_envCgi, "CONTENT_LENGTH", integerToString(req.getBodySize()));
 	addEnv(_envCgi, "SERVER_NAME", req.getHost());
-	// addEnv(_envCgi, "SERVER_PORT", req.);
-	// addEnv(_envCgi, "REMOTE_ADDR", req.);
+	addEnv(_envCgi, "SERVER_PORT", integerToString(req.getServerPort()));
+	addEnv(_envCgi, "REMOTE_ADDR", req.getRemoteAddr());
 
 	addHTTPHeaders(_envCgi);
 	return (vectorToEnv(_envCgi));
+}
+
+std::string	CGI::integerToString(size_t value) {
+	std::ostringstream	oss;
+	oss << value;
+	return (oss.str());
 }
 
 std::string	CGI::findInterpreter() {
 	std::string	extension;
 	size_t		dotPos = _scriptPath.find_last_of('.');
 	if (dotPos == std::string::npos)
-		return (NULL);
+		return ("");
 	extension = _scriptPath.substr(dotPos);
 	return (extension);
 }
@@ -72,12 +78,6 @@ char	**CGI::vectorToEnv(std::vector<std::string> &env) {
 	}
 	envRet[vecLen] = NULL;
 	return (envRet);
-}
-
-std::string	CGI::integerToString(size_t val) {
-	std::ostringstream	oss;
-	oss << val;
-	return (oss.str());
 }
 
 void	CGI::addEnv(std::vector<std::string> &env, const std::string &key, const std::string &value) {
