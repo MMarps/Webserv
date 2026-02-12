@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/11 17:38:18 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/12 14:30:18 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,13 @@
 Request::Request() : _isLocation(false), _isPost(false), _isComplete(false),
 					 _makeAutoindex(false), _isCgi(false), _code(200)
 {
+	std::cout << BGREEN << "construct req" << NC << std::endl;
 }
 
 Request::~Request()
 {
+	std::cout << BRED << "destruct req" << NC << std::endl;
+
 }
 
 void Request::parse(ServerConfig server, std::string header, int code)

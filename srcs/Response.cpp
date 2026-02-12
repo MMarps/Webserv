@@ -6,13 +6,13 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/11 17:49:35 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/12 14:33:19 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response(Request &req) : _req(req)
+Response::Response(Request req) : _req(req), _contentLength(0)
 {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
@@ -35,7 +35,6 @@ Response::Response(Request &req) : _req(req)
 	_contentType.insert(std::make_pair(".ico", "image/x-icon"));
 	_contentType.insert(std::make_pair(".mp4", "video/mp4"));
 	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
-	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
 	_contentType.insert(std::make_pair("nodotdetected", "text/plain"));
 
 	/*telecharge automatiquement la ressource !!!*/
@@ -46,9 +45,8 @@ Response::~Response()
 {
 }
 
-void Response::makeRep(ServerConfig &server)
+void Response::makeRep()
 {
-	(void)server;
 	generateBody();
 	generateHeader();
 }
