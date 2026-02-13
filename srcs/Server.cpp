@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/13 19:14:54 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/13 19:40:03 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,7 +166,8 @@ void Server::run() {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
 		if (nfds < 0) {
 			if (errno == EINTR && g_terminate) {
-				std::cout << " Signal received, shutdown asked" << std::endl;
+				std::cout << std::endl;
+				Logger::info("Signal received, shutdown asked");
 				_closeAllClients();
 				_closeSocketFds();
 				break ;
@@ -198,6 +199,12 @@ void Server::run() {
 }
 
 void Server::_closeConnection(int fd) {
+	int					srvIdx;
+	std::stringstream	oss;
+
+	srvIdx = _clients[fd]->getServerIdx();
+	oss << "Connection closed: " << fd;
+
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
 
@@ -207,24 +214,28 @@ void Server::_closeConnection(int fd) {
 	if (_clients.count(fd))
 		_clients.erase(fd);
 
-	std::cout << "Connection closed: " << fd << std::endl;
+	// std::cout << "Connection closed: " << fd << std::endl;
+	Logger::info(oss.str(), srvIdx);
 }
 
 void Server::_addNewClient(int serverFd) {
 	struct sockaddr_in	clientAddr;
 	socklen_t			addrLen;
 	int					clientFd;
+	std::stringstream	oss;
 
 	addrLen = sizeof(clientAddr);
 	clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
 	if (clientFd < 0) {
-		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
+		oss << "Error accepting client: " << strerror(errno) << std::endl;
+		Logger::error(oss.str(), serverFd);
 		return ;
 	}
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
 	_clients[clientFd] = new Client(clientFd, _serverSockets[serverFd]);
-	std::cout << "New connection: " << clientFd << std::endl;
+	oss << "New connection: " << clientFd << std::endl;
+	Logger::info(oss.str(), _serverSockets[serverFd]);
 }
 
 void Server::_handleClientData(int clientFd) {
@@ -248,8 +259,8 @@ void Server::_handleClientData(int clientFd) {
 			client->expectedBodySize = _extractContentLen(client->getHeader());
 			long maxSize = _getLocationMaxBodySize(client);
 
-			std::cout << BRED << "expectedBodySize = " << client->expectedBodySize << std::endl
-					  << "maxSize = " << maxSize << NC << std::endl;
+			// std::cout << BRED << "expectedBodySize = " << client->expectedBodySize << std::endl
+			// 		  << "maxSize = " << maxSize << NC << std::endl;
 
 			if (client->expectedBodySize > static_cast<size_t>(maxSize)) {
 				_parseResponse(client, 413);
@@ -277,7 +288,8 @@ void Server::_handleClientData(int clientFd) {
 	}
 	if (client->isHeaderFinished) {
 		if (client->getBody().size() >= client->expectedBodySize) {
-			std::cout << "Request received completely." << std::endl;
+			// std::cout << "Request received completely." << std::endl;
+			Logger::info("Request received completely.", client->getServerIdx());
 			client->isRequestFinished = true;
             _parseResponse(client, 200);
             _modEpoll(clientFd, EPOLLOUT);
@@ -314,7 +326,8 @@ void Server::_sendResponse(int clientFd) {
 		return ;
 	}
 	if (static_cast<size_t>(sent) >= resp.size()) {
-		std::cout << "Response sent fully." << std::endl;
+		// std::cout << "Response sent fully." << std::endl;
+		Logger::info("Response sent fully.", client->getServerIdx());
 		client->getHeader().clear();
 		client->getResponse().clear();
 		client->getBody().clear();
@@ -395,7 +408,8 @@ void	Server::_closeSocketFds() {
 		close(fd);
 	}
 	_serverSockets.clear();
-	std::cout << "All sockets closed" << std::endl;
+	// std::cout << "All sockets closed" << std::endl;
+	Logger::info("All sockets closed");
 }
 
 void	Server::_closeAllClients() {
@@ -410,7 +424,8 @@ void	Server::_closeAllClients() {
 		delete it->second;
 	}
 	_clients.clear();
-	std::cout << "All clients disconnected" << std::endl;
+	// std::cout << "All clients disconnected" << std::endl;
+	Logger::info("All clients disconnected");
 }
 
 /////////////////////////////////////
