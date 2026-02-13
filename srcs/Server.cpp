@@ -214,6 +214,9 @@ void Server::_closeConnection(int fd) {
 	if (_clients.count(fd))
 		_clients.erase(fd);
 
+	if (_clientMetadata.count(fd)) // Nettoyer les metadonnees reseau
+		_clientMetadata.erase(fd);
+
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
@@ -231,6 +234,8 @@ void Server::_addNewClient(int serverFd) {
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
 	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0]);
+	_clientMetadata[clientFd] = std::make_pair(remoteAddr, serverPort); // stocker la map pour la passer a request dans parseResponse
+
 	std::cout << "New connection: " << clientFd << std::endl;
 }
 
@@ -294,6 +299,12 @@ void Server::_handleClientData(int clientFd) {
 
 void Server::_parseResponse(Client *c, int errCode) {
 	Request	req;
+
+	int	clientFd = c->getFd();
+	if (_clientMetadata.find(clientFd) != _clientMetadata.end()) { // transmettre les metadata reseau a Request
+		req.setRemoteAddr(_clientMetadata[clientFd].first);
+		req.setServerPort(_clientMetadata[clientFd].second);
+	}
 
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 	Response response(req);
