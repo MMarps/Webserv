@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 17:36:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/22 19:21:50 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/06 20:38:26 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,5 +58,6 @@ ServerConfig::ServerConfig()
 	  cgi(),
 	  client_max_body_size(0),
 	  has_client_max_body_size(false),
-	  locations() {}
+	  locations(),
+	  log() {}
 	  

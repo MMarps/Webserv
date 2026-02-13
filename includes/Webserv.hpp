@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 11:29:53 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/06 00:05:36 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,8 @@
 # include <sys/socket.h>
 # include <sys/select.h>
 # include <sys/epoll.h>    // Linux epoll
-# include <sys/time.h>
+// # include <sys/time.h>
+# include <ctime>
 # include <sys/wait.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
@@ -52,6 +53,5 @@
 
 # include <algorithm>
 # include "color.h"
-
 
 #endif
