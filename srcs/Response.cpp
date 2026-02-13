@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/13 16:57:14 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/13 17:23:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,6 +106,11 @@ void getAutoindexPage()
 {
 	
 }
+
+// void Response::getAutoindexPage()
+// {
+// 	std::ifstream autoindex("./var/");
+// }
 
 void Response::generateAutoindex()
 {
