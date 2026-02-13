@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/14 16:34:59 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/14 16:36:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -316,7 +316,7 @@ void Server::_parseResponse(Client *c, int errCode) {
 	response.makeRep();
 	c->getResponse().append(response.getResponse());
 
-	std::cout  << BBLUE << response << NC << std::endl;
+	std::cout  << response << std::endl;
 
 	const std::vector<char> &content = response.getContent();
 	if (!content.empty()) {
