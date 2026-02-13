@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/11 16:57:38 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/12 14:36:50 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ public:
 	void generateAutoindex();
 
 	// refactor
-	void makeRep(ServerConfig &server);
+	void makeRep();
 	void generateHeader();
 	void generateBody();
 	void checkFile(bool save);

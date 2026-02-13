@@ -3,22 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/13 16:59:55 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/13 17:14:39 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _isLocation(false), _isPost(false), _isComplete(false),
-					 _makeAutoindex(false), _isCgi(false), _code(200) {}
 
+Request::Request() : _isLocation(false), _isPost(false), _isComplete(false),
+					 _makeAutoindex(false), _isCgi(false), _code(200)
+{
+	std::cout << BGREEN << "construct req" << NC << std::endl;
+}
 Request::~Request() {}
 
-void Request::parse(ServerConfig server, std::string header, int code) {
+void Request::parse(ServerConfig &server, std::string header, int code)
+{
 	std::cout << "debut parsing request" << std::endl;
 	this->_code = code;
 	if (this->_code != 200)
@@ -30,7 +34,6 @@ void Request::parse(ServerConfig server, std::string header, int code) {
 	std::cout << *this << std::endl;
 	std::cout << "fin parsing request" << std::endl;
 }
-
 bool	Request::parseChunkedBody(const std::string &newData) {
 	_rawBuffer += newData;
 	size_t	pos = 0;
@@ -83,7 +86,7 @@ void	Request::makeRequest(ServerConfig &server, std::string &buffer) {
 		if (!headerParsed) {
 			std::istringstream	cut(line);
 			std::string			res;
-			getline(cut, res, ' ');
+			cut >> res;
 			if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
 				parseMethode(server, line);
 			else
@@ -122,17 +125,16 @@ void	Request::makeRequest(ServerConfig &server, std::string &buffer) {
 	}
 }
 
-void Request::parseMethode(ServerConfig server, std::string line)
+void Request::parseMethode(ServerConfig &server, std::string line)
 {
 	std::stringstream ss(line);
-	std::string method, uri, version;
 	std::string path;
 
 	ss >> this->_methode >> this->_path >> this->_version;
 	prepareReq(server);
 }
 
-void Request::prepareReq(ServerConfig server)
+void Request::prepareReq(ServerConfig &server)
 {
 	cutVariableToPath();
 	cutPath();
@@ -217,7 +219,7 @@ void Request::cutPath()
 	this->_cutPath.push_back(path);
 }
 
-void Request::makeAllPathRules(ServerConfig server)
+void Request::makeAllPathRules(ServerConfig &server)
 {
 	int pathType;
 	std::string newPath;
@@ -243,13 +245,14 @@ void Request::makeAllPathRules(ServerConfig server)
 	}
 }
 
-int Request::checkPathType(ServerConfig server, std::string piecePath)
+int Request::checkPathType(ServerConfig &server, std::string piecePath)
 {
 	struct stat st;
 
 	std::string cPath = server.root + piecePath;
 	if (stat(cPath.c_str(), &st) == -1)
 	{
+		std::cout << BRED << "ca passe" << NC << std::endl;
 		verifFile(server.root + piecePath);
 		return (-1);
 	}
@@ -284,9 +287,15 @@ void Request::verifFile(std::string path)
 			this->_code = 500;
 		return;
 	}
+
+	if (access(path.c_str(), X_OK | R_OK) != 0)
+	{
+		this->_code = 403;
+		return;
+	}
 }
 
-void Request::copyLocationRules(ServerConfig server, std::string folder, std::string piecePath)
+void Request::copyLocationRules(ServerConfig &server, std::string folder, std::string piecePath)
 {
 	if (!folder.empty() && folder[folder.size() - 1] == '/')
 		folder.erase(folder.size() - 1);
@@ -382,7 +391,7 @@ void Request::searchIndex()
 	}
 }
 
-void Request::checkIsCgi(ServerConfig server)
+void Request::checkIsCgi(ServerConfig &server)
 {
 	if (this->_fileName.empty() || this->_fileExtention.empty())
 		return;
@@ -418,6 +427,7 @@ void Request::parseAttribut(std::string line)
 
 void Request::checkRequest()
 {
+
 	if (this->_methode.empty() || this->_path.empty() || this->_version.empty() || this->_host.empty())
 		this->_code = 400;
 	if (this->_code == 0)
