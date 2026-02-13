@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/13 16:01:17 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/13 16:57:14 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,10 +102,16 @@ std::string Response::intToString(int n)
 	return (ss.str());
 }
 
+void getAutoindexPage()
+{
+	
+}
+
 void Response::generateAutoindex()
 {
 	std::string htmlpage;
 	std::vector<std::string> lstFiles;
+	
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
