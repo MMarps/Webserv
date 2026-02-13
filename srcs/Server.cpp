@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/13 18:12:58 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/13 19:14:54 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 Server::Server(const std::string &confFileName) {
 	Lexer ts(confFileName);
 	Parser p(ts);
-	ts.printTokens();
+	// ts.printTokens();
 	_conf = p.parseConfig();
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
@@ -43,26 +43,16 @@ void	signal_handler(int sig) {
 /////////////////////////////////////
 
 void Server::_setupServerSockets() {
-	struct addrinfo								hints;
-	struct addrinfo								*res;
-	int											status;
-	int											fd;
-	int											opt;
-	std::map<std::pair<std::string, int>, int>	bound;
-	std::ostringstream 							oss;
+	struct addrinfo		hints;
+	struct addrinfo		*res;
+	int					status;
+	int					fd;
+	int					opt;
+	std::ostringstream 	oss;
 
 	for (size_t si = 0; si < _conf.servers.size(); si++) {
 		std::vector<Listen>::iterator it;
 		for (it = _conf.servers[si].listens.begin(); it != _conf.servers[si].listens.end(); it++) {
-			std::pair<std::string, int>	key(it->host, it->port);
-			if (bound.count(key)) {
-				_serveurSockets[bound[key]].push_back(si);
-				oss << "Listening on port " << it->port << " (fd=" << fd << ")";
-				Logger::info(oss.str(), si);
-				oss.str("");
-				continue ;
-			}
-
 			std::memset(&hints, 0, sizeof(hints));
 			hints.ai_family = AF_INET;
 			hints.ai_socktype = SOCK_STREAM;
@@ -98,16 +88,6 @@ void Server::_setupServerSockets() {
 				int save_errno = errno;
 				freeaddrinfo(res);
 				close(fd);
-				if (save_errno == EADDRINUSE) {
-					std::pair<std::string, int>	wildcardKey("*", it->port);
-					if (bound.count(wildcardKey)) {
-						_serveurSockets[bound[wildcardKey]].push_back(si);
-						oss << "Listening on port " << it->port << " (fd=" << fd << ")";
-						Logger::info(oss.str(), si);
-						oss.str("");
-						continue ;
-					}
-				}
 				std::ostringstream msg;
 				msg << "Failed to bind, " << it->host << ":" << it->port
 					<< " errno=" << save_errno << " " << strerror(save_errno);
@@ -123,13 +103,11 @@ void Server::_setupServerSockets() {
 			}
 
 			_addToEpoll(fd, EPOLLIN);
-			_serveurSockets[fd].push_back(si);
+			_serverSockets[fd] = si;
 
 			oss << "Listening on port " << it->port << " (fd=" << fd << ")";
 			Logger::info(oss.str(), si);
 			oss.str("");
-
-			bound[key] = fd;
 		}
 	}
 }
@@ -206,7 +184,7 @@ void Server::run() {
 				_closeConnection(currentFd);
 				continue ;
 			}
-			if (_serveurSockets.find(currentFd) != _serveurSockets.end())
+			if (_serverSockets.find(currentFd) != _serverSockets.end())
 				_addNewClient(currentFd);
 			else if (currentEvent & EPOLLIN)
 				_handleClientData(currentFd);
@@ -245,7 +223,7 @@ void Server::_addNewClient(int serverFd) {
 	}
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
-	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0]);
+	_clients[clientFd] = new Client(clientFd, _serverSockets[serverFd]);
 	std::cout << "New connection: " << clientFd << std::endl;
 }
 
@@ -407,16 +385,16 @@ const LocationConfig*	Server::_findBestLocation(const std::string& uri, int serv
 /////////////////////////////////////
 
 void	Server::_closeSocketFds() {
-	std::map<int, std::vector<int> >::const_iterator it;
+	std::map<int, int>::const_iterator it;
 
-	if (_serveurSockets.empty())
+	if (_serverSockets.empty())
 		return ;
-	for (it = _serveurSockets.begin(); it != _serveurSockets.end(); ++it) {
+	for (it = _serverSockets.begin(); it != _serverSockets.end(); ++it) {
 		int fd = it->first;
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 		close(fd);
 	}
-	_serveurSockets.clear();
+	_serverSockets.clear();
 	std::cout << "All sockets closed" << std::endl;
 }
 
