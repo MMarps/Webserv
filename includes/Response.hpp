@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/12 14:32:17 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/12 14:36:50 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ class Request;
 class Response
 {
 private:
-	Request _req;
+	Request &_req;
 	std::vector<char> _content;
 	std::string _contentLength;
 	std::string _response;
@@ -31,7 +31,7 @@ private:
 	std::map<std::string, std::string> _contentType;
 
 public:
-	Response(Request req);
+	Response(Request &req);
 	~Response();
 
 	// generate response
