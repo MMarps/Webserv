@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/14 16:35:31 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/14 16:42:15 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,7 +225,7 @@ void Request::verifFile(std::string path)
 		return;
 	}
 
-	if (access(path.c_str(), X_OK | R_OK) != 0)
+	if (!this->_fileName.empty() && access(path.c_str(), X_OK | R_OK) != 0)
 	{
 		this->_code = 403;
 		return;
