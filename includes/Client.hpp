@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/04 19:22:24 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/15 17:22:46 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,13 +17,15 @@
 
 class	Client {
 public:
-	Client(int clientFd, int serverIdx);
+	Client(int clientFd, int serverIdx, const std::string &remoteAddr, int ServerPort);
 	~Client();
 
-	int				getFd() const;
-	int				getServerIdx() const;
-	std::string&	getHeader();
-	std::string&	getResponse();
+	int					getFd() const;
+	int					getServerIdx() const;
+	std::string&		getHeader();
+	std::string&		getResponse();
+	std::string			getRemoteAddr() const;
+	int					getServerPort() const;
 
 	std::vector<char>&	getBody();
 	size_t				getBodySize() const;

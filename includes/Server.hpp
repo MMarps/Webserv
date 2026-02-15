@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/03 21:53:17 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/15 17:14:30 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,8 @@ private:
 	std::map<int, std::vector<int> >	_serveurSockets;
 
 	std::map<int, Client*>				_clients;
+
+	std::map<int, std::pair<std::string, int> >	_clientMetadata; // map de metadata, au format: fd, IP client, port serv
 
 	void						_setupServerSockets();
 	int							_setNonBlocking(int fd);

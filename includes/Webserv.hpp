@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/02 11:29:53 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/15 17:14:10 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 # define WEBSERV_HPP
 
 //////* Libraries *//////
-
 
 # include "color.h"
 
@@ -27,6 +26,7 @@
 # include <sys/epoll.h>    // Linux epoll
 # include <sys/time.h>
 # include <sys/wait.h>
+# include <signal.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include <netdb.h>
@@ -50,8 +50,8 @@
 
 # include <stdexcept>
 
-# include <algorithm>
+# include "Request.hpp"
+# include "Response.hpp"
 # include "color.h"
-
 
 #endif
