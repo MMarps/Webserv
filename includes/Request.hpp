@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/15 17:19:00 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/15 17:24:01 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,9 +66,9 @@ public:
 	Request();
 	~Request();
 
-	void parse(ServerConfig server, std::string header, int code);
-	void makeRequest(ServerConfig server, std::string buffer);
-	void parseMethode(ServerConfig server, std::string line);
+	void parse(ServerConfig &server, std::string header, int code);
+	void makeRequest(ServerConfig &server, std::string buffer);
+	void parseMethode(ServerConfig &server, std::string line);
 	void parseAttribut(std::string line);
 
 	void prepareReq(ServerConfig server);
@@ -76,17 +76,17 @@ public:
 	size_t haveVariable();
 	void splitVarQuery(std::string variableQuery);
 	void cutPath();
-	void makeAllPathRules(ServerConfig server);
-	int checkPathType(ServerConfig server, std::string piecePath);
+	void makeAllPathRules(ServerConfig &server);
+	int checkPathType(ServerConfig &server, std::string piecePath);
 	void verifFile(std::string path);
-	void copyLocationRules(ServerConfig server, std::string folder, std::string piecePath);
+	void copyLocationRules(ServerConfig &server, std::string folder, std::string piecePath);
 	void makeExtentionAndNameFile(std::string file);
 	void formatPath();
 	void makeLocationRules();
 	void checkAllowMethods();
 	void searchIndex();
-	void checkIsCgi(ServerConfig server);
-	void getErrorpage(ServerConfig server);
+	void checkIsCgi(ServerConfig &server);
+	void getErrorpage(ServerConfig &server);
 	void checkRequest();
 
 	std::string	getMethode() const;
