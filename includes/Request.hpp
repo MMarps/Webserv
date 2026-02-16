@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/15 17:24:01 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:00:09 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,11 +67,11 @@ public:
 	~Request();
 
 	void parse(ServerConfig &server, std::string header, int code);
-	void makeRequest(ServerConfig &server, std::string buffer);
+	void makeRequest(ServerConfig &server, std::string &buffer);
 	void parseMethode(ServerConfig &server, std::string line);
 	void parseAttribut(std::string line);
 
-	void prepareReq(ServerConfig server);
+	void prepareReq(ServerConfig &server);
 	void cutVariableToPath();
 	size_t haveVariable();
 	void splitVarQuery(std::string variableQuery);
@@ -110,6 +110,8 @@ public:
 	bool			getMakeAutoindex() const;
 	bool			getIsCgi() const;
 	int				getCode() const;
+	void 			setCode(int code);
+
 		// CGI part
 	bool		parseChunkedBody(const std::string &newData);
 	std::string	getQueryString() const;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 13:10:54 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:10:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,8 +49,7 @@ void	Response::makeRep(ServerConfig &server) {
 		_isCGI = true;
 		handleCGI(server);
 		if (_req.getCode() == 502) {
-			getDefaultResponse();
-			_response += "\r\nContent-Length: 0\r\n\r\n";
+			generateHeader();
 			return ;
 		}
 		buildCGIResponse();
@@ -66,7 +65,7 @@ void	Response::generateHeader() {
 	if (this->_req.getCode() == 301) {
 		return ;
 	}
-	if (this->_req.getCode() != 200 && this->_req.getFileName().empty()) {
+	if ((this->_isCGI && this->_req.getCode() == 502) || this->_req.getCode() != 200 && this->_req.getFileName().empty()) {
 		this->_response += "Content-length: 0\n";
 		this->_response += "\n\n";
 		return ;
@@ -163,13 +162,13 @@ void	Response::handleCGI(ServerConfig &server) {
 	CGI	_cgi(_req, server);
 
 	if (!_cgi.execute(_req)) {
-		_req.setErrorCode(502);
+		this->_req.setCode(502);
 		return ;
 	}
 
 	int	statusCode = _cgi.getStatusCode();
 	if (statusCode != 200)
-		_req.setErrorCode(statusCode);
+		this->_req.setCode(statusCode);
 
 	_cgiHeaders = _cgi.getHeaders();
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 13:05:58 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 14:55:11 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,14 +52,14 @@ class Response {
 		// void				getFullResponse();
 		// void				getResponseCode();
 		// void				makeRedirect();
-		// void				generateAutoindex();
-		// std::vector<std::string>	getLstDir();
-
+		
 		// refactor
 		void				makeRep(ServerConfig &server);
 		void				generateHeader();
 		void				generateBody();
 		void				checkFile(bool save);
+		std::vector<std::string>	getLstDir();
+		void				generateAutoindex();
 		std::string			intToString(int n);
 		void				makeError();
 		std::string			getResponse() const;

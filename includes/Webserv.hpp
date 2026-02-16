@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/15 17:14:10 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:10:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 
 # include "color.h"
 
+# include <algorithm> 
 # include <iterator>
 # include <sys/types.h>
 # include <sys/stat.h>
