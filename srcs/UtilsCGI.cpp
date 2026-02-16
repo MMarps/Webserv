@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 16:49:20 by arotondo          #+#    #+#             */
-/*   Updated: 2026/02/13 16:49:23 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 17:04:04 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,14 +47,25 @@ std::string	CGI::findInterpreter() {
 	return (extension);
 }
 
-bool	CGI::isCGI() {
-	std::string	extension = findInterpreter();
+bool	CGI::isCGI(const Request &req, const ServerConfig &server) {
+	if (req.getFileName().empty() || req.getFileExtention().empty())
+		return (false);
+	
+	std::string	extension = req.getFileExtention();
 	if (extension.empty())
 		return (false);
-	if (_server.cgi.find(extension) != _server.cgi.end())
+	
+	if (req.getIsLocation()) {
+		LocationConfig location = req.getLocation();
+		if (location.cgi.find(extension) != location.cgi.end())
+			return (true);
+	}
+	
+	if (server.cgi.find(extension) != server.cgi.end())
 		return (true);
-	for (size_t i = 0; i < _server.locations.size(); i++) {
-		if (_server.locations[i].cgi.find(extension) != _server.locations[i].cgi.end())
+	
+	for (size_t i = 0; i < server.locations.size(); i++) {
+		if (server.locations[i].cgi.find(extension) != server.locations[i].cgi.end())
 			return (true);
 	}
 	return (false);

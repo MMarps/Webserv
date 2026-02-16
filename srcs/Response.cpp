@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 15:10:24 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 17:13:02 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void	Response::generateHeader() {
 	if (this->_req.getCode() == 301) {
 		return ;
 	}
-	if ((this->_isCGI && this->_req.getCode() == 502) || this->_req.getCode() != 200 && this->_req.getFileName().empty()) {
+	if ((this->_isCGI && this->_req.getCode() == 502) || (this->_req.getCode() != 200 && this->_req.getFileName().empty())) {
 		this->_response += "Content-length: 0\n";
 		this->_response += "\n\n";
 		return ;
@@ -155,7 +155,7 @@ bool	Response::isCGIRequest(ServerConfig &server) {
 		return (false);
 
 	CGI	tmpCGI(_req, server);
-	return (tmpCGI.isCGI());
+	return (tmpCGI.isCGI(_req, server));
 }
 
 void	Response::handleCGI(ServerConfig &server) {

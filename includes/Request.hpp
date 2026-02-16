@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 16:25:02 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 17:09:15 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ class Request {
 		std::string		_header;
 		std::string		_host;
 		std::string		_cgiPath;
-		LocationConfig	_location;
+		LocationConfig	*_location;
 		bool			_isLocation;
 		bool			_isPost;
 		bool			_isComplete;
