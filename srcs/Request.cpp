@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 15:35:50 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:38:18 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -499,6 +499,11 @@ bool	Request::getIsCgi() const {
 
 int	Request::getCode() const {
 	return (this->_code);
+}
+
+void Request::setCode(int code)
+{
+	this->_code = code;
 }
 
 std::ostream	&operator<<(std::ostream &o, Request const &request) {
