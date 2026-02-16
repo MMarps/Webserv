@@ -6,36 +6,34 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/14 16:42:15 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 14:50:30 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
+#include "Logger.hpp"
 
 Request::Request() : _isLocation(false), _isPost(false), _isComplete(false),
 					 _makeAutoindex(false), _isCgi(false), _code(200)
 {
-	std::cout << BGREEN << "construct req" << NC << std::endl;
+	// std::cout << BGREEN << "construct req" << NC << std::endl;
 }
 
 Request::~Request()
 {
-	std::cout << BRED << "destruct req" << NC << std::endl;
+	// std::cout << BRED << "destruct req" << NC << std::endl;
 }
 
 void Request::parse(ServerConfig &server, std::string header, int code)
 {
-	std::cout << "debut parsing request" << std::endl;
 	this->_code = code;
 	if (this->_code != 200)
-		return;
+	return;
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, header);
 	checkRequest();
-	std::cout << *this << std::endl;
-	std::cout << "fin parsing request" << std::endl;
 }
 
 void Request::makeRequest(ServerConfig &server, std::string buffer)
@@ -168,14 +166,14 @@ void Request::makeAllPathRules(ServerConfig &server)
 		switch (pathType)
 		{
 		case -1:
-			std::cout << BRED << *it << " is PROBLEME" << NC << std::endl;
+			// std::cout << BRED << *it << " is PROBLEME" << NC << std::endl;
 			return;
 		case SERVER_LOCATION:
-			std::cout << BPURPLE << *it << " is LOCATION" << NC << std::endl;
+			// std::cout << BPURPLE << *it << " is LOCATION" << NC << std::endl;
 			copyLocationRules(server, *it, newPath);
 			break;
 		case FILE_PATH:
-			std::cout << BPURPLE << *it << " is FILE" << NC << std::endl;
+			// std::cout << BPURPLE << *it << " is FILE" << NC << std::endl;
 			makeExtentionAndNameFile(*it);
 			break;
 		}
@@ -225,6 +223,7 @@ void Request::verifFile(std::string path)
 		return;
 	}
 
+	if (!this->_fileName.empty() && access(path.c_str(), X_OK | R_OK) != 0)
 	if (!this->_fileName.empty() && access(path.c_str(), X_OK | R_OK) != 0)
 	{
 		this->_code = 403;

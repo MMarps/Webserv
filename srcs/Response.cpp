@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/14 16:35:37 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 14:49:44 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,21 +104,39 @@ std::string Response::intToString(int n)
 
 void getAutoindexPage()
 {
-	
 }
 
-// void Response::getAutoindexPage()
-// {
-// 	std::ifstream autoindex("./var/");
-// }
+void Response::getAutoindexPage(std::string &rep, std::vector<std::string> lstFile)
+{
+	std::ifstream autoindex("./var/autoindex/autoindex.html");
+	std::string line;
+	if (!autoindex.is_open())
+		return;
+	while (getline(autoindex, line))
+	{
+		rep += line;
+		if (line == "<body>")
+		{
+			for (long unsigned int i = 0; i < lstFile.size(); i++)
+			{
+				rep += "<a href=\"" + this->_req.getPath() + lstFile[i] + "\">" + lstFile[i] + "</a></br>";
+			}
+		}
+	}
+}
 
 void Response::generateAutoindex()
 {
 	std::string htmlpage;
 	std::vector<std::string> lstFiles;
-	
-	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
+
 	lstFiles = getLstDir();
+	getAutoindexPage(htmlpage, lstFiles);
+	if (!htmlpage.empty())
+	{
+		return;
+	}
+	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
 	{
 		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";

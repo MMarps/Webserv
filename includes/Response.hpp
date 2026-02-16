@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/14 16:35:53 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 14:49:18 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,21 +35,20 @@ public:
 	~Response();
 
 	// generate response
-	void makeLocation();
-	void getCodePage();
-	// old
-	std::string getRep() const;
-	void getText();
-	void getDoc();
-	void checkDoc();
-	void getDefaultResponse();
-	void getFullResponse();
-	void getResponseCode();
-	void makeRedirect();
-	std::vector<std::string> getLstDir();
-	void generateAutoindex();
+	// void makeLocation();
+	// void getCodePage();
+	// // old
+	// std::string getRep() const;
+	// void getText();
+	// void getDoc();
+	// void checkDoc();
+	// void getDefaultResponse();
+	// void getFullResponse();
+	// void getResponseCode();
+	// void makeRedirect();
 
 	// refactor
+	std::vector<std::string> getLstDir();
 	void makeRep();
 	void generateHeader();
 	void generateBody();
@@ -58,6 +57,8 @@ public:
 	void makeError();
 	std::string getResponse() const;
 	std::vector<char> getContent() const;
+	void generateAutoindex();
+	void getAutoindexPage(std::string &rep, std::vector<std::string> lstFile);
 	// void makeError();
 };
 
