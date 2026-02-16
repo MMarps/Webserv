@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/13 17:16:43 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 13:10:54 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response(Request &req) : _req(req) {
+Response::Response(Request &req) : _req(req), _isCGI(false) {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
@@ -44,24 +44,32 @@ Response::Response(Request &req) : _req(req) {
 
 Response::~Response() {}
 
-void Response::makeRep()
-{
+void	Response::makeRep(ServerConfig &server) {
+	if (isCGIRequest(server)) {
+		_isCGI = true;
+		handleCGI(server);
+		if (_req.getCode() == 502) {
+			getDefaultResponse();
+			_response += "\r\nContent-Length: 0\r\n\r\n";
+			return ;
+		}
+		buildCGIResponse();
+		return ;
+	}
+	handleCGI(server);
 	generateBody();
 	generateHeader();
 }
 
-void Response::generateHeader()
-{
+void	Response::generateHeader() {
 	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\n";
-	if (this->_req.getCode() == 301)
-	{
-		return;
+	if (this->_req.getCode() == 301) {
+		return ;
 	}
-	if (this->_req.getCode() != 200 && this->_req.getFileName().empty())
-	{
+	if (this->_req.getCode() != 200 && this->_req.getFileName().empty()) {
 		this->_response += "Content-length: 0\n";
 		this->_response += "\n\n";
-		return;
+		return ;
 	}
 	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtention()] + "\n";
 	this->_response += "Content-length: " + this->_contentLength + "\n";
@@ -106,7 +114,7 @@ void getAutoindexPage()
 	
 }
 
-void Response::generateAutoindex()
+void	Response::generateAutoindex()
 {
 	std::string htmlpage;
 	std::vector<std::string> lstFiles;
@@ -188,19 +196,15 @@ void	Response::buildCGIResponse() {
 	_response.append(_content.begin(), _content.end());
 }
 
-std::string Response::getResponse() const
-{
+std::string	Response::getResponse() const {
 	return (this->_response);
 }
 
-std::vector<char> Response::getContent() const
-{
+std::vector<char>	Response::getContent() const {
 	return (this->_content);
 }
 
-std::ostream &operator<<(std::ostream &o, Response const &response)
-{
+std::ostream	&operator<<(std::ostream &o, Response const &response) {
 	o << BYELLOW << response.getResponse() << std::endl;
-
 	return (o);
 }

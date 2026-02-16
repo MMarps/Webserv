@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/13 16:05:56 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 12:48:17 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,15 +231,19 @@ void Server::_addNewClient(int serverFd) {
 		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
 		return ;
 	}
+
+	std::string	remoteAddr = inet_ntoa(clientAddr.sin_addr);
+	int			serverPort = _conf.servers[_serveurSockets[serverFd][0]].listens[0].port;
+
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
-	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0]);
+	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0], remoteAddr, serverPort);
 	_clientMetadata[clientFd] = std::make_pair(remoteAddr, serverPort); // stocker la map pour la passer a request dans parseResponse
 
-	std::cout << "New connection: " << clientFd << std::endl;
+	std::cout << "New connection: " << clientFd <<" from " << remoteAddr << std::endl;
 }
 
-void Server::_handleClientData(int clientFd) {
+void	Server::_handleClientData(int clientFd) {
 	char	buf[BUFFER_SIZE];
 	Client	*client;
 	ssize_t	nbytes;
@@ -307,7 +311,7 @@ void Server::_parseResponse(Client *c, int errCode) {
 	}
 
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
-	Response response(req);
+	Response	response(req);
 	response.makeRep();
 	c->getResponse().append(response.getResponse());
 
