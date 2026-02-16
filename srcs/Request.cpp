@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 15:38:18 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:47:42 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -501,9 +501,44 @@ int	Request::getCode() const {
 	return (this->_code);
 }
 
-void Request::setCode(int code)
-{
+void	Request::setCode(int code) {
 	this->_code = code;
+}
+
+std::string	Request::getQueryString() const {
+	return (this->_queryString);
+}
+
+std::string	Request::getBody() const {
+	return (this->_body);
+}
+
+std::string	Request::getContentType() const {
+	return (this->_contentType);
+}
+
+size_t	Request::getBodySize() const {
+	return (this->_bodySize);
+}
+
+const std::map<std::string, std::string>	&Request::getHttpHeaders() const {
+	return (this->_httpHeaders);
+}
+
+std::string	Request::getRemoteAddr() const {
+	return (this->_remoteAddr);
+}
+
+int	Request::getServerPort() const {
+	return (this->_serverPort);
+}
+
+void	Request::setRemoteAddr(const std::string &addr) {
+	this->_remoteAddr = addr;
+}
+
+void	Request::setServerPort(int port) {
+	this->_serverPort = port;
 }
 
 std::ostream	&operator<<(std::ostream &o, Request const &request) {

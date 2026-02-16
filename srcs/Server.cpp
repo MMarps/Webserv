@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 12:48:17 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 16:22:10 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ void	signal_handler(int sig) {
 
 /////////////////////////////////////
 
-void Server::_setupServerSockets() {
+void	Server::_setupServerSockets() {
 	struct addrinfo								hints;
 	struct addrinfo								*res;
 	int											status;
@@ -120,7 +120,7 @@ void Server::_setupServerSockets() {
 	}
 }
 
-int Server::_setNonBlocking(int fd) {
+int	Server::_setNonBlocking(int fd) {
 	int	flags;
 
 	flags = fcntl(fd, F_GETFL);
@@ -135,7 +135,7 @@ int Server::_setNonBlocking(int fd) {
 	return (0);
 }
 
-int Server::_addToEpoll(int fd, uint32_t events) {
+int	Server::_addToEpoll(int fd, uint32_t events) {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
@@ -148,7 +148,7 @@ int Server::_addToEpoll(int fd, uint32_t events) {
 	return (0);
 }
 
-int Server::_modEpoll(int fd, uint32_t newEvents) {
+int	Server::_modEpoll(int fd, uint32_t newEvents) {
 	struct epoll_event	event;
 
 	std::memset(&event, 0, sizeof(event));
@@ -163,7 +163,7 @@ int Server::_modEpoll(int fd, uint32_t newEvents) {
 
 /////////////////////////////////////
 
-void Server::run() {
+void	Server::run() {
 	int			nfds;
 	int			currentFd;
 	uint32_t	currentEvent;
@@ -184,8 +184,7 @@ void Server::run() {
 				continue ;
 			}
 		}
-		for (int i = 0; i < nfds; i++)
-		{
+		for (int i = 0; i < nfds; i++) {
 			currentFd = _events[i].data.fd;
 			currentEvent = _events[i].events;
 			if (currentEvent & (EPOLLHUP | EPOLLERR)) {
@@ -204,10 +203,9 @@ void Server::run() {
 		std::cout << BGREEN << "Shutdown complete" << NC << std::endl;
 }
 
-void Server::_closeConnection(int fd) {
+void	Server::_closeConnection(int fd) {
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
-
 	close(fd);
 	delete _clients[fd];
 
@@ -220,7 +218,7 @@ void Server::_closeConnection(int fd) {
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
-void Server::_addNewClient(int serverFd) {
+void	Server::_addNewClient(int serverFd) {
 	struct sockaddr_in	clientAddr;
 	socklen_t			addrLen;
 	int					clientFd;
@@ -301,10 +299,10 @@ void	Server::_handleClientData(int clientFd) {
 	}
 }
 
-void Server::_parseResponse(Client *c, int errCode) {
+void	Server::_parseResponse(Client *c, int errCode) {
 	Request	req;
+	int		clientFd = c->getFd();
 
-	int	clientFd = c->getFd();
 	if (_clientMetadata.find(clientFd) != _clientMetadata.end()) { // transmettre les metadata reseau a Request
 		req.setRemoteAddr(_clientMetadata[clientFd].first);
 		req.setServerPort(_clientMetadata[clientFd].second);
@@ -312,18 +310,17 @@ void Server::_parseResponse(Client *c, int errCode) {
 
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 	Response	response(req);
-	response.makeRep();
+	response.makeRep(this->_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getResponse());
 
-	std::cout  << response << std::endl;
+	std::cout << response << std::endl;
+	const std::vector<char>	&content = response.getContent();
 
-	const std::vector<char> &content = response.getContent();
-	if (!content.empty()) {
+	if (!content.empty())
 		c->getResponse().append(content.data(), content.size());
-	}
 }
 
-void Server::_sendResponse(int clientFd) {
+void	Server::_sendResponse(int clientFd) {
 	Client	*client;
 	ssize_t	sent;
 
@@ -344,56 +341,53 @@ void Server::_sendResponse(int clientFd) {
 		client->isRequestFinished = false;
 		_modEpoll(clientFd, EPOLLIN);
 	}
-	else {
+	else
 		resp = resp.substr(sent);
-	}
 }
 
 /////////////////////////////////////
 
 long	Server::_extractContentLen(const std::string& header) {
-	std::string search = "Content-Length: ";
-	size_t pos = header.find(search);
+	std::string	search = "Content-Length: ";
+	size_t		pos = header.find(search);
 
 	if (pos == header.npos)
 		return (0);
-
-	size_t start = pos + search.length();
-	size_t end = header.find("\r\n", start);
+	size_t		start = pos + search.length();
+	size_t		end = header.find("\r\n", start);
 
 	if (end == header.npos)
-		return (0);
-	
-	std::string val = header.substr(start, end - start);
+		return (0);	
+	std::string	val = header.substr(start, end - start);
 
 	return (std::atol(val.c_str()));
 }
 
 long	Server::_getLocationMaxBodySize(Client* client) {
-	std::string &buf = client->getHeader();
-	size_t firstLineEnd = buf.find("\r\n");
+	std::string	&buf = client->getHeader();
+	size_t		firstLineEnd = buf.find("\r\n");
 	if (firstLineEnd == std::string::npos)
 		return (_conf.servers[client->getServerIdx()].client_max_body_size);
 
-	std::string firstLine = buf.substr(0, firstLineEnd);
-	std::stringstream ss(firstLine);
-	std::string method, uri, version;
+	std::string	firstLine = buf.substr(0, firstLineEnd);
+	std::string	method, uri, version;
+	std::stringstream	ss(firstLine);
 	ss >> method >> uri >> version;
 
-	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
+	const LocationConfig	*loc = _findBestLocation(uri, client->getServerIdx());
 	if (loc)
-		return loc->client_max_body_size;
+		return (loc->client_max_body_size);
 	else
 		return (_conf.servers[client->getServerIdx()].client_max_body_size);
-	}
+}
 
-const LocationConfig*	Server::_findBestLocation(const std::string& uri, int serverIdx) {
-	const ServerConfig& conf = _conf.servers[serverIdx];
-	const LocationConfig* bestMatch = NULL;
-	size_t longestMatch = 0;
+const LocationConfig	*Server::_findBestLocation(const std::string& uri, int serverIdx) {
+	const ServerConfig		&conf = _conf.servers[serverIdx];
+	const LocationConfig	*bestMatch = NULL;
+	size_t					longestMatch = 0;
 
 	for (size_t i = 0; i < conf.locations.size(); ++i) {
-		const std::string& locPath = conf.locations[i].path;
+		const std::string	&locPath = conf.locations[i].path;
 		if (uri.compare(0, locPath.length(), locPath) == 0) {
 			if (locPath.length() >= longestMatch) {
 				longestMatch = locPath.length();
@@ -401,18 +395,17 @@ const LocationConfig*	Server::_findBestLocation(const std::string& uri, int serv
 			}
 		}
 	}
-	return bestMatch;
+	return (bestMatch);
 }
 
 /////////////////////////////////////
 
 void	Server::_closeSocketFds() {
-	std::map<int, std::vector<int> >::const_iterator it;
-
 	if (_serveurSockets.empty())
 		return ;
-	for (it = _serveurSockets.begin(); it != _serveurSockets.end(); ++it) {
-		int fd = it->first;
+	std::map<int, std::vector<int> >::const_iterator	it = _serveurSockets.begin();
+	for (; it != _serveurSockets.end(); ++it) {
+		int	fd = it->first;
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 		close(fd);
 	}
@@ -421,12 +414,11 @@ void	Server::_closeSocketFds() {
 }
 
 void	Server::_closeAllClients() {
-	std::map<int, Client*>::const_iterator it;
-
 	if (_clients.empty())
 		return ;
-	for (it = _clients.begin(); it != _clients.end(); it++) {
-		int fd = it->first;
+	std::map<int, Client*>::const_iterator	it = _clients.begin();
+	for (; it != _clients.end(); it++) {
+		int	fd = it->first;
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 		close(fd);
 		delete it->second;

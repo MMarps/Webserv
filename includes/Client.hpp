@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/15 17:22:46 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:54:51 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,10 @@ private:
 	int					_serverIdx;
 	std::string			_header;
 	std::string			_response;
+	
 	std::vector<char>	_body;
+	std::string			_remoteAddr;
+	int					_serverPort;
 };
 
 #endif

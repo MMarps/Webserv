@@ -3,13 +3,12 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/04 19:02:33 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:52:01 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "Parser.hpp"
 
@@ -270,7 +269,7 @@ void	Parser::parseCgi(LocationConfig& loc, const std::vector<std::string>& args)
 	}
 }
 
-void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &args) {
+void	Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &args) {
 	if (args.size() != 2)
 		throwError("'return' expects status and target", true);
 	const std::string &s = args[0];
@@ -325,9 +324,9 @@ void	Parser::checkCgi(Config &cfg) {
 
 /////////////////////////////////////
 
-void Parser::throwError(const std::string &msg, bool flg) const {
-	const Token &t = flg ? _ts.peekLast() : _ts.peek();
-	std::ostringstream oss;
+void	Parser::throwError(const std::string &msg, bool flg) const {
+	const Token			&t = flg ? _ts.peekLast() : _ts.peek();
+	std::ostringstream	oss;
 	if (t.l > 0)
 		oss << "ligne " << t.l << " " << "col " << t.c << ": " << msg;
 	else
@@ -352,6 +351,3 @@ std::vector<std::string>	Parser::collectArgs() {
 	_ts.next();
 	return (args);
 }
-
-/////////////////////////////////////
-

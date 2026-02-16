@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:15:18 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 16:13:45 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 16:14:16 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ struct LocationConfig {
 	std::string							root;
 	std::vector<std::string>			index;
 	std::vector<std::string>			methods;
-	bool 								autoindex;
+	bool								autoindex;
 	std::string 						upload_store;
 	std::map<std::string, std::string>	cgi;
 	size_t								client_max_body_size;
@@ -49,8 +49,8 @@ struct ServerConfig {
 	std::vector<std::string>			index;
 	std::map<int, std::string>			error_pages;
 	std::map<std::string, std::string>	cgi;
-	size_t 								client_max_body_size;
-	bool 								has_client_max_body_size;
+	size_t								client_max_body_size;
+	bool								has_client_max_body_size;
 	std::vector<LocationConfig>			locations;
 
 	ServerConfig();

@@ -3,22 +3,24 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:17:46 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/04 19:22:30 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:55:21 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 
-Client::Client(int clientFd, int serverIdx)
+Client::Client(int clientFd, int serverIdx, const std::string &remoteAddr, int serverPort)
 	: isHeaderFinished(false),
 	  isRequestFinished(false),
 	  expectedBodySize(0),
 	  actualBodySize(0),
 	  _fd(clientFd),
-	  _serverIdx(serverIdx) {}
+	  _serverIdx(serverIdx),
+	  _remoteAddr(remoteAddr),
+	  _serverPort(serverPort) {}
 
 Client::~Client() {}
 

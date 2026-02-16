@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 14:55:11 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 16:10:25 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class Response {
 		std::vector<char>					_content;
 		std::map<int, std::string>			_statutMessage;
 		std::map<std::string, std::string>	_contentType;
-	
+
 		// CGI
 		bool								_isCGI;
 		std::map<std::string, std::string>	_cgiHeaders;

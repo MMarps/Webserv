@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/28 17:50:27 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:51:18 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,37 +23,36 @@ struct	LocationConfig;
 struct	ServerConfig;
 class	Config;
 
-class	Parser {
-public:
-	Parser(Lexer& ts);
-	Config	parseConfig();
+class Parser {
+	public:
+		Parser(Lexer& ts);
+		Config	parseConfig();
+		
+	private:
+		Lexer&	_ts;
 	
-
-private:
-	Lexer&	_ts;
-
-	void	throwError(const std::string& msg, bool flg) const;
-
-	std::vector<std::string>	collectArgs();
-
-	ServerConfig	parseServer();
-	LocationConfig	parseLocation();
-
-	void			parseDirective(ServerConfig& srv);
-	void			parseDirective(LocationConfig& srv);
-
-	Listen			parseListen(std::vector<std::string>& args);
-	void			parseErrorPage(ServerConfig& srv, const std::vector<std::string>& args);
-	size_t			parseSize(const std::string& s);
-
-	std::vector<std::string>	parseMethods(const std::vector<std::string>& args);
-
-	void			parseCgi(ServerConfig& srv, const std::vector<std::string>& args);
-	void			parseCgi(LocationConfig& loc, const std::vector<std::string>& args);
-	void 			parseReturn(LocationConfig& loc, const std::vector<std::string>& args);
-
-	void			putDefaultValues(Config &cfg);
-	void			checkCgi(Config &cfg);
+		void	throwError(const std::string& msg, bool flg) const;
+	
+		std::vector<std::string>	collectArgs();
+	
+		ServerConfig	parseServer();
+		LocationConfig	parseLocation();
+	
+		void			parseDirective(ServerConfig& srv);
+		void			parseDirective(LocationConfig& srv);
+	
+		Listen			parseListen(std::vector<std::string>& args);
+		void			parseErrorPage(ServerConfig& srv, const std::vector<std::string>& args);
+		size_t			parseSize(const std::string& s);
+	
+		std::vector<std::string>	parseMethods(const std::vector<std::string>& args);
+	
+		void			parseCgi(ServerConfig& srv, const std::vector<std::string>& args);
+		void			parseCgi(LocationConfig& loc, const std::vector<std::string>& args);
+		void 			parseReturn(LocationConfig& loc, const std::vector<std::string>& args);
+	
+		void			putDefaultValues(Config &cfg);
+		void			checkCgi(Config &cfg);
 };
 
 #endif
