@@ -6,24 +6,20 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 14:50:30 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:21:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
-#include "Logger.hpp"
+
 
 Request::Request() : _isLocation(false), _isPost(false), _isComplete(false),
 					 _makeAutoindex(false), _isCgi(false), _code(200)
 {
 	// std::cout << BGREEN << "construct req" << NC << std::endl;
 }
-
-Request::~Request()
-{
-	// std::cout << BRED << "destruct req" << NC << std::endl;
-}
+Request::~Request() {}
 
 void Request::parse(ServerConfig &server, std::string header, int code)
 {
@@ -34,34 +30,103 @@ void Request::parse(ServerConfig &server, std::string header, int code)
 	this->_index = server.index;
 	makeRequest(server, header);
 	checkRequest();
+	std::cout << *this << std::endl;
+	std::cout << "fin parsing request" << std::endl;
+}
+bool	Request::parseChunkedBody(const std::string &newData) {
+	_rawBuffer += newData;
+	size_t	pos = 0;
+	
+	while (pos < _rawBuffer.size()) {
+		size_t	lineEnd = _rawBuffer.find("\r\n", pos); // chercher
+		if (lineEnd == std::string::npos)
+			return (false); // donnees incompletes -> attendre
+		std::string	chunkSizeStr = _rawBuffer.substr(pos, lineEnd - pos);
+		size_t		chunkSize = hexToDecimal(chunkSizeStr);
+		if (chunkSize == static_cast<size_t>(-1)) {
+			_code = 400;
+			return (false);
+		}
+		if (chunkSize == 0) { // check si chunk final
+			size_t	finalEnd = _rawBuffer.find("\r\n", lineEnd + 2);
+			if (finalEnd == std::string::npos)
+				return (false); // si \r\n final pas trouve -> attendre
+			// dechunking done
+			_bodySize = _body.size();
+			_isComplete = true;
+			_rawBuffer.clear();
+			return (true);
+		}
+		// ÉTAPE 4 : Vérifier qu'on a assez de données pour ce chunk
+		size_t	dataStart = lineEnd + 2; // Position après "\r\n"
+		size_t	dataEnd = dataStart + chunkSize;
+		size_t	nextChunkStart = dataEnd + 2; // Après les données + "\r\n"
+
+		if (nextChunkStart > _rawBuffer.size())
+			return (false); // pas assez de donnees -> attendre
+		std::string	chunkData = _rawBuffer.substr(dataStart, chunkSize);
+
+		_body += chunkData;
+		pos = nextChunkStart;
+	}
+	if (pos > 0)
+		_rawBuffer = _rawBuffer.substr(pos);
+	
+	return (false); // pas fini -> attendre + de donnees
 }
 
-void Request::makeRequest(ServerConfig &server, std::string buffer)
-{
-	std::istringstream request(buffer.c_str());
-	std::string line;
-	while (getline(request, line))
-	{
-		std::istringstream cut(line);
-		std::string res;
-		cut >> res;
-		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
-		{
-			parseMethode(server, line);
+void	Request::makeRequest(ServerConfig &server, std::string &buffer) {
+	std::istringstream	request(buffer.c_str());
+	std::string			line;
+	std::string			bodyBuffer;
+	bool				headerParsed = false;
+	
+	while (getline(request, line)) {
+		if (!headerParsed) {
+			std::istringstream	cut(line);
+			std::string			res;
+			cut >> res;
+			if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
+				parseMethode(server, line);
+			else
+				parseAttribut(line);
+			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0) {
+				headerParsed = true;
+			}
 		}
-		else
-		{
-			parseAttribut(line);
+		else {
+			// Accumuler les lignes du body
+			if (!bodyBuffer.empty())
+				bodyBuffer += "\n";
+			bodyBuffer += line;
 		}
-		if (strcmp(line.c_str(), "\r\n") == 0)
-			break;
+	}
+	
+	// Traiter le body après avoir lu tout le buffer
+	if (headerParsed && !bodyBuffer.empty()) {
+		if (_isChunked) {
+			// Pour les requêtes chunked, parser les chunks
+			parseChunkedBody(bodyBuffer);
+		}
+		else {
+			// Pour les requêtes normales, stocker directement
+			this->_body += bodyBuffer;
+			this->_bodySize = this->_body.size();
+			
+			// Vérifier si le body est complet
+			std::map<std::string, std::string>::iterator	it = _httpHeaders.find("Content-Length");
+			if (it != _httpHeaders.end()) {
+				size_t	expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
+				if (this->_bodySize >= expectedSize)
+					_isComplete = true;
+			}
+		}
 	}
 }
 
 void Request::parseMethode(ServerConfig &server, std::string line)
 {
 	std::stringstream ss(line);
-	std::string method, uri, version;
 	std::string path;
 
 	ss >> this->_methode >> this->_path >> this->_version;
@@ -470,6 +535,11 @@ int Request::getCode() const
 	return (this->_code);
 }
 
+void Request::setCode(int code)
+{
+	this->_code = code;
+}
+
 std::ostream &operator<<(std::ostream &o, Request const &request)
 {
 	o << BGREEN << std::endl;
@@ -540,4 +610,22 @@ std::ostream &operator<<(std::ostream &o, Request const &request)
 	o << NC;
 
 	return (o);
+}
+
+size_t		hexToDecimal(const std::string &hex) {
+	size_t	value = 0;
+
+	for (size_t i = 0; i < hex.size(); i++) {
+		char	c = hex[i];
+		value *= 16;
+		if (c >= '0' && c <= '9')
+			value += c - '0';
+		else if (c >= 'A' && c <= 'F')
+			value += c - 'A' + 10;
+		else if (c >= 'a' && c <= 'f')
+			value += c - 'a' + 10;
+		else
+			break;
+	}
+	return (value);
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 00:05:36 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/16 15:26:21 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 
 //////* Libraries *//////
 
-
 # include "color.h"
 
+# include <algorithm> 
 # include <iterator>
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -28,6 +28,7 @@
 // # include <sys/time.h>
 # include <ctime>
 # include <sys/wait.h>
+# include <signal.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include <netdb.h>
@@ -51,7 +52,8 @@
 
 # include <stdexcept>
 
-# include <algorithm>
+// # include "Request.hpp"
+// # include "Response.hpp"
 # include "color.h"
 
 #endif

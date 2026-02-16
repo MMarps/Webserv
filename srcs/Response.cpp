@@ -6,14 +6,13 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 14:49:44 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:21:40 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Response.hpp"
 
-Response::Response(Request &req) : _req(req), _contentLength("0")
-{
+Response::Response(Request &req) : _req(req), _isCGI(false) {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
@@ -25,6 +24,8 @@ Response::Response(Request &req) : _req(req), _contentLength("0")
 	_statutMessage.insert(std::make_pair(409, "Conflict"));
 	_statutMessage.insert(std::make_pair(413, "Payload Too Large"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
+	_statutMessage.insert(std::make_pair(502, "Bad Gateway")); // script CGI a crash ou n'a pas pu etre exec
+	_statutMessage.insert(std::make_pair(504, "Gateway Timeout")); // script CGI a pris trop de temps
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));
 	_contentType.insert(std::make_pair(".js", "text/javascript"));
@@ -41,28 +42,33 @@ Response::Response(Request &req) : _req(req), _contentLength("0")
 	// _contentType.insert(std::make_pair("...", "application/octet-stream"));
 }
 
-Response::~Response()
-{
-}
+Response::~Response() {}
 
-void Response::makeRep()
-{
+void	Response::makeRep(ServerConfig &server) {
+	if (isCGIRequest(server)) {
+		_isCGI = true;
+		handleCGI(server);
+		if (_req.getCode() == 502) {
+			generateHeader();
+			return ;
+		}
+		buildCGIResponse();
+		return ;
+	}
+	handleCGI(server);
 	generateBody();
 	generateHeader();
 }
 
-void Response::generateHeader()
-{
+void	Response::generateHeader() {
 	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\n";
-	if (this->_req.getCode() == 301)
-	{
-		return;
+	if (this->_req.getCode() == 301) {
+		return ;
 	}
-	if (this->_req.getCode() != 200 && this->_req.getFileName().empty())
-	{
+	if ((this->_isCGI && this->_req.getCode() == 502) || this->_req.getCode() != 200 && this->_req.getFileName().empty()) {
 		this->_response += "Content-length: 0\n";
 		this->_response += "\n\n";
-		return;
+		return ;
 	}
 	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtention()] + "\n";
 	this->_response += "Content-length: " + this->_contentLength + "\n";
@@ -125,17 +131,11 @@ void Response::getAutoindexPage(std::string &rep, std::vector<std::string> lstFi
 	}
 }
 
-void Response::generateAutoindex()
+void	Response::generateAutoindex()
 {
 	std::string htmlpage;
 	std::vector<std::string> lstFiles;
 
-	lstFiles = getLstDir();
-	getAutoindexPage(htmlpage, lstFiles);
-	if (!htmlpage.empty())
-	{
-		return;
-	}
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
 	{
@@ -167,19 +167,60 @@ std::vector<std::string> Response::getLstDir()
 	return (lstFiles);
 }
 
-std::string Response::getResponse() const
-{
+bool	Response::isCGIRequest(ServerConfig &server) {
+	if (_req.getCode() != 200) // requete incorrecte
+		return (false);
+
+	CGI	tmpCGI(_req, server);
+	return (tmpCGI.isCGI());
+}
+
+void	Response::handleCGI(ServerConfig &server) {
+	CGI	_cgi(_req, server);
+
+	if (!_cgi.execute(_req)) {
+		this->_req.setCode(502);
+		return ;
+	}
+
+	int	statusCode = _cgi.getStatusCode();
+	if (statusCode != 200)
+		this->_req.setCode(statusCode);
+
+	_cgiHeaders = _cgi.getHeaders();
+
+	std::string	body = _cgi.getBody();
+	_content.assign(body.begin(), body.end()); // converti body (std::string) en std::vector pour assigner a _content 
+}
+
+void	Response::buildCGIResponse() {
+	std::ostringstream	statusLine;
+	statusLine << "HTTP/1.1 " << _req.getCode() << ' ' << _statutMessage[_req.getCode()] << "\r\n";
+	_response = statusLine.str();
+
+	std::map<std::string, std::string>::iterator	it = _cgiHeaders.begin();
+	while (it != _cgiHeaders.end()) {
+		_response += it->first + ": " + it->second + "\r\n";
+		it++;
+	}
+	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) { // ajouter content-length si pas deja present
+		std::ostringstream	contentLengthStream;
+		contentLengthStream << _content.size();
+		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
+	}
+	_response += "Connection: close\r\n\r\n";
+	_response.append(_content.begin(), _content.end());
+}
+
+std::string	Response::getResponse() const {
 	return (this->_response);
 }
 
-std::vector<char> Response::getContent() const
-{
+std::vector<char>	Response::getContent() const {
 	return (this->_content);
 }
 
-std::ostream &operator<<(std::ostream &o, Response const &response)
-{
+std::ostream	&operator<<(std::ostream &o, Response const &response) {
 	o << BYELLOW << response.getResponse() << std::endl;
-
 	return (o);
 }

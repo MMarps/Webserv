@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/06 00:05:41 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/16 15:22:31 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,55 +30,57 @@ static volatile sig_atomic_t g_terminate = 0;
 
 void	signal_handler(int sig);
 
-class	ServerError : public std::exception {
-public:
-	ServerError(const std::string& msg) throw() {
-		_msg = "Error: Server: " + msg;
-	}
-	virtual ~ServerError() throw() {}
-	virtual const char*	what() const throw() {
-		return (_msg.c_str());
-	}
-private:
-	std::string	_msg;
+class ServerError : public std::exception {
+	public:
+		ServerError(const std::string& msg) throw() {
+			_msg = "Error: Server: " + msg;
+		}
+		virtual ~ServerError() throw() {}
+		virtual const char*	what() const throw() {
+			return (_msg.c_str());
+		}
+	private:
+		std::string	_msg;
 };
 
-class	Server {
-public:
-	Server(const std::string& confFileName);
-	~Server();
-
-	const Config&	getConfig() const;
-
-	void			run();
-
-private:
-	Config								_conf;
-
-	int									_epollFd;
-	struct epoll_event					_events[MAX_EVENTS];
-
-	std::map<int, std::vector<int> >	_serveurSockets;
-
-	std::map<int, Client*>				_clients;
-
-	void						_setupServerSockets();
-	int							_setNonBlocking(int fd);
-	int							_addToEpoll(int fd, uint32_t events);
-	int							_modEpoll(int fd, uint32_t newEvents);
-
-	void						_closeConnection(int fd);
-	void						_addNewClient(int serverFd);
-	void						_handleClientData(int clientFd);
-	void						_parseResponse(Client* c, int errCode);
-	void						_sendResponse(int clientFd);
-
-	void						_closeSocketFds();
-	void						_closeAllClients();
- 
-	long						_extractContentLen(const std::string& header);
-	long						_getLocationMaxBodySize(Client* client);
-	const LocationConfig*		_findBestLocation(const std::string& uri, int serverIdx);
+class Server {
+	public:
+		Server(const std::string& confFileName);
+		~Server();
+	
+		const Config&	getConfig() const;
+	
+		void			run();
+	
+	private:
+		Config								_conf;
+	
+		int									_epollFd;
+		struct epoll_event					_events[MAX_EVENTS];
+	
+		std::map<int, std::vector<int> >	_serveurSockets;
+	
+		std::map<int, Client*>				_clients;
+	
+		std::map<int, std::pair<std::string, int> >	_clientMetadata; // map de metadata, au format: fd, IP client, port serv
+	
+		void						_setupServerSockets();
+		int							_setNonBlocking(int fd);
+		int							_addToEpoll(int fd, uint32_t events);
+		int							_modEpoll(int fd, uint32_t newEvents);
+	
+		void						_closeConnection(int fd);
+		void						_addNewClient(int serverFd);
+		void						_handleClientData(int clientFd);
+		void						_parseResponse(Client* c, int errCode);
+		void						_sendResponse(int clientFd);
+	
+		void						_closeSocketFds();
+		void						_closeAllClients();
+	
+		long						_extractContentLen(const std::string& header);
+		long						_getLocationMaxBodySize(Client* client);
+		const LocationConfig*		_findBestLocation(const std::string& uri, int serverIdx);
 };
 
 #endif

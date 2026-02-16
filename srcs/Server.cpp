@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/14 16:39:58 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/16 15:25:43 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,6 +230,9 @@ void Server::_closeConnection(int fd) {
 	if (_clients.count(fd))
 		_clients.erase(fd);
 
+	if (_clientMetadata.count(fd)) // Nettoyer les metadonnees reseau
+		_clientMetadata.erase(fd);
+
 	std::cout << "Connection closed: " << fd << std::endl;
 }
 
@@ -244,13 +247,19 @@ void Server::_addNewClient(int serverFd) {
 		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
 		return ;
 	}
+
+	std::string	remoteAddr = inet_ntoa(clientAddr.sin_addr);
+	int			serverPort = _conf.servers[_serveurSockets[serverFd][0]].listens[0].port;
+
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
-	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0]);
-	std::cout << "New connection: " << clientFd << std::endl;
+	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0], remoteAddr, serverPort);
+	_clientMetadata[clientFd] = std::make_pair(remoteAddr, serverPort); // stocker la map pour la passer a request dans parseResponse
+
+	std::cout << "New connection: " << clientFd <<" from " << remoteAddr << std::endl;
 }
 
-void Server::_handleClientData(int clientFd) {
+void	Server::_handleClientData(int clientFd) {
 	char	buf[BUFFER_SIZE];
 	Client	*client;
 	ssize_t	nbytes;
@@ -311,9 +320,15 @@ void Server::_handleClientData(int clientFd) {
 void Server::_parseResponse(Client *c, int errCode) {
 	Request	req;
 
+	int	clientFd = c->getFd();
+	if (_clientMetadata.find(clientFd) != _clientMetadata.end()) { // transmettre les metadata reseau a Request
+		req.setRemoteAddr(_clientMetadata[clientFd].first);
+		req.setServerPort(_clientMetadata[clientFd].second);
+	}
+
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
-	Response response(req);
-	response.makeRep();
+	Response	response(req);
+	response.makeRep(_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getResponse());
 
 	std::cout  << response << std::endl;
