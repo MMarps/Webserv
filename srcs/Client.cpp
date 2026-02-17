@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:17:46 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 15:55:21 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 19:35:40 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,8 @@ Client::Client(int clientFd, int serverIdx, const std::string &remoteAddr, int s
 	  actualBodySize(0),
 	  _fd(clientFd),
 	  _serverIdx(serverIdx),
-	  _remoteAddr(remoteAddr),
-	  _serverPort(serverPort) {}
+	  _addr(remoteAddr),
+	  _port(serverPort) {}
 
 Client::~Client() {}
 
@@ -40,6 +40,21 @@ std::string& Client::getHeader() {
 
 std::string& Client::getResponse() {
 	return (_response);
+}
+
+std::string	Client::getAddr() const {
+	return (_addr);
+}
+
+int	Client::getPort() const {
+	return (_port);
+}
+
+std::string	Client::getAllInfos() const {
+	std::stringstream	oss;
+
+	oss << _addr << ':' << _port << " (fd=" << _fd << ')';
+	return (oss.str());
 }
 
 void Client::setBody(std::vector<char> body) {

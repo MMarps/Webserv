@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 15:50:31 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 19:19:05 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ class Server {
 		struct epoll_event		_events[MAX_EVENTS];
 	
 		std::map<int, int>		_serverSockets;
-	// std::map<int, std::vector<int> >	_serverSockets;
+		std::map<int, int>		_serverPorts;
 	
 		std::map<int, Client*>	_clients;
 	
@@ -82,6 +82,7 @@ class Server {
 		long					_extractContentLen(const std::string& header);
 		long					_getLocationMaxBodySize(Client* client);
 		const LocationConfig*	_findBestLocation(const std::string& uri, int serverIdx);
+		std::string				_getClientAddr(const struct sockaddr_in& clientAddr);
 };
 
 #endif

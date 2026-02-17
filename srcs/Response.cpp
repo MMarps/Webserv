@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 15:52:32 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 19:20:48 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,6 +206,6 @@ std::vector<char>	Response::getContent() const {
 }
 
 std::ostream	&operator<<(std::ostream &o, Response const &response) {
-	o << BYELLOW << response.getResponse() << std::endl;
+	o << BYELLOW << response.getResponse() << NC << std::endl;
 	return (o);
 }

@@ -3,16 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 16:01:49 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 19:45:58 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-Server::Server(const std::string &confFileName) {
+Server::Server(const std::string &confFileName)
+	: _conf(),
+	  _serverSockets(),
+	  _serverPorts(),
+	  _clients(),
+	  _clientMetadata() {
+
 	Lexer ts(confFileName);
 	Parser p(ts);
 	// ts.printTokens();
@@ -104,6 +110,7 @@ void Server::_setupServerSockets() {
 
 			_addToEpoll(fd, EPOLLIN);
 			_serverSockets[fd] = si;
+			_serverPorts[fd] = it->port;
 
 			oss << "Listening on port " << it->port << " (fd=" << fd << ")";
 			Logger::info(oss.str(), si);
@@ -200,14 +207,15 @@ void	Server::run() {
 void Server::_closeConnection(int fd) {
 	int					srvIdx;
 	std::stringstream	oss;
+	Client*				client = _clients[fd];
 
-	srvIdx = _clients[fd]->getServerIdx();
-	oss << "Connection closed: " << fd;
+	srvIdx = client->getServerIdx();
+	oss << "Connection closed: " << client->getAllInfos();
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
 	close(fd);
-	delete _clients[fd];
+	delete client;
 
 	if (_clients.count(fd))
 		_clients.erase(fd);
@@ -225,22 +233,24 @@ void	Server::_addNewClient(int serverFd) {
 	int					clientFd;
 	std::stringstream	oss;
 
+	memset(&clientAddr, 0, sizeof(clientAddr));
 	addrLen = sizeof(clientAddr);
 	clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
 	if (clientFd < 0) {
-		oss << "Error accepting client: " << strerror(errno) << std::endl;
+		oss << "Accepting client: " << strerror(errno) << ", on port: " << _serverPorts[serverFd];
 		Logger::error(oss.str(), serverFd);
 		return ;
 	}
 
-	std::string	remoteAddr = inet_ntoa(clientAddr.sin_addr);
-	int			serverPort = _conf.servers[_serverSockets[serverFd]].listens[0].port;
+	std::string	remoteAddr = _getClientAddr(clientAddr);
+	int			serverPort = _serverPorts[serverFd];
 
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
 	_clients[clientFd] = new Client(clientFd, _serverSockets[serverFd], remoteAddr, serverPort);
 	_clientMetadata[clientFd] = std::make_pair(remoteAddr, serverPort); // stocker la map pour la passer a request dans parseResponse
-	oss << "New connection: " << clientFd << std::endl;
+	
+	oss << "New connection: " << _clients[clientFd]->getAllInfos();
 	Logger::info(oss.str(), _serverSockets[serverFd]);
 }
 
@@ -401,6 +411,18 @@ const LocationConfig	*Server::_findBestLocation(const std::string& uri, int serv
 		}
 	}
 	return (bestMatch);
+}
+
+std::string	Server::_getClientAddr(const struct sockaddr_in& clientAddr) {
+	unsigned int ip = ntohl(clientAddr.sin_addr.s_addr);
+
+	std::stringstream	oss;
+	oss << ((ip >> 24) & 0xFF) << '.'
+		<< ((ip >> 16) & 0xFF) << '.'
+		<< ((ip >> 8) & 0xFF) << '.'
+		<< (ip & 0xFF);
+
+	return (oss.str());
 }
 
 /////////////////////////////////////
