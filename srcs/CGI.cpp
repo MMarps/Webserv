@@ -37,7 +37,7 @@ void	CGI::parseOutput() {
 	if (separatorPos == std::string::npos) { // si pas trouve de separateur, chercher \n\n
 		separatorPos = output.find("\n\n");
 		separatorSize = 2;
-	}	
+	}
 	if (separatorPos == std::string::npos) { // si pas trouve, pas de header et tout dans le body
 		_body = output;
 		return ;
@@ -102,15 +102,27 @@ void	CGI::executeScript(char **env) {
 
 bool	CGI::execute(const Request &req) {
 	this->_interpreter = findInterpreter();
-	if (this->_interpreter.empty())
+	if (this->_interpreter.empty()){
+		std::cout << BRED << "cgi false 1" << NC << std::endl;
+
 		return (false);
-	if (_server.cgi.find(this->_interpreter) == _server.cgi.end()) // check si dans les interpreter valides dans la config
+	}
+
+	if (_server.cgi.find(this->_interpreter) == _server.cgi.end()){ // check si dans les interpreter valides dans la config
+		std::cout << BRED << "cgi false 2" << NC << std::endl;
 		return (false);
+	}
 	std::string	interpreterPath = _server.cgi[_interpreter];
-	if (access(interpreterPath.c_str(), X_OK) != 0) // check si executable
+	if (access(interpreterPath.c_str(), X_OK) != 0){ // check si executable
+		std::cout << BRED << "cgi false 3" << NC << std::endl;
+		
 		return (false);
-	if (open(_scriptPath.c_str(), O_RDONLY, O_EXCL) < 0)
+	}
+	if (open(_scriptPath.c_str(), O_RDONLY, O_EXCL) < 0){
+		std::cout << BRED << "cgi false 4" << NC << std::endl;
+		
 		return (false);
+	}
 
 	char	**cgiEnv = setupEnv(req);
 	if (processScript(cgiEnv)) {
@@ -119,6 +131,8 @@ bool	CGI::execute(const Request &req) {
 		return (true);
 	}
 	freeEnv(cgiEnv);
+	std::cout << BRED << "cgi false 5" << NC << std::endl;
+
 	return (false);
 }
 

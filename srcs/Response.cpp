@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 17:13:02 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 15:40:50 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ Response::~Response() {}
 void	Response::makeRep(ServerConfig &server) {
 	if (isCGIRequest(server)) {
 		_isCGI = true;
+		std::cout << BRED << "Is Cgi flg" << NC << std::endl;
 		handleCGI(server);
 		if (_req.getCode() == 502) {
 			generateHeader();
@@ -161,7 +162,8 @@ bool	Response::isCGIRequest(ServerConfig &server) {
 void	Response::handleCGI(ServerConfig &server) {
 	CGI	_cgi(_req, server);
 
-	if (!_cgi.execute(_req)) {
+	if (_cgi.isCGI(_req, server) &&!_cgi.execute(_req)) {
+		std::cout << BRED << "cgi execute" << NC << std::endl;
 		this->_req.setCode(502);
 		return ;
 	}
