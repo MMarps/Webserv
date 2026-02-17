@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 17:09:15 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 10:47:06 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ class Request {
 		void	checkAllowMethods();
 		void	searchIndex();
 		void	checkIsCgi(ServerConfig &server);
-		void	getErrorpage(ServerConfig &server);
+		void	getErrorPage(ServerConfig &server);
 		void	checkRequest();
 		void	setCode(int code);
 
@@ -104,7 +104,7 @@ class Request {
 		std::vector<std::string>	getCutPath() const;
 		std::map<std::string, std::string>	getVarLst() const;
 
-		LocationConfig	getLocation() const;
+		LocationConfig	*getLocation() const;
 		bool			getIsLocation() const;
 		bool			getIsPost() const;
 		bool			getIsComplete() const;

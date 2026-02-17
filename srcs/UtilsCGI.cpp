@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 16:49:20 by arotondo          #+#    #+#             */
-/*   Updated: 2026/02/16 17:04:04 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 10:53:56 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,11 +56,11 @@ bool	CGI::isCGI(const Request &req, const ServerConfig &server) {
 		return (false);
 	
 	if (req.getIsLocation()) {
-		LocationConfig location = req.getLocation();
-		if (location.cgi.find(extension) != location.cgi.end())
+		LocationConfig *location = req.getLocation();
+		if (location->cgi.find(extension) != location->cgi.end())
 			return (true);
 	}
-	
+
 	if (server.cgi.find(extension) != server.cgi.end())
 		return (true);
 	
