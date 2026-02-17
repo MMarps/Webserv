@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 17:36:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 15:52:51 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 15:51:40 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,4 +58,6 @@ ServerConfig::ServerConfig()
 	  cgi(),
 	  client_max_body_size(0),
 	  has_client_max_body_size(false),
-	  locations() {}
+	  locations(),
+	  log() {}
+	  

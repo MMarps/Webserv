@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 16:22:10 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 16:01:49 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,9 @@ Server::Server(const std::string &confFileName) {
 
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
+
+	Logger::init(_conf.servers);
+	Logger::log("Logger initialised");
 }
 
 Server::~Server() {
@@ -39,28 +42,22 @@ void	signal_handler(int sig) {
 
 /////////////////////////////////////
 
-void	Server::_setupServerSockets() {
-	struct addrinfo								hints;
-	struct addrinfo								*res;
-	int											status;
-	int											fd;
-	int											opt;
-	std::map<std::pair<std::string, int>, int>	bound;
+void Server::_setupServerSockets() {
+	struct addrinfo		hints;
+	struct addrinfo		*res;
+	int					status;
+	int					fd;
+	int					opt;
+	std::ostringstream 	oss;
 
 	for (size_t si = 0; si < _conf.servers.size(); si++) {
 		std::vector<Listen>::iterator it;
 		for (it = _conf.servers[si].listens.begin(); it != _conf.servers[si].listens.end(); it++) {
-			std::pair<std::string, int>	key(it->host, it->port);
-			if (bound.count(key)) {
-				_serveurSockets[bound[key]].push_back(si);
-				std::cout << "Server " << "[" << si << "] listening on port "
-						  << it->port << " (fd=" << fd << ")" << std::endl;
-				continue ;
-			}
 			std::memset(&hints, 0, sizeof(hints));
 			hints.ai_family = AF_INET;
 			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_flags = AI_PASSIVE;
+
 			std::stringstream ss;
 			ss << it->port;
 			std::string strPort = ss.str();
@@ -71,6 +68,7 @@ void	Server::_setupServerSockets() {
 				_closeSocketFds();
 				throw ServerError(gai_strerror(status));
 			}
+
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 			if (fd < 0) {
 				freeaddrinfo(res);
@@ -90,15 +88,6 @@ void	Server::_setupServerSockets() {
 				int save_errno = errno;
 				freeaddrinfo(res);
 				close(fd);
-				if (save_errno == EADDRINUSE) {
-					std::pair<std::string, int>	wildcardKey("*", it->port);
-					if (bound.count(wildcardKey)) {
-						_serveurSockets[bound[wildcardKey]].push_back(si);
-						std::cout << "Server " << "[" << si << "] listening on port "
-					  			  << it->port << " (fd=" << fd << ")" << std::endl;
-						continue ;
-					}
-				}
 				std::ostringstream msg;
 				msg << "Failed to bind, " << it->host << ":" << it->port
 					<< " errno=" << save_errno << " " << strerror(save_errno);
@@ -106,16 +95,19 @@ void	Server::_setupServerSockets() {
 				throw ServerError(msg.str());
 			}
 			freeaddrinfo(res);
+
 			if (listen(fd, SOMAXCONN) < 0) {
 				close(fd);
 				_closeSocketFds();
 				throw ServerError("Failed to listen");
 			}
+
 			_addToEpoll(fd, EPOLLIN);
-			_serveurSockets[fd].push_back(si);
-			std::cout << "Server " << "[" << si << "] listening on port "
-					  << it->port << " (fd=" << fd << ")" << std::endl;
-			bound[key] = fd;
+			_serverSockets[fd] = si;
+
+			oss << "Listening on port " << it->port << " (fd=" << fd << ")";
+			Logger::info(oss.str(), si);
+			oss.str("");
 		}
 	}
 }
@@ -169,12 +161,13 @@ void	Server::run() {
 	uint32_t	currentEvent;
 
 	_setupServerSockets();
-	std::cout << BGREEN << "\nServer Ready\n" << NC << std::endl; 
+	Logger::log("Server Ready");
 	while (true) {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
 		if (nfds < 0) {
 			if (errno == EINTR && g_terminate) {
-				std::cout << " Signal received, shutdown asked" << std::endl;
+				std::cout << std::endl;
+				Logger::info("Signal received, shutdown asked");
 				_closeAllClients();
 				_closeSocketFds();
 				break ;
@@ -191,7 +184,7 @@ void	Server::run() {
 				_closeConnection(currentFd);
 				continue ;
 			}
-			if (_serveurSockets.find(currentFd) != _serveurSockets.end())
+			if (_serverSockets.find(currentFd) != _serverSockets.end())
 				_addNewClient(currentFd);
 			else if (currentEvent & EPOLLIN)
 				_handleClientData(currentFd);
@@ -199,11 +192,18 @@ void	Server::run() {
 				_sendResponse(currentFd);
 		}
 	}
-	if (g_terminate)
-		std::cout << BGREEN << "Shutdown complete" << NC << std::endl;
+	if (g_terminate) {
+		Logger::log("Shutdown complete\n");
+	}
 }
 
-void	Server::_closeConnection(int fd) {
+void Server::_closeConnection(int fd) {
+	int					srvIdx;
+	std::stringstream	oss;
+
+	srvIdx = _clients[fd]->getServerIdx();
+	oss << "Connection closed: " << fd;
+
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
 	close(fd);
@@ -215,30 +215,33 @@ void	Server::_closeConnection(int fd) {
 	if (_clientMetadata.count(fd)) // Nettoyer les metadonnees reseau
 		_clientMetadata.erase(fd);
 
-	std::cout << "Connection closed: " << fd << std::endl;
+	// std::cout << "Connection closed: " << fd << std::endl;
+	Logger::info(oss.str(), srvIdx);
 }
 
 void	Server::_addNewClient(int serverFd) {
 	struct sockaddr_in	clientAddr;
 	socklen_t			addrLen;
 	int					clientFd;
+	std::stringstream	oss;
 
 	addrLen = sizeof(clientAddr);
 	clientFd = accept(serverFd, (sockaddr *)&clientAddr, &addrLen);
 	if (clientFd < 0) {
-		std::cerr << "Error accepting client: " << strerror(errno) << std::endl;
+		oss << "Error accepting client: " << strerror(errno) << std::endl;
+		Logger::error(oss.str(), serverFd);
 		return ;
 	}
 
 	std::string	remoteAddr = inet_ntoa(clientAddr.sin_addr);
-	int			serverPort = _conf.servers[_serveurSockets[serverFd][0]].listens[0].port;
+	int			serverPort = _conf.servers[_serverSockets[serverFd]].listens[0].port;
 
 	_setNonBlocking(clientFd);
 	_addToEpoll(clientFd, EPOLLIN);
-	_clients[clientFd] = new Client(clientFd, _serveurSockets[serverFd][0], remoteAddr, serverPort);
+	_clients[clientFd] = new Client(clientFd, _serverSockets[serverFd], remoteAddr, serverPort);
 	_clientMetadata[clientFd] = std::make_pair(remoteAddr, serverPort); // stocker la map pour la passer a request dans parseResponse
-
-	std::cout << "New connection: " << clientFd <<" from " << remoteAddr << std::endl;
+	oss << "New connection: " << clientFd << std::endl;
+	Logger::info(oss.str(), _serverSockets[serverFd]);
 }
 
 void	Server::_handleClientData(int clientFd) {
@@ -262,8 +265,8 @@ void	Server::_handleClientData(int clientFd) {
 			client->expectedBodySize = _extractContentLen(client->getHeader());
 			long maxSize = _getLocationMaxBodySize(client);
 
-			std::cout << BRED << "expectedBodySize = " << client->expectedBodySize << std::endl
-					  << "maxSize = " << maxSize << NC << std::endl;
+			// std::cout << BRED << "expectedBodySize = " << client->expectedBodySize << std::endl
+			// 		  << "maxSize = " << maxSize << NC << std::endl;
 
 			if (client->expectedBodySize > static_cast<size_t>(maxSize)) {
 				_parseResponse(client, 413);
@@ -291,7 +294,8 @@ void	Server::_handleClientData(int clientFd) {
 	}
 	if (client->isHeaderFinished) {
 		if (client->getBody().size() >= client->expectedBodySize) {
-			std::cout << "Request received completely." << std::endl;
+			// std::cout << "Request received completely." << std::endl;
+			Logger::info("Request received completely.", client->getServerIdx());
 			client->isRequestFinished = true;
             _parseResponse(client, 200);
             _modEpoll(clientFd, EPOLLOUT);
@@ -333,7 +337,8 @@ void	Server::_sendResponse(int clientFd) {
 		return ;
 	}
 	if (static_cast<size_t>(sent) >= resp.size()) {
-		std::cout << "Response sent fully." << std::endl;
+		// std::cout << "Response sent fully." << std::endl;
+		Logger::info("Response sent fully.", client->getServerIdx());
 		client->getHeader().clear();
 		client->getResponse().clear();
 		client->getBody().clear();
@@ -401,16 +406,18 @@ const LocationConfig	*Server::_findBestLocation(const std::string& uri, int serv
 /////////////////////////////////////
 
 void	Server::_closeSocketFds() {
-	if (_serveurSockets.empty())
+	std::map<int, int>::const_iterator it;
+
+	if (_serverSockets.empty())
 		return ;
-	std::map<int, std::vector<int> >::const_iterator	it = _serveurSockets.begin();
-	for (; it != _serveurSockets.end(); ++it) {
-		int	fd = it->first;
+	for (it = _serverSockets.begin(); it != _serverSockets.end(); ++it) {
+		int fd = it->first;
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL);
 		close(fd);
 	}
-	_serveurSockets.clear();
-	std::cout << "All sockets closed" << std::endl;
+	_serverSockets.clear();
+	// std::cout << "All sockets closed" << std::endl;
+	Logger::info("All sockets closed");
 }
 
 void	Server::_closeAllClients() {
@@ -424,7 +431,8 @@ void	Server::_closeAllClients() {
 		delete it->second;
 	}
 	_clients.clear();
-	std::cout << "All clients disconnected" << std::endl;
+	// std::cout << "All clients disconnected" << std::endl;
+	Logger::info("All clients disconnected");
 }
 
 /////////////////////////////////////

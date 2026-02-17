@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/11 15:50:04 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/13 18:32:55 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,6 @@ void	Lexer::makeTokenStream() {
 			i++;
 			_c++;
 		}
-		SkipWhiteSpaceAndComment();
 	}
 	if (_tok.empty())
 		throw ParserError(_path + " is empty");
@@ -108,10 +107,10 @@ void Lexer::printTokens() {
 	for (std::list<Token>::const_iterator it = _tok.begin(); it != _tok.end(); ++it, ++idx) {
 		const Token& tok = *it;
 		std::cout << idx << ": "
-					<< tokenTypeToString(tok.type)
-					<< " | content: \"" << tok.content << "\""
-					<< " | line: " << tok.l << " col: " << tok.c
-					<< '\n';
+				  << tokenTypeToString(tok.type)
+				  << " | content: \"" << tok.content << "\""
+				  << " | line: " << tok.l << " col: " << tok.c
+				  << std::endl;
 	}
 }
 
@@ -141,6 +140,8 @@ void	Lexer::SkipWhiteSpaceAndComment() {
 			_c++;
 		i++;
 	}
+	if (_f[i] == '#')
+		SkipWhiteSpaceAndComment();
 }
 
 bool	Lexer::isSep(const char& c) const {

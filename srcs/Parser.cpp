@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 15:52:01 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 15:52:20 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,7 +156,7 @@ void	Parser::parseDirective(LocationConfig& loc) {
 	else if (name == "return")
 		parseReturn(loc, args);
 	else
-		throwError("Directive unknown1", true);
+		throwError("Directive unknown", true);
 }
 
 Listen			Parser::parseListen(std::vector<std::string>& args) {
@@ -297,6 +297,9 @@ void	Parser::putDefaultValues(Config &cfg) {
 			srv.client_max_body_size = 1024 * 1024;
 			srv.has_client_max_body_size = true;
 		}
+		if (srv.log.empty()) {
+			getLogFile(srv, si);
+		}
 		for (size_t li = 0; li < srv.locations.size(); li++) {
 			LocationConfig& loc = srv.locations[li];
 			if (loc.has_client_max_body_size == false) {
@@ -320,6 +323,34 @@ void	Parser::checkCgi(Config &cfg) {
 			}
 		}
 	}
+}
+
+void	Parser::getLogFile(ServerConfig& srv, int srvIdx) {
+	std::string::const_iterator it;
+	const std::string& root = srv.root;
+	std::stringstream ss;
+
+
+	if (root.size() == 1 && root[0] == '/')
+		ss << srv.root;
+	else
+		ss << findRootDir(root);
+
+	it = ss.str().end() - 1;
+	if (*it == '/')
+		ss << "log/Server[" << srvIdx << "].log";
+	else
+		ss << "/log/Server[" << srvIdx << "].log";
+
+	srv.log = ss.str();
+}
+
+std::string	Parser::findRootDir(const std::string& root) {
+	size_t pos = root.find('/', 1);
+	if (pos == root.npos)
+		return (root);
+	else
+		return (root.substr(0, pos));
 }
 
 /////////////////////////////////////

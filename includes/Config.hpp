@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:15:18 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 16:14:16 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 15:48:16 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,8 @@ struct ServerConfig {
 	size_t								client_max_body_size;
 	bool								has_client_max_body_size;
 	std::vector<LocationConfig>			locations;
+
+	std::string							log;
 
 	ServerConfig();
 };

@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:34 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 15:51:18 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 15:49:40 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,8 @@ class Parser {
 	
 		void			putDefaultValues(Config &cfg);
 		void			checkCgi(Config &cfg);
+		void			getLogFile(ServerConfig& srv, int srvIdx);
+		std::string		findRootDir(const std::string& root);
 };
 
 #endif
