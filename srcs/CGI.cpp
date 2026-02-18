@@ -139,9 +139,21 @@ bool	CGI::execute(const Request &req) {
 void	CGI::parentProcess(int *fdIn, int *fdOut) {
 	close(fdIn[0]);
 	close(fdOut[1]);
+
+	std::cout << BYELLOW << "=== CGI PARENT PROCESS ===" << NC << std::endl;
+	std::cout << "Method: " << _req.getMethode() << std::endl;
+	std::cout << "Body size: " << _req.getBody().size() << std::endl;
+	std::cout << "Body content: '" << _req.getBody() << "'" << std::endl;
+	std::cout << BYELLOW << "==========================" << NC << std::endl;
+	
 	if (_req.getMethode() == "POST") { // Si POST : écrire le body dans le pipe d'entrée
 		std::string body = _req.getBody();
-		write(fdIn[1], body.c_str(), body.size());
+		if (!body.empty()) {
+			ssize_t	written = write(fdIn[1], body.c_str(), body.size());
+			std::cout << BGREEN << "Wrote " << written << " bytes to CGI stdin" << NC << std::endl;
+		}
+		else
+			std::cout << BRED << "Body is EMPTY!" << NC << std::endl;
 	}
 	close(fdIn[1]);
 
@@ -186,6 +198,7 @@ bool	CGI::processScript(char **env) {
 		close(pipeOut[1]);
 		executeScript(env);
 	}
+	std::cout << BRED << "BEFORE PARENT PROCESS" << NC <<std::endl;
 	parentProcess(pipeIn, pipeOut);
 	return (waitProcess(pid));
 }

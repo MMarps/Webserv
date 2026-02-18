@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 16:49:20 by arotondo          #+#    #+#             */
-/*   Updated: 2026/02/17 14:56:49 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 19:00:01 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,9 +27,14 @@ char	**CGI::setupEnv(const Request &req) {
 	addEnv(_envCgi, "SERVER_NAME", req.getHost());
 	addEnv(_envCgi, "SERVER_PORT", integerToString(req.getServerPort()));
 	addEnv(_envCgi, "REMOTE_ADDR", req.getRemoteAddr());
+	addEnv(_envCgi, "PATH_INFO", extractPathInfo(req));
 
 	addHTTPHeaders(_envCgi);
 	return (vectorToEnv(_envCgi));
+}
+
+std::string	CGI::extractPathInfo(const Request &req) {
+	return (req.getPathInfo());
 }
 
 std::string	CGI::integerToString(size_t value) {
@@ -48,10 +53,14 @@ std::string	CGI::findInterpreter() {
 }
 
 bool	CGI::isCGI(const Request &req, const ServerConfig &server) {
-	if (req.getFileName().empty() || req.getFileExtention().empty())
+	std::cout << BCYAN << "=== isCGI CHECK ===" << NC << std::endl;
+	std::cout << "FileName: '" << req.getFileName() << "'" << std::endl;
+	std::cout << "FileExtension: '" << req.getFileExtension() << "'" << std::endl;
+
+	if (req.getFileName().empty() || req.getFileExtension().empty())
 		return (false);
 	
-	std::string	extension = req.getFileExtention();
+	std::string	extension = req.getFileExtension();
 	if (extension.empty())
 		return (false);
 	

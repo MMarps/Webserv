@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/18 11:44:15 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 19:12:13 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -313,11 +313,9 @@ void	Server::_parseResponse(Client *c, int errCode) {
 	}
 
 	std::string	fullRequest = c->getHeader();
-	if (!c->getBody().empty()) {
-    	std::cout << BYELLOW << "Adding body to request! Body size: " << c->getBody().size() << NC << std::endl;
+	if (!c->getBody().empty())
 		fullRequest += std::string(c->getBody().begin(), c->getBody().end());
-	}
-	req.parse(_conf.servers[c->getServerIdx()], fullRequest, errCode);
+	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 
 	Response	response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);

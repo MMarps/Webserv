@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/18 10:47:50 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 17:55:09 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ class Request {
 		std::string		_body; // contenu du body pour la requete POST
 		size_t			_bodySize; // taille du body
 		std::string		_contentType; // contentType de la requete
+		std::string		_pathInfo;
 
 		bool			_isChunked;
 		// bool			_headersParser;
@@ -95,7 +96,7 @@ class Request {
 		std::string		getPath() const;
 		std::string		getCompletPath() const;
 		std::string		getFileName() const;
-		std::string		getFileExtention() const;
+		std::string		getFileExtension() const;
 		std::string		getVersion() const;
 		std::string		getHeader() const;
 		std::string		getHost() const;
@@ -113,10 +114,13 @@ class Request {
 		int				getCode() const;
 		// CGI part
 		// bool			parseChunkedBody(const std::string &newData);
+		bool			isCgiExtension(const ServerConfig &server);
+		void			extractPathInfo(std::vector<std::string>::iterator it);
 		std::string		getQueryString() const;
 		std::string		getBody() const;
 		std::string		getContentType() const;
 		size_t			getBodySize() const;
+		std::string		getPathInfo() const;
 		const std::map<std::string, std::string>	&getHttpHeaders() const;
 
 		// Network metadata

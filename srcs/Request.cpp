@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/18 10:53:46 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 19:03:01 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,11 +193,12 @@ void	Request::cutPath() {
 		findPos = path.find('/', 1);
 		lastFindPos = 0;
 		while (findPos != std::string::npos) {
-			res = path.substr(lastFindPos, findPos);
+			res = path.substr(lastFindPos, findPos - lastFindPos);
 			lastFindPos = findPos;
 			this->_cutPath.push_back(res);
 			path = path.substr(findPos);
-			findPos = path.find('/', findPos + 1);
+			lastFindPos = 0;
+			findPos = path.find('/', 1);
 		}
 	}
 	this->_cutPath.push_back(path);
@@ -207,6 +208,11 @@ void	Request::makeAllPathRules(ServerConfig &server) {
 	int			pathType;
 	std::string	newPath;
 	std::vector<std::string>::iterator	it = this->_cutPath.begin();
+
+	// std::cout << BCYAN << "=== CUT PATH DEBUG ===" << NC << std::endl;
+	// for (size_t i = 0; i < this->_cutPath.size(); i++)
+	// 	std::cout << "  [" << i << "] = '" << this->_cutPath[i] << "'" << std::endl;
+	// std::cout << BCYAN << "======================" << NC << std::endl;
 	for (; it != this->_cutPath.end(); it++) {
 		newPath += *it;
 		pathType = checkPathType(server, newPath);
@@ -221,9 +227,32 @@ void	Request::makeAllPathRules(ServerConfig &server) {
 		case FILE_PATH:
 			std::cout << BPURPLE << *it << " is FILE" << NC << std::endl;
 			makeExtentionAndNameFile(*it);
+			if (isCgiExtension(server)) {
+				this->_completPath = this->_root + newPath;
+				extractPathInfo(++it);
+				return ;
+			}
 			break ;
 		}
 	}
+}
+
+bool	Request::isCgiExtension(const ServerConfig &server) {
+	if (this->_fileExtention.empty())
+		return (false);
+	if (this->_isLocation && this->_location) {
+		if (this->_location->cgi.find(this->_fileExtention) != this->_location->cgi.end())
+			return (true);
+	}
+	if (server.cgi.find(this->_fileExtention) != server.cgi.end())
+		return (true);
+	return (false);
+}
+
+void	Request::extractPathInfo(std::vector<std::string>::iterator it) {
+	for (; it != this->_cutPath.end(); it++)
+		this->_pathInfo += *it;
+	std::cout << BYELLOW << "PATH_INFO extracted: " << this->_pathInfo << NC << std::endl;
 }
 
 int	Request::checkPathType(ServerConfig &server, std::string &piecePath) {
@@ -440,7 +469,7 @@ std::string	Request::getFileName() const {
 	return (this->_fileName);
 }
 
-std::string	Request::getFileExtention() const {
+std::string	Request::getFileExtension() const {
 	return (this->_fileExtention);
 }
 
@@ -520,6 +549,10 @@ size_t	Request::getBodySize() const {
 	return (this->_bodySize);
 }
 
+std::string	Request::getPathInfo() const {
+	return (this->_pathInfo);
+}
+
 const std::map<std::string, std::string>	&Request::getHttpHeaders() const {
 	return (this->_httpHeaders);
 }
@@ -549,7 +582,7 @@ std::ostream	&operator<<(std::ostream &o, Request const &request) {
 	o << "version   : " << request.getVersion() << std::endl;
 	o << "host      : " << request.getHost() << std::endl;
 	o << "filename  : " << request.getFileName() << std::endl;
-	o << "file ext  : " << request.getFileExtention() << std::endl;
+	o << "file ext  : " << request.getFileExtension() << std::endl;
 	o << "comp path : " << request.getCompletPath() << std::endl;
 	if (request.getIsCgi())
 		o << "cgi path  : " << request.getCgiPath() << std::endl;

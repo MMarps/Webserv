@@ -31,6 +31,7 @@ class CGI {
 		void				executeScript(char **env);
 		void				parentProcess(int *fdIn, int *fdOut);
 		// UtilsCGI.hpp
+		std::string			extractPathInfo(const Request &req);
 		std::string			findInterpreter();
 		std::string			integerToString(size_t value);
 		void				freePipes(int *fdIn, int *fdOut);
@@ -47,7 +48,6 @@ class CGI {
 		std::vector<char>	getOutput() const;
 		std::string			getBody() const;
 		std::map<std::string, std::string>	getHeaders() const; // recupere les headers CGI
-		// bool				isCGI();
 		bool				isCGI(const Request &req, const ServerConfig &server);
 };
 

@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 15:52:32 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 18:58:17 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ void	Response::generateHeader() {
 		this->_response += "\n\n";
 		return ;
 	}
-	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtention()] + "\n";
+	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtension()] + "\n";
 	this->_response += "Content-length: " + this->_contentLength + "\n";
 	this->_response += "\n\n";
 }
@@ -102,29 +102,24 @@ void Response::checkFile(bool save)
 		this->_content.swap(buffer);
 }
 
-std::string Response::intToString(int n)
-{
+std::string Response::intToString(int n) {
 	std::stringstream ss;
 	ss << n;
 	return (ss.str());
 }
 
-void getAutoindexPage()
-{
-	
-}
+// void getAutoindexPage() {
+	// 
+// }
 
-void	Response::generateAutoindex()
-{
+void	Response::generateAutoindex() {
 	std::string htmlpage;
 	std::vector<std::string> lstFiles;
 
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
-	{
 		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
-	}
 	htmlpage += "</body></html>";
 	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
 	this->_content.swap(tmp);
@@ -133,16 +128,14 @@ void	Response::generateAutoindex()
 	this->_contentLength = ss.str();
 }
 
-std::vector<std::string> Response::getLstDir()
-{
-	DIR *folder;
-	struct dirent *readFolder;
-	std::vector<std::string> lstFiles;
+std::vector<std::string> Response::getLstDir() {
+	DIR				*folder;
+	struct dirent	*readFolder;
+	std::vector<std::string>	lstFiles;
 
 	folder = opendir(this->_req.getCompletPath().c_str());
 	readFolder = readdir(folder);
-	while (readFolder)
-	{
+	while (readFolder) {
 		if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
 			lstFiles.push_back(readFolder->d_name);
 		readFolder = readdir(folder);
@@ -160,6 +153,14 @@ bool	Response::isCGIRequest(ServerConfig &server) {
 }
 
 void	Response::handleCGI(ServerConfig &server) {
+	std::cout << BPURPLE << "=== REQUEST BEFORE CGI ===" << NC << std::endl;
+	std::cout << "Method: " << _req.getMethode() << std::endl;
+	std::cout << "Path: " << _req.getPath() << std::endl;
+	std::cout << "FileName: '" << _req.getFileName() << "'" << std::endl;
+	std::cout << "FileExtension: '" << _req.getFileExtension() << "'" << std::endl;
+	std::cout << "CompletePath: '" << _req.getCompletPath() << "'" << std::endl;
+	std::cout << "Body size: " << _req.getBody().size() << std::endl;
+	std::cout << BPURPLE << "==========================" << NC << std::endl;
 	CGI	_cgi(_req, server);
 
 	if (_cgi.isCGI(_req, server) &&!_cgi.execute(_req)) {
