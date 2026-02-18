@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 16:01:49 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 11:44:15 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,11 +294,11 @@ void	Server::_handleClientData(int clientFd) {
 	}
 	if (client->isHeaderFinished) {
 		if (client->getBody().size() >= client->expectedBodySize) {
-			// std::cout << "Request received completely." << std::endl;
+			std::cout << BGREEN << "Body complete! Size: " << client->getBody().size() << NC << std::endl;
 			Logger::info("Request received completely.", client->getServerIdx());
 			client->isRequestFinished = true;
-            _parseResponse(client, 200);
-            _modEpoll(clientFd, EPOLLOUT);
+			_parseResponse(client, 200);
+			_modEpoll(clientFd, EPOLLOUT);
 		}
 	}
 }
@@ -312,7 +312,13 @@ void	Server::_parseResponse(Client *c, int errCode) {
 		req.setServerPort(_clientMetadata[clientFd].second);
 	}
 
-	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
+	std::string	fullRequest = c->getHeader();
+	if (!c->getBody().empty()) {
+    	std::cout << BYELLOW << "Adding body to request! Body size: " << c->getBody().size() << NC << std::endl;
+		fullRequest += std::string(c->getBody().begin(), c->getBody().end());
+	}
+	req.parse(_conf.servers[c->getServerIdx()], fullRequest, errCode);
+
 	Response	response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getResponse());

@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 10:47:06 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 10:47:50 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ class Request {
 		std::vector<std::string>			_cutPath;
 		std::map<std::string, std::string>	_varLst;
 		std::map<std::string, std::string>	_httpHeaders;
-	
+
 		// CGI part
 		std::string		_queryString; // partie apres le '?' dans l'URL
 		std::string		_body; // contenu du body pour la requete POST
@@ -112,7 +112,7 @@ class Request {
 		bool			getIsCgi() const;
 		int				getCode() const;
 		// CGI part
-		bool			parseChunkedBody(const std::string &newData);
+		// bool			parseChunkedBody(const std::string &newData);
 		std::string		getQueryString() const;
 		std::string		getBody() const;
 		std::string		getContentType() const;

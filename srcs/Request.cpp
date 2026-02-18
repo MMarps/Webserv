@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 15:17:04 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 10:53:46 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,6 +102,7 @@ void	Request::makeRequest(ServerConfig &server, std::string &buffer) {
 	}
 
 	if (headerParsed && !bodyBuffer.empty()) {
+		std::cout << "BODY DETECTED: " << bodyBuffer << std::endl;
 		// if (_isChunked)
 			// parseChunkedBody(bodyBuffer); // pour les requetes chunked, parser les chunks
 		// else {
