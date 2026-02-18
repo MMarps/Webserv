@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 15:17:04 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 15:22:23 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isComplete(false),
+Request::Request() : _isLocation(false), _isPost(false), _isComplete(false),
 					 _makeAutoindex(false), _isCgi(false), _code(200), _bodySize(0), 
 					 _isChunked(false), _serverPort(0) {
 	std::cout << BGREEN << "construct req" << NC << std::endl;
@@ -134,7 +134,7 @@ void	Request::prepareReq(ServerConfig &server) {
 	formatPath();
 	if (this->_isLocation)
 		makeLocationRules();
-	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex) {
+	if (this->_code == 200 && this->_fileName.empty() && this->_location.autoindex) {
 		this->_makeAutoindex = true;
 		this->_fileExtention = ".html";
 		this->_completPath = this->_root + this->_path;
@@ -262,7 +262,7 @@ void	Request::verifFile(std::string path) {
 		return ;
 	}
 
-	if (access(path.c_str(), X_OK | R_OK) != 0) {
+	if (this->_path[this->_path.size() - 1] != '/' && access(path.c_str(), X_OK | R_OK) != 0) {
 		this->_code = 403;
 		return ;
 	}
@@ -277,7 +277,7 @@ void	Request::copyLocationRules(ServerConfig &server, std::string &folder, std::
 			verifFile(server.root + piecePath);
 			if (this->_code == 200) {
 				this->_isLocation = true;
-				*this->_location = *it;
+				this->_location = *it;
 			}
 			return ;
 		}
@@ -304,24 +304,24 @@ void	Request::formatPath() {
 }
 
 void	Request::makeLocationRules() {
-	if (this->_location && this->_location->has_return) {
-		this->_path = this->_location->return_url;
-		this->_code = this->_location->return_code;
+	if (this->_location.has_return) {
+		this->_path = this->_location.return_url;
+		this->_code = this->_location.return_code;
 		return ;
 	}
 	checkAllowMethods();
 	if (_code != 200)
 		return ;
-	if (this->_location && !this->_location->root.empty())
-		this->_root = this->_location->root;
-	if (!this->_location->index.empty())
-		this->_index = this->_location->index;
+	if (!this->_location.root.empty())
+		this->_root = this->_location.root;
+	if (!this->_location.index.empty())
+		this->_index = this->_location.index;
 }
 
 void	Request::checkAllowMethods() {
-	if (this->_location && !this->_location->methods.empty()) {
-		for (size_t i = 0; i < this->_location->methods.size(); i++) {
-			if (this->_location->methods[i] == this->_methode)
+	if (!this->_location.methods.empty()) {
+		for (size_t i = 0; i < this->_location.methods.size(); i++) {
+			if (this->_location.methods[i] == this->_methode)
 				return ;
 		}
 		_code = 405;
@@ -348,8 +348,8 @@ void	Request::checkIsCgi(ServerConfig &server) {
 	if (this->_fileName.empty() || this->_fileExtention.empty())
 		return ;
 	std::map<std::string, std::string>	mapCgi;
-	if (this->_location && this->_isLocation)
-		mapCgi = this->_location->cgi;
+	if (this->_isLocation)
+		mapCgi = this->_location.cgi;
 	else
 		mapCgi = server.cgi;
 
@@ -471,7 +471,7 @@ std::map<std::string, std::string>	Request::getVarLst() const {
 	return (this->_varLst);
 }
 
-LocationConfig	*Request::getLocation() const {
+LocationConfig	Request::getLocation() const {
 	return (this->_location);
 }
 
@@ -561,29 +561,29 @@ std::ostream	&operator<<(std::ostream &o, Request const &request) {
 		for (; it != var.end(); it++)
 			o << "	" << it->first << "=" << it->second << std::endl;
 	}
-	if (request.getIsLocation() && request.getLocation()) {
+	if (request.getIsLocation()) {
 		o << "location  :" << std::endl;
-		o << "	path      : " << request.getLocation()->path << std::endl;
-		if (!request.getLocation()->root.empty())
-			o << "	root      : " << request.getLocation()->root << std::endl;
+		o << "	path      : " << request.getLocation().path << std::endl;
+		if (!request.getLocation().root.empty())
+			o << "	root      : " << request.getLocation().root << std::endl;
 		else
 			o << "	root      : empty" << std::endl;
 
-		if (!request.getLocation()->index.empty()) {
+		if (!request.getLocation().index.empty()) {
 			o << "	index      : ";
-			std::vector<std::string>			index = request.getLocation()->index;
+			std::vector<std::string>			index = request.getLocation().index;
 			std::vector<std::string>::iterator	it = index.begin();
 			for (; it != index.end(); it++)
 				o << *it << " ";
 			o << std::endl;
 		}
-		if (request.getLocation()->autoindex)
+		if (request.getLocation().autoindex)
 			o << "	autoindex : true" << std::endl;
 		else
 			o << "	autoindex : false" << std::endl;
-		if (!request.getLocation()->cgi.empty()) {
+		if (!request.getLocation().cgi.empty()) {
 			o << "	cgi       : ";
-			std::map<std::string, std::string>				cgi = request.getLocation()->cgi;
+			std::map<std::string, std::string>				cgi = request.getLocation().cgi;
 			std::map<std::string, std::string>::iterator	it = cgi.begin();
 			for (; it != cgi.end(); it++)
 				o << it->first << " ";

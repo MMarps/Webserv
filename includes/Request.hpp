@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 10:47:06 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/18 15:23:04 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,8 @@
 
 #include "Config.hpp"
 
-struct ServerConfig;
 struct LocationConfig;
+struct ServerConfig;
 
 enum PathType {
 	FILE_PATH,
@@ -37,7 +37,7 @@ class Request {
 		std::string		_header;
 		std::string		_host;
 		std::string		_cgiPath;
-		LocationConfig	*_location;
+		LocationConfig	_location;
 		bool			_isLocation;
 		bool			_isPost;
 		bool			_isComplete;
@@ -104,7 +104,7 @@ class Request {
 		std::vector<std::string>	getCutPath() const;
 		std::map<std::string, std::string>	getVarLst() const;
 
-		LocationConfig	*getLocation() const;
+		LocationConfig	getLocation() const;
 		bool			getIsLocation() const;
 		bool			getIsPost() const;
 		bool			getIsComplete() const;
