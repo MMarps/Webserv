@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:17:46 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 19:35:40 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/18 18:33:36 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@ Client::Client(int clientFd, int serverIdx, const std::string &remoteAddr, int s
 	  isRequestFinished(false),
 	  expectedBodySize(0),
 	  actualBodySize(0),
+	  isUpload(false),
+	  uploadFileName(),
 	  _fd(clientFd),
 	  _serverIdx(serverIdx),
 	  _addr(remoteAddr),
