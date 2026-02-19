@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/16 15:54:51 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/17 19:41:28 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,37 +16,44 @@
 # include "Webserv.hpp"
 
 class	Client {
-public:
-	Client(int clientFd, int serverIdx, const std::string &remoteAddr, int ServerPort);
-	~Client();
+	public:
+		Client(int clientFd, int serverIdx, const std::string &remoteAddr, int ServerPort);
+		~Client();
 
-	int					getFd() const;
-	int					getServerIdx() const;
-	std::string&		getHeader();
-	std::string&		getResponse();
-	std::string			getRemoteAddr() const;
-	int					getServerPort() const;
+		int					getFd() const;
+		int					getServerIdx() const;
+		std::string&		getHeader();
+		std::string&		getResponse();
+		std::string			getAddr() const;
+		int					getPort() const;
 
-	std::vector<char>&	getBody();
-	size_t				getBodySize() const;
-	void				setBody(std::vector<char> body);
-	void				appendBody(const char* buf, size_t size);
+		std::string			getAllInfos() const;
 
-	bool				isHeaderFinished;
-	bool				isRequestFinished;
+		std::vector<char>&	getBody();
+		size_t				getBodySize() const;
+		void				setBody(std::vector<char> body);
+		void				appendBody(const char* buf, size_t size);
 
-	size_t				expectedBodySize;
-	size_t				actualBodySize;
+		bool				isHeaderFinished;
+		bool				isRequestFinished;
 
-private:
-	int					_fd;
-	int					_serverIdx;
-	std::string			_header;
-	std::string			_response;
-	
-	std::vector<char>	_body;
-	std::string			_remoteAddr;
-	int					_serverPort;
+		size_t				expectedBodySize;
+		size_t				actualBodySize;
+
+	private:
+		int					_fd;
+		int					_serverIdx;
+		std::string			_addr;
+		int					_port;
+		
+		std::string			_header;
+		std::vector<char>	_body;
+		
+		std::string			_response;
+
+		/*     ??
+		std::string 		_repHeader
+		std::vector<char>	_repBody*/
 };
 
 #endif
