@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 16:49:20 by arotondo          #+#    #+#             */
-/*   Updated: 2026/02/18 19:00:01 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 14:49:10 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,15 +48,16 @@ std::string	CGI::findInterpreter() {
 	size_t		dotPos = _scriptPath.find_last_of('.');
 	if (dotPos == std::string::npos)
 		return ("");
-	extension = _scriptPath.substr(dotPos);
+
+	size_t	slashPos = _scriptPath.find('/', dotPos);
+	if (slashPos != std::string::npos)
+		extension = _scriptPath.substr(dotPos, slashPos - dotPos);
+	else
+		extension = _scriptPath.substr(dotPos);
 	return (extension);
 }
 
 bool	CGI::isCGI(const Request &req, const ServerConfig &server) {
-	std::cout << BCYAN << "=== isCGI CHECK ===" << NC << std::endl;
-	std::cout << "FileName: '" << req.getFileName() << "'" << std::endl;
-	std::cout << "FileExtension: '" << req.getFileExtension() << "'" << std::endl;
-
 	if (req.getFileName().empty() || req.getFileExtension().empty())
 		return (false);
 	

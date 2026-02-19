@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/18 19:03:01 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 12:44:46 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,10 @@ void	Request::prepareReq(ServerConfig &server) {
 		makeExtentionAndNameFile(this->_completPath);
 		return ;
 	}
-	this->_completPath = this->_root + this->_path;
+	if (this->_pathInfo.empty())
+		this->_completPath = this->_root + this->_path;
+	else
+		std::cout << BPURPLE << "Keeping CGI completePath: " << this->_completPath << NC << std::endl;
 }
 
 void	Request::cutVariableToPath() {
@@ -229,7 +232,8 @@ void	Request::makeAllPathRules(ServerConfig &server) {
 			makeExtentionAndNameFile(*it);
 			if (isCgiExtension(server)) {
 				this->_completPath = this->_root + newPath;
-				extractPathInfo(++it);
+				std::cout << BGREEN << "Fixed completePath: " << this->_completPath << NC << std::endl;
+				extractPathInfo(it + 1);
 				return ;
 			}
 			break ;
@@ -531,6 +535,11 @@ int	Request::getCode() const {
 
 void	Request::setCode(int code) {
 	this->_code = code;
+}
+
+void	Request::setBody(const std::string &body) {
+	this->_body = body;
+	this->_bodySize = body.size();
 }
 
 std::string	Request::getQueryString() const {

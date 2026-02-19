@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/18 19:12:13 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 14:58:35 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,7 +294,7 @@ void	Server::_handleClientData(int clientFd) {
 	}
 	if (client->isHeaderFinished) {
 		if (client->getBody().size() >= client->expectedBodySize) {
-			std::cout << BGREEN << "Body complete! Size: " << client->getBody().size() << NC << std::endl;
+			// std::cout << BGREEN << "Body complete! Size: " << client->getBody().size() << NC << std::endl;
 			Logger::info("Request received completely.", client->getServerIdx());
 			client->isRequestFinished = true;
 			_parseResponse(client, 200);
@@ -315,7 +315,9 @@ void	Server::_parseResponse(Client *c, int errCode) {
 	std::string	fullRequest = c->getHeader();
 	if (!c->getBody().empty())
 		fullRequest += std::string(c->getBody().begin(), c->getBody().end());
-	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
+	req.parse(_conf.servers[c->getServerIdx()], fullRequest, errCode);
+	if (!c->getBody().empty())
+		req.setBody(std::string(c->getBody().begin(), c->getBody().end()));
 
 	Response	response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);

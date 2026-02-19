@@ -1,4 +1,3 @@
-cat > var/www/python/test_post.py << 'EOF'
 #!/usr/bin/python3
 import sys
 import os
@@ -21,6 +20,3 @@ if content_length != '0':
     print(f"<p><b>Body:</b> {body}</p>")
 
 print("</body></html>")
-EOF
-
-chmod +x var/www/python/test_post.py

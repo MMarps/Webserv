@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/18 17:55:09 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 11:53:09 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ class Request {
 		void	getErrorPage(ServerConfig &server);
 		void	checkRequest();
 		void	setCode(int code);
+		void	setBody(const std::string &body);
 
 		std::string		getMethode() const;
 		std::string		getRoot() const;

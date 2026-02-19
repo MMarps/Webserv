@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/18 18:58:17 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 15:00:38 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,8 @@ Response::~Response() {}
 
 void	Response::makeRep(ServerConfig &server) {
 	if (isCGIRequest(server)) {
+		std::cout << BRED << "CGI DETECTED" << NC << std::endl;
 		_isCGI = true;
-		std::cout << BRED << "Is Cgi flg" << NC << std::endl;
 		handleCGI(server);
 		if (_req.getCode() == 502) {
 			generateHeader();
@@ -76,8 +76,7 @@ void	Response::generateHeader() {
 	this->_response += "\n\n";
 }
 
-void Response::generateBody()
-{
+void Response::generateBody() {
 	if (!this->_req.getFileName().empty())
 	{
 		if (this->_req.getMethode() == "HEAD")
@@ -90,8 +89,7 @@ void Response::generateBody()
 		generateAutoindex();
 }
 
-void Response::checkFile(bool save)
-{
+void Response::checkFile(bool save) {
 	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
 	std::istreambuf_iterator<char> first(file);
 	std::istreambuf_iterator<char> last;

@@ -1,9 +1,9 @@
 #include "CGI.hpp"
 
 CGI::CGI(Request &req, ServerConfig &server) 
-	: _req(req), _server(server), _statusCode(200), _timeout(30) {
-	_scriptPath = _req.getCompletPath();
-}
+	: _req(req), _server(server), _statusCode(200), _timeout(30) { 
+		_scriptPath = req.getCompletPath();
+	}
 
 CGI::~CGI() {}
 
@@ -140,20 +140,10 @@ void	CGI::parentProcess(int *fdIn, int *fdOut) {
 	close(fdIn[0]);
 	close(fdOut[1]);
 
-	std::cout << BYELLOW << "=== CGI PARENT PROCESS ===" << NC << std::endl;
-	std::cout << "Method: " << _req.getMethode() << std::endl;
-	std::cout << "Body size: " << _req.getBody().size() << std::endl;
-	std::cout << "Body content: '" << _req.getBody() << "'" << std::endl;
-	std::cout << BYELLOW << "==========================" << NC << std::endl;
-	
 	if (_req.getMethode() == "POST") { // Si POST : écrire le body dans le pipe d'entrée
 		std::string body = _req.getBody();
-		if (!body.empty()) {
-			ssize_t	written = write(fdIn[1], body.c_str(), body.size());
-			std::cout << BGREEN << "Wrote " << written << " bytes to CGI stdin" << NC << std::endl;
-		}
-		else
-			std::cout << BRED << "Body is EMPTY!" << NC << std::endl;
+		if (!body.empty())
+			write(fdIn[1], body.c_str(), body.size());
 	}
 	close(fdIn[1]);
 
@@ -163,6 +153,8 @@ void	CGI::parentProcess(int *fdIn, int *fdOut) {
 		_output.insert(_output.end(), buffer, buffer + bytesRead);
 	}
 	close(fdOut[0]);
+	if (!_output.empty())
+		std::string outputStr(_output.begin(), _output.end());
 }
 
 bool	CGI::processScript(char **env) {
@@ -198,7 +190,6 @@ bool	CGI::processScript(char **env) {
 		close(pipeOut[1]);
 		executeScript(env);
 	}
-	std::cout << BRED << "BEFORE PARENT PROCESS" << NC <<std::endl;
 	parentProcess(pipeIn, pipeOut);
 	return (waitProcess(pid));
 }
@@ -228,7 +219,8 @@ bool	CGI::waitProcess(pid_t pid) {
 		return (false);
 	}
 	if (WIFEXITED(status)) {
-		if (!WEXITSTATUS(status))
+		int	exitStatus = WEXITSTATUS(status);
+		if (!exitStatus)
 			return (true);
 		_statusCode = 502;
 		return (false);
