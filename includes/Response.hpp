@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/16 16:10:25 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 16:09:22 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ class Response {
 		void				generateHeader();
 		void				generateBody();
 		void				checkFile(bool save);
+		void				handleDelete();
 		std::vector<std::string>	getLstDir();
 		void				generateAutoindex();
 		std::string			intToString(int n);

@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/19 16:05:35 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 16:24:07 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 Response::Response(Request &req) : _req(req), _isCGI(false) {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
+	_statutMessage.insert(std::make_pair(204, "No Content"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
 	_statutMessage.insert(std::make_pair(302, "Found"));
 	_statutMessage.insert(std::make_pair(400, "Bad Request"));
@@ -45,6 +46,11 @@ Response::Response(Request &req) : _req(req), _isCGI(false) {
 Response::~Response() {}
 
 void	Response::makeRep(ServerConfig &server) {
+	if (_req.getMethode() == "DELETE") {
+		handleDelete();
+		generateHeader();
+		return ;
+	}
 	if (isCGIRequest(server)) {
 		std::cout << BRED << "CGI DETECTED" << NC << std::endl;
 		_isCGI = true;
@@ -56,13 +62,16 @@ void	Response::makeRep(ServerConfig &server) {
 		buildCGIResponse();
 		return ;
 	}
-	handleCGI(server);
 	generateBody();
 	generateHeader();
 }
 
 void	Response::generateHeader() {
 	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\n";
+	if (this->_req.getCode() == 204) {
+		this->_response += "Connection: close\r\n\r\n";
+		return ;
+	}
 	if (this->_req.getCode() == 301) {
 		return ;
 	}
@@ -194,6 +203,28 @@ void	Response::buildCGIResponse() {
 	}
 	_response += "Connection: close\r\n\r\n";
 	_response.append(_content.begin(), _content.end());
+}
+
+void	Response::handleDelete() {
+	std::string	filePath = _req.getCompletPath();
+	struct stat	fileStat;
+	if (stat(filePath.c_str(), &fileStat) != 0) {
+		_req.setCode(404);
+		return ;
+	}
+	if (S_ISDIR(fileStat.st_mode)) {
+		_req.setCode(403);
+		return ;
+	}
+	if (access(filePath.c_str(), W_OK) != 0) {
+		_req.setCode(403);
+		return ;
+	}
+	if (unlink(filePath.c_str()) != 0) {
+		_req.setCode(500);
+		return ;
+	}
+	_req.setCode(204);
 }
 
 std::string	Response::getResponse() const {

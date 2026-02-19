@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/19 12:44:46 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/19 15:16:33 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isComplete(false),
 					 _makeAutoindex(false), _isCgi(false), _code(200), _bodySize(0), 
 					 _isChunked(false), _serverPort(0) {
-	std::cout << BGREEN << "construct req" << NC << std::endl;
+	// std::cout << BGREEN << "construct req" << NC << std::endl;
 }
 Request::~Request() {}
 
