@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/20 19:36:56 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/20 20:13:40 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,14 +143,16 @@ void Request::parseMethode(ServerConfig &server, std::string &line)
 void Request::prepareReq(ServerConfig &server)
 {
 	cutVariableToPath();
-	int pathType = checkPathType(server, this->_path);
-	if (pathType == DIR_NO_SLASH ||
-		(pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
-	{
-		this->_code = 301;
-		this->_path += "/";
-		return;
-	}
+
+	//a fix pour le cas ou serve.root change
+	// int pathType = checkPathType(server, this->_path);
+	// if (pathType == DIR_NO_SLASH ||
+	// 	(pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
+	// {
+	// 	this->_code = 301;
+	// 	this->_path += "/";
+	// 	return;
+	// }
 	cutPath();
 	makeAllPathRules(server);
 	if (this->_isLocation)
