@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/20 18:10:44 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/20 19:34:32 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -311,6 +311,7 @@ void	Server::_handleClientData(int clientFd) {
 			client->appendBody(buf, nbytes);
 	}
 	if (client->isHeaderFinished && (client->actualBodySize >= client->expectedBodySize)) {
+		// std::cout << BRED << client->getHeader() << NC << std::endl;
 		if (client->isUpload && client->uploadStream.is_open()) {
 			client->uploadStream.close();
 			client->isUpload = false;
