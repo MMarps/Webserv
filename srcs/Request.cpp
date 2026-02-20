@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/20 18:04:01 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/20 19:36:56 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,10 +143,16 @@ void Request::parseMethode(ServerConfig &server, std::string &line)
 void Request::prepareReq(ServerConfig &server)
 {
 	cutVariableToPath();
+	int pathType = checkPathType(server, this->_path);
+	if (pathType == DIR_NO_SLASH ||
+		(pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
+	{
+		this->_code = 301;
+		this->_path += "/";
+		return;
+	}
 	cutPath();
 	makeAllPathRules(server);
-	if (this->_code == 301)
-		return;
 	if (this->_isLocation)
 		makeLocationRules();
 	searchIndex();
@@ -207,24 +213,33 @@ void Request::cutPath()
 {
 	size_t findPos;
 	size_t lastFindPos;
-
 	std::string res;
 	std::string path = this->_path;
+	std::cout << BBLUE << path << NC <<  std::endl;
 	std::istringstream cut(path);
 	if (path.size() != 1)
 	{
 		findPos = path.find('/', 1);
 		lastFindPos = 0;
-		while (findPos != std::string::npos)
+		while (findPos != std::string::npos )
 		{
 			res = path.substr(lastFindPos, findPos);
-			lastFindPos = findPos;
+			std::cout << BRED << lastFindPos << " " << findPos << NC << std::endl;
+			// lastFindPos = findPos;
 			this->_cutPath.push_back(res);
 			path = path.substr(findPos);
-			findPos = path.find('/', findPos + 1);
+			std::cout << BRED << path <<  NC << std::endl;
+			findPos = path.find('/', 1);
 		}
 	}
+	
 	this->_cutPath.push_back(path);
+
+	for (size_t i = 0; i < _cutPath.size(); i++)
+	{
+		std::cout << BBLUE << _cutPath[i] << std::endl;
+	}
+	
 }
 
 void Request::makeAllPathRules(ServerConfig &server)
@@ -248,10 +263,6 @@ void Request::makeAllPathRules(ServerConfig &server)
 			accessFolder(newCompletPath);
 			break;
 		case DIR_NO_SLASH:
-			this->_code = 301;
-			this->_path += "/";
-			// std::cout << BPURPLE << *it << " is DIR_NO_SLASH" << NC << std::endl;
-			// accessFolder(newCompletPath);
 			break;
 		case SERVER_LOCATION:
 			std::cout << BPURPLE << *it << " is LOCATION" << NC << std::endl;
@@ -287,7 +298,7 @@ int Request::checkPathType(ServerConfig &server, std::string &piecePath)
 
 	if (stat(cPath.c_str(), &st) == -1)
 	{
-		std::cout << BRED << this->_path << NC << std::endl;
+		std::cout << BRED << cPath << NC << std::endl;
 		verifFile(cPath);
 		return (-1);
 	}
