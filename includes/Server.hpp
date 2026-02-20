@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 19:19:05 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/18 17:45:24 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,6 +83,8 @@ class Server {
 		long					_getLocationMaxBodySize(Client* client);
 		const LocationConfig*	_findBestLocation(const std::string& uri, int serverIdx);
 		std::string				_getClientAddr(const struct sockaddr_in& clientAddr);
+
+		void					_setUploadStream(Client* client);
 };
 
 #endif

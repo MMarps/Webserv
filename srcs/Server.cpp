@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 19:45:58 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/20 19:34:32 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -275,19 +275,24 @@ void	Server::_handleClientData(int clientFd) {
 			client->expectedBodySize = _extractContentLen(client->getHeader());
 			long maxSize = _getLocationMaxBodySize(client);
 
-			// std::cout << BRED << "expectedBodySize = " << client->expectedBodySize << std::endl
-			// 		  << "maxSize = " << maxSize << NC << std::endl;
-
 			if (client->expectedBodySize > static_cast<size_t>(maxSize)) {
 				_parseResponse(client, 413);
 				_modEpoll(clientFd, EPOLLOUT);
 				return ;
 			}
 
+			_setUploadStream(client);
+
 			size_t headerFullSize = pos + 4;
 			if (client->getHeader().size() > headerFullSize) {
 				size_t extraSize = client->getHeader().size() - headerFullSize;
-				client->appendBody(client->getHeader().data() + headerFullSize, extraSize);
+				const char* bodyData = client->getHeader().data() + headerFullSize;
+
+				if (client->isUpload && client->uploadStream.is_open())
+					client->uploadStream.write(bodyData, extraSize);
+				else
+					client->appendBody(bodyData, extraSize);
+
 				client->getHeader().resize(headerFullSize);
 				client->actualBodySize += extraSize;
 			}
@@ -295,21 +300,32 @@ void	Server::_handleClientData(int clientFd) {
 	}
 	else {
 		client->actualBodySize += nbytes;
-		client->appendBody(buf, nbytes);
 		if (client->actualBodySize > client->expectedBodySize) {
 			_parseResponse(client, 413);
 			_modEpoll(clientFd, EPOLLOUT);
 			return ;
 		}
+		if (client->isUpload && client->uploadStream.is_open())
+			client->uploadStream.write(buf, nbytes);
+		else
+			client->appendBody(buf, nbytes);
 	}
-	if (client->isHeaderFinished) {
-		if (client->getBody().size() >= client->expectedBodySize) {
-			// std::cout << "Request received completely." << std::endl;
-			Logger::info("Request received completely.", client->getServerIdx());
-			client->isRequestFinished = true;
-            _parseResponse(client, 200);
-            _modEpoll(clientFd, EPOLLOUT);
+	if (client->isHeaderFinished && (client->actualBodySize >= client->expectedBodySize)) {
+		// std::cout << BRED << client->getHeader() << NC << std::endl;
+		if (client->isUpload && client->uploadStream.is_open()) {
+			client->uploadStream.close();
+			client->isUpload = false;
+			client->uploadFileName = "";
+			Logger::info("Upload completed successfully.", client->getServerIdx());
+			_parseResponse(client, 201);
+			_modEpoll(clientFd, EPOLLOUT);
 		}
+		else {
+			Logger::info("Request received completely.", client->getServerIdx());
+			_parseResponse(client, 200);
+			_modEpoll(clientFd, EPOLLOUT);
+		}
+		client->isRequestFinished = true;
 	}
 }
 
@@ -389,11 +405,51 @@ long	Server::_getLocationMaxBodySize(Client* client) {
 	std::stringstream	ss(firstLine);
 	ss >> method >> uri >> version;
 
-	const LocationConfig	*loc = _findBestLocation(uri, client->getServerIdx());
+	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
 	if (loc)
 		return (loc->client_max_body_size);
 	else
 		return (_conf.servers[client->getServerIdx()].client_max_body_size);
+}
+
+void	Server::_setUploadStream(Client* client) {
+	std::string	&buf = client->getHeader();
+	size_t		firstLineEnd = buf.find("\r\n");
+	if (firstLineEnd == buf.npos)
+		return ;
+	
+	std::string firstLine = buf.substr(0, firstLineEnd);
+	std::string method, uri, version;
+	std::stringstream	ss(firstLine);
+	ss >> method >> uri >> version;
+
+	if (method != "POST")
+		return ;
+
+	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
+	if (loc && !loc->upload_store.empty()) {
+		client->isUpload = true;
+
+		std::string filename;
+		size_t lastSlash = uri.rfind('/');
+		if (lastSlash != uri.npos && lastSlash + 1 < uri.length())
+			filename = uri.substr(lastSlash + 1);
+
+		std::string fullpath = loc->upload_store;
+		if (fullpath[fullpath.length() - 1] != '/')
+			fullpath += '/';
+		fullpath += filename;
+		client->uploadFileName = fullpath;
+
+		client->uploadStream.open(fullpath.c_str(), std::ios::out | std::ios::binary);
+		if (!client->uploadStream.is_open()) {
+			Logger::error("Failed to open upload stream: " + fullpath, client->getServerIdx());
+			client->isUpload = false;
+		}
+		else {
+			Logger::info("Started streaming upload to: " + fullpath, client->getServerIdx());
+		}
+	}
 }
 
 const LocationConfig	*Server::_findBestLocation(const std::string& uri, int serverIdx) {

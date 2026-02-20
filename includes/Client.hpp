@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 19:41:28 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/18 18:11:59 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,10 +36,15 @@ class	Client {
 
 		bool				isHeaderFinished;
 		bool				isRequestFinished;
-
+		
 		size_t				expectedBodySize;
 		size_t				actualBodySize;
-
+	
+		// Upload
+		bool				isUpload;
+		std::ofstream		uploadStream;
+		std::string			uploadFileName;
+		
 	private:
 		int					_fd;
 		int					_serverIdx;
