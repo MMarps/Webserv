@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/20 14:44:53 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/20 17:21:21 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,16 +321,18 @@ void Request::copyLocationRules(ServerConfig &server, std::string &folder, std::
 {
 	if (!folder.empty() && folder[folder.size() - 1] == '/')
 		folder.erase(folder.size() - 1);
-	std::vector<LocationConfig>::iterator it = server.locations.begin();
-	for (; it != server.locations.end(); ++it)
+	// std::vector<LocationConfig>::iterator it = server.locations.begin();
+	
+
+	for (size_t i = 0; i < server.locations.size() ; ++i)
 	{
-		if (it->path == folder)
+		if (server.locations[i].path == folder)
 		{
 			verifFile(server.root + piecePath);
 			if (this->_code == 200)
 			{
 				this->_isLocation = true;
-				*this->_location = *it;
+				this->_location = &server.locations[i];
 			}
 			return;
 		}
