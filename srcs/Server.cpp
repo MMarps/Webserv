@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/18 19:20:07 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/20 18:10:44 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -310,19 +310,21 @@ void	Server::_handleClientData(int clientFd) {
 		else
 			client->appendBody(buf, nbytes);
 	}
-	if (client->isHeaderFinished && (client->getBody().size() >= client->expectedBodySize)) {
+	if (client->isHeaderFinished && (client->actualBodySize >= client->expectedBodySize)) {
 		if (client->isUpload && client->uploadStream.is_open()) {
 			client->uploadStream.close();
 			client->isUpload = false;
 			client->uploadFileName = "";
 			Logger::info("Upload completed successfully.", client->getServerIdx());
+			_parseResponse(client, 201);
+			_modEpoll(clientFd, EPOLLOUT);
 		}
-		else
+		else {
 			Logger::info("Request received completely.", client->getServerIdx());
+			_parseResponse(client, 200);
+			_modEpoll(clientFd, EPOLLOUT);
+		}
 		client->isRequestFinished = true;
-		_parseResponse(client, 200);
-		_modEpoll(clientFd, EPOLLOUT);
-		std::cout << BRED << "TEST" << NC << std::endl;
 	}
 }
 
