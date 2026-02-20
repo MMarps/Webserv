@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/17 19:20:48 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/20 17:54:09 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,7 @@ void	Response::makeRep(ServerConfig &server) {
 void	Response::generateHeader() {
 	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\n";
 	if (this->_req.getCode() == 301) {
+		this->_response += "lcoation: " + this->_req.getPath() + "\n";
 		return ;
 	}
 	if ((this->_isCGI && this->_req.getCode() == 502) || (this->_req.getCode() != 200 && this->_req.getFileName().empty())) {

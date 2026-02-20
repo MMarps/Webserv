@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/20 17:21:21 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/20 18:04:01 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,10 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, header);
+	if (this->_code == 301)
+	{
+		return;
+	}
 	checkRequest();
 	std::cout << *this << std::endl;
 	std::cout << "fin parsing request" << std::endl;
@@ -141,9 +145,12 @@ void Request::prepareReq(ServerConfig &server)
 	cutVariableToPath();
 	cutPath();
 	makeAllPathRules(server);
-	// formatPath();
+	if (this->_code == 301)
+		return;
 	if (this->_isLocation)
 		makeLocationRules();
+	searchIndex();
+	std::cout << BBLUE << "ca parse" << NC << std::endl;
 	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
 	{
 		this->_makeAutoindex = true;
@@ -151,7 +158,7 @@ void Request::prepareReq(ServerConfig &server)
 		this->_completPath = this->_root + this->_path;
 		return;
 	}
-	searchIndex();
+	this->_completPath = this->_root + this->_path;
 	checkIsCgi(server);
 	std::cout << "PARSING METHOD [OK]" << std::endl;
 	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
@@ -160,7 +167,6 @@ void Request::prepareReq(ServerConfig &server)
 		makeExtentionAndNameFile(this->_completPath);
 		return;
 	}
-	this->_completPath = this->_root + this->_path;
 }
 
 void Request::cutVariableToPath()
@@ -242,8 +248,10 @@ void Request::makeAllPathRules(ServerConfig &server)
 			accessFolder(newCompletPath);
 			break;
 		case DIR_NO_SLASH:
-			std::cout << BPURPLE << *it << " is DIR_NO_SLASH" << NC << std::endl;
-			accessFolder(newCompletPath);
+			this->_code = 301;
+			this->_path += "/";
+			// std::cout << BPURPLE << *it << " is DIR_NO_SLASH" << NC << std::endl;
+			// accessFolder(newCompletPath);
 			break;
 		case SERVER_LOCATION:
 			std::cout << BPURPLE << *it << " is LOCATION" << NC << std::endl;
@@ -303,8 +311,6 @@ int Request::checkPathType(ServerConfig &server, std::string &piecePath)
 void Request::verifFile(std::string path)
 {
 	struct stat st;
-
-	std::cout << BRED << "ca passe" << NC << std::endl;
 	if (stat(path.c_str(), &st) == -1)
 	{
 		if (errno == ENOENT || errno == ENOTDIR)
@@ -322,9 +328,8 @@ void Request::copyLocationRules(ServerConfig &server, std::string &folder, std::
 	if (!folder.empty() && folder[folder.size() - 1] == '/')
 		folder.erase(folder.size() - 1);
 	// std::vector<LocationConfig>::iterator it = server.locations.begin();
-	
 
-	for (size_t i = 0; i < server.locations.size() ; ++i)
+	for (size_t i = 0; i < server.locations.size(); ++i)
 	{
 		if (server.locations[i].path == folder)
 		{
@@ -388,7 +393,7 @@ void Request::checkAllowMethods()
 			if (this->_location->methods[i] == this->_methode)
 				return;
 		}
-		_code = 405;
+		this->_code = 405;
 	}
 }
 
@@ -409,7 +414,7 @@ void Request::searchIndex()
 			}
 			verifFile(path);
 		}
-		std::cout << BRED << "no index found" << NC << std::endl;
+		this->_code = 200;
 	}
 }
 
@@ -494,7 +499,9 @@ void Request::checkRequest()
 {
 	if (this->_methode.empty() || this->_path.empty() || this->_version.empty() || this->_host.empty())
 		this->_code = 400;
+	std::cout << BGREEN << this->_code << NC << std::endl;
 	verifFile(this->_completPath);
+	std::cout << BRED << this->_code << NC << std::endl;
 }
 
 std::string Request::getMethode() const
