@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/18 18:11:59 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/23 20:16:32 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,13 @@
 # define CLIENT_HPP
 
 # include "Webserv.hpp"
+
+enum MultipartState {
+    WAITING_BOUNDARY,
+    WAITING_HEADERS,
+    WRITING_BODY,
+    FINISHED
+};
 
 class	Client {
 	public:
@@ -42,8 +49,12 @@ class	Client {
 	
 		// Upload
 		bool				isUpload;
+		bool				isMultipart;
 		std::ofstream		uploadStream;
 		std::string			uploadFileName;
+		MultipartState		multipartState;
+    	std::string			boundary;
+    	std::string			boundaryEnd;
 		
 	private:
 		int					_fd;
@@ -55,10 +66,6 @@ class	Client {
 		std::vector<char>	_body;
 		
 		std::string			_response;
-
-		/*     ??
-		std::string 		_repHeader
-		std::vector<char>	_repBody*/
 };
 
 #endif

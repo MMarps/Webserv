@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/20 19:34:32 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/23 20:42:19 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -311,22 +311,28 @@ void	Server::_handleClientData(int clientFd) {
 			client->appendBody(buf, nbytes);
 	}
 	if (client->isHeaderFinished && (client->actualBodySize >= client->expectedBodySize)) {
-		// std::cout << BRED << client->getHeader() << NC << std::endl;
-		if (client->isUpload && client->uploadStream.is_open()) {
-			client->uploadStream.close();
-			client->isUpload = false;
-			client->uploadFileName = "";
-			Logger::info("Upload completed successfully.", client->getServerIdx());
-			_parseResponse(client, 201);
-			_modEpoll(clientFd, EPOLLOUT);
-		}
-		else {
-			Logger::info("Request received completely.", client->getServerIdx());
-			_parseResponse(client, 200);
-			_modEpoll(clientFd, EPOLLOUT);
-		}
-		client->isRequestFinished = true;
-	}
+        if (client->isUpload && client->uploadStream.is_open()) {
+            client->uploadStream.close();
+            
+            if (client->isMultipart) {
+                _processMultipart(client);
+                client->isMultipart = false;
+            } 
+
+            client->isUpload = false;
+            client->uploadFileName = "";
+            
+            Logger::info("Upload completed successfully.", client->getServerIdx());
+            _parseResponse(client, 201);
+        }
+        else {
+            Logger::info("Request received completely.", client->getServerIdx());
+            _parseResponse(client, 200);
+        }
+        
+        client->isRequestFinished = true;
+        _modEpoll(clientFd, EPOLLOUT);
+    }
 }
 
 void	Server::_parseResponse(Client *c, int errCode) {
@@ -412,46 +418,6 @@ long	Server::_getLocationMaxBodySize(Client* client) {
 		return (_conf.servers[client->getServerIdx()].client_max_body_size);
 }
 
-void	Server::_setUploadStream(Client* client) {
-	std::string	&buf = client->getHeader();
-	size_t		firstLineEnd = buf.find("\r\n");
-	if (firstLineEnd == buf.npos)
-		return ;
-	
-	std::string firstLine = buf.substr(0, firstLineEnd);
-	std::string method, uri, version;
-	std::stringstream	ss(firstLine);
-	ss >> method >> uri >> version;
-
-	if (method != "POST")
-		return ;
-
-	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
-	if (loc && !loc->upload_store.empty()) {
-		client->isUpload = true;
-
-		std::string filename;
-		size_t lastSlash = uri.rfind('/');
-		if (lastSlash != uri.npos && lastSlash + 1 < uri.length())
-			filename = uri.substr(lastSlash + 1);
-
-		std::string fullpath = loc->upload_store;
-		if (fullpath[fullpath.length() - 1] != '/')
-			fullpath += '/';
-		fullpath += filename;
-		client->uploadFileName = fullpath;
-
-		client->uploadStream.open(fullpath.c_str(), std::ios::out | std::ios::binary);
-		if (!client->uploadStream.is_open()) {
-			Logger::error("Failed to open upload stream: " + fullpath, client->getServerIdx());
-			client->isUpload = false;
-		}
-		else {
-			Logger::info("Started streaming upload to: " + fullpath, client->getServerIdx());
-		}
-	}
-}
-
 const LocationConfig	*Server::_findBestLocation(const std::string& uri, int serverIdx) {
 	const ServerConfig		&conf = _conf.servers[serverIdx];
 	const LocationConfig	*bestMatch = NULL;
@@ -479,6 +445,128 @@ std::string	Server::_getClientAddr(const struct sockaddr_in& clientAddr) {
 		<< (ip & 0xFF);
 
 	return (oss.str());
+}
+
+/////////////////////////////////////
+
+void	Server::_setUploadStream(Client* client) {
+	std::string &header = client->getHeader();
+
+	// 1. Extraction du Content-Type pour détecter le Multipart
+	size_t ctPos = header.find("Content-Type: ");
+	if (ctPos != std::string::npos) {
+		size_t ctEnd = header.find("\r\n", ctPos);
+		std::string ctLine = header.substr(ctPos, ctEnd - ctPos);
+
+		if (ctLine.find("multipart/form-data") != std::string::npos) {
+			size_t bPos = ctLine.find("boundary=");
+			if (bPos != std::string::npos) {
+				client->isMultipart = true;
+				// Le boundary dans le header est "X", dans le body il sera "--X"
+				client->boundary = "--" + ctLine.substr(bPos + 9);
+				client->boundaryEnd = client->boundary + "--";
+			}
+		}
+	}
+
+	// 2. Extraction de la méthode et de l'URI
+	size_t firstLineEnd = header.find("\r\n");
+	if (firstLineEnd == std::string::npos) return;
+
+	std::string firstLine = header.substr(0, firstLineEnd);
+	std::string method, uri, version;
+	std::stringstream ss(firstLine);
+	ss >> method >> uri >> version;
+
+	if (method != "POST") return;
+
+	// 3. Récupération de la configuration de la location
+	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
+	if (loc && !loc->upload_store.empty()) {
+		client->isUpload = true;
+
+		std::string fullpath = loc->upload_store;
+		// Ajout du slash de sécurité si manquant dans la config
+		if (fullpath[fullpath.length() - 1] != '/')
+			fullpath += '/';
+
+		if (client->isMultipart) {
+			// Pour le multipart, on crée un fichier temporaire caché
+			// On utilise le FD du client pour garantir l'unicité
+			std::stringstream oss;
+			oss << fullpath << ".tmp_upload_" << client->getFd();
+			client->uploadFileName = oss.str();
+		}
+		else {
+			// Pour le binaire pur, le nom est dans l'URL
+			std::string filename = "default_upload";
+			size_t lastSlash = uri.rfind('/');
+			if (lastSlash != std::string::npos && lastSlash + 1 < uri.length())
+				filename = uri.substr(lastSlash + 1);
+			client->uploadFileName = fullpath + filename;
+		}
+
+		// 4. Ouverture du stream en mode binaire
+		client->uploadStream.open(client->uploadFileName.c_str(), std::ios::out | std::ios::binary);
+		
+		if (!client->uploadStream.is_open()) {
+			Logger::error("Failed to open upload stream: " + client->uploadFileName, client->getServerIdx());
+			client->isUpload = false;
+		} else {
+			Logger::info("Started streaming upload to: " + client->uploadFileName, client->getServerIdx());
+		}
+	}
+}
+
+void	Server::_processMultipart(Client* client) {
+	std::ifstream src(client->uploadFileName.c_str(), std::ios::binary);
+	if (!src.is_open())
+		return ;
+
+	std::string content((std::istreambuf_iterator<char>(src)), std::istreambuf_iterator<char>());
+	src.close();
+
+	size_t namePos = content.find("filename=\"");
+	std::string finalName = "uploaded_file";
+	if (namePos != std::string::npos) {
+		size_t nameEnd = content.find("\"", namePos + 10);
+		finalName = content.substr(namePos + 10, nameEnd - (namePos + 10));
+	}
+
+	size_t dataStart = content.find("\r\n\r\n", content.find(client->boundary)) + 4;
+
+	size_t dataEnd = content.find(client->boundary, dataStart);
+	if (dataEnd == std::string::npos) {
+		Logger::error("Multipart: Boundary final non trouvé", client->getServerIdx());
+		return ;
+	}
+	dataEnd -= 2;
+
+	std::string finalPath = _getUploadPath(client) + "/" + finalName;
+	std::ofstream dest(finalPath.c_str(), std::ios::binary);
+	dest.write(content.data() + dataStart, dataEnd - dataStart);
+	dest.close();
+
+	std::remove(client->uploadFileName.c_str());
+	Logger::info("Multipart processed: " + finalName, client->getServerIdx());
+}
+
+std::string	Server::_getUploadPath(Client* client) {
+    std::string header = client->getHeader();
+    size_t firstLineEnd = header.find("\r\n");
+    if (firstLineEnd == std::string::npos)
+		return (".");
+
+    std::string firstLine = header.substr(0, firstLineEnd);
+    std::string method, uri, version;
+    std::stringstream ss(firstLine);
+    ss >> method >> uri >> version;
+
+    const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
+    if (loc && !loc->upload_store.empty()) {
+        return (loc->upload_store);
+    }
+    return (".");
 }
 
 /////////////////////////////////////

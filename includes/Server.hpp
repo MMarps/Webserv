@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/18 17:45:24 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/23 20:27:52 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,8 @@ class Server {
 		std::string				_getClientAddr(const struct sockaddr_in& clientAddr);
 
 		void					_setUploadStream(Client* client);
+		void					_processMultipart(Client* client);
+		std::string				_getUploadPath(Client* client);
 };
 
 #endif
