@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/19 15:16:33 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/23 11:30:07 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -307,14 +307,16 @@ void	Request::copyLocationRules(ServerConfig &server, std::string &folder, std::
 		folder.erase(folder.size() - 1);
 	std::vector<LocationConfig>::const_iterator	it = server.locations.begin();
 	for (; it != server.locations.end(); ++it) {
+		std::cout << BGREEN << "it->path: " << it->path << NC << std::endl;
 		if (it->path == folder) {
 			verifFile(server.root + piecePath);
 			if (this->_code == 200) {
 				this->_isLocation = true;
 				*this->_location = *it;
+				std::cout << BYELLOW << "this->location" << this->_location << NC << std::endl;
 			}
 			return ;
-		}
+		}		
 	}
 }
 
@@ -348,7 +350,7 @@ void	Request::makeLocationRules() {
 		return ;
 	if (this->_location && !this->_location->root.empty())
 		this->_root = this->_location->root;
-	if (!this->_location->index.empty())
+	if (this->_location && !this->_location->index.empty())
 		this->_index = this->_location->index;
 }
 
