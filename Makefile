@@ -27,6 +27,7 @@ FILES :=	main.cpp \
 			Client.cpp \
 			Request.cpp \
 			Response.cpp \
+			Logger.cpp \
 			ConfigPrint.cpp
 
 # Source and object files

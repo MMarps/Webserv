@@ -3,176 +3,471 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/01/26 16:53:09 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/23 16:03:34 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
 
-Request::Request() : _isComplete(false), _code(0), _bodySize(0), _isChunked(false), _serverPort(0) {}
-
+Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isComplete(false),
+					 _makeAutoindex(false), _isCgi(false), _code(200), _bodySize(0),
+					 _isChunked(false), _serverPort(0)
+{
+	std::cout << BGREEN << "construct req" << NC << std::endl;
+}
 Request::~Request() {}
 
-void	Request::parse(ServerConfig &server, std::string &buffer, int code) {
-	this->_code = code;
-	if (this->_code != 0)
-		return ;
-	makeRequest(server, buffer);
-	checkRequest();
-}
-
-size_t		hexToDecimal(const std::string &hex) {
-	size_t	value = 0;
-
-	for (size_t i = 0; i < hex.size(); i++) {
-		char	c = hex[i];
-		value *= 16;
-		if (c >= '0' && c <= '9')
-			value += c - '0';
-		else if (c >= 'A' && c <= 'F')
-			value += c - 'A' + 10;
-		else if (c >= 'a' && c <= 'f')
-			value += c - 'a' + 10;
-		else
-			break;
-	}
-	return (value);
-}
-
-bool	Request::parseChunkedBody(const std::string &newData) {
-	_rawBuffer += newData;
-	size_t	pos = 0;
-	
-	while (pos < _rawBuffer.size()) {
-		size_t	lineEnd = _rawBuffer.find("\r\n", pos); // chercher
-		if (lineEnd == std::string::npos)
-			return (false); // donnees incompletes -> attendre
-		std::string	chunkSizeStr = _rawBuffer.substr(pos, lineEnd - pos);
-		size_t		chunkSize = hexToDecimal(chunkSizeStr);
-		if (chunkSize == static_cast<size_t>(-1)) {
-			_code = 400;
-			return (false);
-		}
-		if (chunkSize == 0) { // check si chunk final
-			size_t	finalEnd = _rawBuffer.find("\r\n", lineEnd + 2);
-			if (finalEnd == std::string::npos)
-				return (false); // si \r\n final pas trouve -> attendre
-			// dechunking done
-			_bodySize = _body.size();
-			_isComplete = true;
-			_rawBuffer.clear();
-			return (true);
-		}
-		// ÉTAPE 4 : Vérifier qu'on a assez de données pour ce chunk
-		size_t	dataStart = lineEnd + 2; // Position après "\r\n"
-		size_t	dataEnd = dataStart + chunkSize;
-		size_t	nextChunkStart = dataEnd + 2; // Après les données + "\r\n"
-
-		if (nextChunkStart > _rawBuffer.size())
-			return (false); // pas assez de donnees -> attendre
-		std::string	chunkData = _rawBuffer.substr(dataStart, chunkSize);
-
-		_body += chunkData;
-		pos = nextChunkStart;
-	}
-	if (pos > 0)
-		_rawBuffer = _rawBuffer.substr(pos);
-	
-	return (false); // pas fini -> attendre + de donnees
-}
-
-void	Request::makeRequest(ServerConfig &server, std::string &buffer)
+void Request::parse(ServerConfig &server, std::string &header, int code)
 {
-	std::istringstream	request(buffer.c_str());
-	std::string			line;
-	std::string			bodyBuffer;
-	bool				headerParsed = false;
-	
-	while (getline(request, line)) {
-		if (!headerParsed) {
-			std::istringstream	cut(line);
-			std::string			res;
-			getline(cut, res, ' ');
+	std::cout << "debut parsing request" << std::endl;
+	this->_code = code;
+	if (this->_code != 200)
+		return;
+	this->_root = server.root;
+	this->_index = server.index;
+	makeRequest(server, header);
+	if (this->_code == 301)
+	{
+		return;
+	}
+	checkRequest();
+	std::cout << *this << std::endl;
+	std::cout << "fin parsing request" << std::endl;
+}
+
+// bool	Request::parseChunkedBody(const std::string &newData) {
+// 	_rawBuffer += newData;
+// 	size_t	pos = 0;
+
+// 	while (pos < _rawBuffer.size()) {
+// 		size_t	lineEnd = _rawBuffer.find("\r\n", pos); // chercher
+// 		if (lineEnd == std::string::npos)
+// 			return (false); // donnees incompletes -> attendre
+// 		std::string	chunkSizeStr = _rawBuffer.substr(pos, lineEnd - pos);
+// 		ssize_t		chunkSize = hexToDecimal(chunkSizeStr);
+// 		if (chunkSize == static_cast<ssize_t>(-1)) {
+// 			_code = 400;
+// 			return (false);
+// 		}
+// 		if (chunkSize == 0) { // check si chunk final
+// 			size_t	finalEnd = _rawBuffer.find("\r\n", lineEnd + 2);
+// 			if (finalEnd == std::string::npos)
+// 				return (false); // si \r\n final pas trouve -> attendre
+// 			// dechunking done
+// 			_bodySize = _body.size();
+// 			_isComplete = true;
+// 			_rawBuffer.clear();
+// 			return (true);
+// 		}
+// 		// verifier qu on a assez de donnees pour ce chunk
+// 		size_t	dataStart = lineEnd + 2; // Position après "\r\n"
+// 		size_t	dataEnd = dataStart + chunkSize;
+// 		size_t	nextChunkStart = dataEnd + 2; // apres les données + "\r\n"
+
+// 		if (nextChunkStart > _rawBuffer.size())
+// 			return (false); // pas assez de donnees -> attendre
+// 		std::string	chunkData = _rawBuffer.substr(dataStart, chunkSize);
+
+// 		_body += chunkData;
+// 		pos = nextChunkStart;
+// 	}
+// 	if (pos > 0)
+// 		_rawBuffer = _rawBuffer.substr(pos);
+
+// 	return (false); // pas fini -> attendre + de donnees
+// }
+
+void Request::makeRequest(ServerConfig &server, std::string &buffer)
+{
+	std::istringstream request(buffer.c_str());
+	std::string line;
+	std::string bodyBuffer;
+	bool headerParsed = false;
+
+	while (getline(request, line))
+	{
+		if (!headerParsed)
+		{
+			std::istringstream cut(line);
+			std::string res;
+			cut >> res;
 			if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
 				parseMethode(server, line);
 			else
 				parseAttribut(line);
-			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0) {
+			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0)
 				headerParsed = true;
-			}
 		}
-		else {
-			// Accumuler les lignes du body
+		else
+		{
+			// accumuler les lignes du body
 			if (!bodyBuffer.empty())
 				bodyBuffer += "\n";
 			bodyBuffer += line;
 		}
 	}
-	
-	// Traiter le body après avoir lu tout le buffer
-	if (headerParsed && !bodyBuffer.empty()) {
-		if (_isChunked) {
-			// Pour les requêtes chunked, parser les chunks
-			parseChunkedBody(bodyBuffer);
+
+	if (headerParsed && !bodyBuffer.empty())
+	{
+		// if (_isChunked)
+		// parseChunkedBody(bodyBuffer); // pour les requetes chunked, parser les chunks
+		// else {
+		// pour les requetes normales, stocker directement
+		this->_body += bodyBuffer;
+		this->_bodySize = this->_body.size();
+
+		std::map<std::string, std::string>::iterator it = _httpHeaders.find("Content-Length");
+		if (it != _httpHeaders.end())
+		{ // verifier si le body est complet
+			size_t expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
+			if (this->_bodySize >= expectedSize)
+				_isComplete = true;
 		}
-		else {
-			// Pour les requêtes normales, stocker directement
-			this->_body += bodyBuffer;
-			this->_bodySize = this->_body.size();
-			
-			// Vérifier si le body est complet
-			std::map<std::string, std::string>::iterator	it = _httpHeaders.find("Content-Length");
-			if (it != _httpHeaders.end()) {
-				size_t expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
-				if (this->_bodySize >= expectedSize)
-					_isComplete = true;
+		// }
+	}
+}
+
+void Request::parseMethode(ServerConfig &server, std::string &line)
+{
+	std::stringstream ss(line);
+	std::string path;
+
+	ss >> this->_methode >> this->_path >> this->_version;
+	prepareReq(server);
+}
+
+void Request::prepareReq(ServerConfig &server)
+{
+	cutVariableToPath();
+	int pathType = checkPathType(server, this->_path);
+	if (pathType == DIR_NO_SLASH ||
+		(pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
+	{
+		this->_code = 301;
+		this->_path += "/";
+		return;
+	}
+	cutPath();
+	makeAllPathRules(server);
+	if (this->_isLocation)
+		makeLocationRules();
+	searchIndex();
+	std::cout << BBLUE << "ca parse" << NC << std::endl;
+	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
+	{
+		this->_makeAutoindex = true;
+		this->_fileExtention = ".html";
+		this->_completPath = this->_root + this->_path;
+		return;
+	}
+	this->_completPath = this->_root + this->_path;
+	checkIsCgi(server);
+	std::cout << "PARSING METHOD [OK]" << std::endl;
+	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
+	{
+		this->_completPath = server.error_pages[this->_code];
+		makeExtentionAndNameFile(this->_completPath);
+		return;
+	}
+}
+
+void Request::cutVariableToPath()
+{
+	std::string variableQuery;
+	if (haveVariable() == std::string::npos)
+		return;
+	variableQuery = this->_path.substr(haveVariable() + 1);
+	this->_path = this->_path.substr(0, haveVariable());
+	splitVarQuery(variableQuery);
+}
+
+size_t Request::haveVariable()
+{
+	size_t findVar;
+	std::string cutPath;
+
+	findVar = this->_path.find('?');
+	return (findVar);
+}
+
+void Request::splitVarQuery(std::string &variableQuery)
+{
+	std::stringstream varLine(variableQuery);
+	std::string buff;
+	while (getline(varLine, buff, '&'))
+	{
+		std::stringstream varCut(buff);
+		std::string nameBuff;
+		std::string valueBuff;
+		getline(varCut, nameBuff, '=');
+		getline(varCut, valueBuff);
+		this->_varLst[nameBuff] = valueBuff;
+	}
+}
+
+void Request::cutPath()
+{
+	size_t findPos;
+	size_t lastFindPos;
+	std::string res;
+	std::string path = this->_path;
+	std::cout << BBLUE << path << NC <<  std::endl;
+	std::istringstream cut(path);
+	if (path.size() != 1)
+	{
+		findPos = path.find('/', 1);
+		lastFindPos = 0;
+		while (findPos != std::string::npos )
+		{
+			res = path.substr(lastFindPos, findPos);
+			std::cout << BRED << lastFindPos << " " << findPos << NC << std::endl;
+			// lastFindPos = findPos;
+			this->_cutPath.push_back(res);
+			path = path.substr(findPos);
+			std::cout << BRED << path <<  NC << std::endl;
+			findPos = path.find('/', 1);
+		}
+	}
+	
+	this->_cutPath.push_back(path);
+
+	for (size_t i = 0; i < _cutPath.size(); i++)
+	{
+		std::cout << BBLUE << _cutPath[i] << std::endl;
+	}
+	
+}
+
+void Request::makeAllPathRules(ServerConfig &server)
+{
+	int pathType;
+	std::string newPath;
+	std::string newCompletPath;
+	std::vector<std::string>::iterator it = this->_cutPath.begin();
+	for (; it != this->_cutPath.end(); it++)
+	{
+		newPath += *it;
+		newCompletPath = this->_root + *it;
+		pathType = checkPathType(server, newPath);
+		switch (pathType)
+		{
+		case -1:
+			std::cout << BRED << *it << " is PROBLEM" << NC << std::endl;
+			return;
+		case DIR_WITH_SLASH:
+			std::cout << BPURPLE << *it << " is DIR_WITH_SLASH" << NC << std::endl;
+			accessFolder(newCompletPath);
+			break;
+		case DIR_NO_SLASH:
+			break;
+		case SERVER_LOCATION:
+			std::cout << BPURPLE << *it << " is LOCATION" << NC << std::endl;
+			accessFolder(newCompletPath);
+			copyLocationRules(server, *it, newPath);
+			break;
+		case FILE_PATH:
+			std::cout << BPURPLE << *it << " is FILE" << NC << std::endl;
+			makeExtentionAndNameFile(*it);
+			if (access(newCompletPath.c_str(), R_OK) != 0)
+			{
+				std::cout << BRED << "403" << NC << std::endl;
+				this->_code = 403;
+				break;
 			}
+			break;
 		}
 	}
 }
 
-void	Request::checkRequest() {
-	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
-		|| this->_host.empty())
-		this->_code = 400;
-	if (this->_code == 0)
-		this->_code = 200;
+void Request::accessFolder(std::string newCompletPath)
+{
+	if (this->_path != "/" && access(newCompletPath.c_str(), X_OK) != 0)
+	{
+		this->_code = 403;
+	}
 }
 
-void	Request::parseMethode(ServerConfig &server, std::string &line) {
+int Request::checkPathType(ServerConfig &server, std::string &piecePath)
+{
+	struct stat st;
+	std::string cPath = this->_root + piecePath;
+
+	if (stat(cPath.c_str(), &st) == -1)
+	{
+		std::cout << BRED << cPath << NC << std::endl;
+		verifFile(cPath);
+		return (-1);
+	}
+	if (S_ISREG(st.st_mode))
+		return (FILE_PATH);
+	if (S_ISDIR(st.st_mode))
+	{
+		std::vector<LocationConfig>::iterator it = server.locations.begin();
+		for (; it < server.locations.end(); it++)
+		{
+			if (this->_root + it->path == this->_root + piecePath)
+				return (SERVER_LOCATION);
+		}
+		if (this->_path[this->_path.size() - 1] == '/')
+			return (DIR_WITH_SLASH);
+		return (DIR_NO_SLASH);
+	}
+	return (0);
+}
+
+void Request::verifFile(std::string path)
+{
+	struct stat st;
+	if (stat(path.c_str(), &st) == -1)
+	{
+		if (errno == ENOENT || errno == ENOTDIR)
+			this->_code = 404;
+		else if (errno == EACCES || errno == ELOOP)
+			this->_code = 403;
+		else
+			this->_code = 500;
+		return;
+	}
+}
+
+void Request::copyLocationRules(ServerConfig &server, std::string &folder, std::string &piecePath)
+{
+	if (!folder.empty() && folder[folder.size() - 1] == '/')
+		folder.erase(folder.size() - 1);
+	// std::vector<LocationConfig>::iterator it = server.locations.begin();
+
+	for (size_t i = 0; i < server.locations.size(); ++i)
+	{
+		if (server.locations[i].path == folder)
+		{
+			verifFile(server.root + piecePath);
+			if (this->_code == 200)
+			{
+				this->_isLocation = true;
+				this->_location = &server.locations[i];
+			}
+			return;
+		}
+	}
+}
+
+void Request::makeExtentionAndNameFile(std::string file)
+{
+	size_t dotPos;
+
+	dotPos = file.rfind('.');
+	if (dotPos == std::string::npos)
+	{
+		this->_fileExtention = "nodotdetected";
+		this->_fileName = file;
+	}
+	else
+	{
+		this->_fileExtention = file.substr(dotPos);
+		this->_fileName = file.substr(0, dotPos);
+	}
+}
+
+void Request::formatPath()
+{
+	if (this->_fileName.empty() && this->_path[this->_path.size() - 1] != '/')
+		this->_path += '/';
+}
+
+void Request::makeLocationRules()
+{
+	if (this->_location && this->_location->has_return)
+	{
+		this->_path = this->_location->return_url;
+		this->_code = this->_location->return_code;
+		return;
+	}
+	checkAllowMethods();
+	if (_code != 200)
+		return;
+	if (this->_location && !this->_location->root.empty())
+		this->_root = this->_location->root;
+	if (!this->_location->index.empty())
+		this->_index = this->_location->index;
+}
+
+void Request::checkAllowMethods()
+{
+	if (this->_location && !this->_location->methods.empty())
+	{
+		for (size_t i = 0; i < this->_location->methods.size(); i++)
+		{
+			if (this->_location->methods[i] == this->_methode)
+				return;
+		}
+		this->_code = 405;
+	}
+}
+
+void Request::searchIndex()
+{
+	std::string path;
+	if (this->_fileName.empty() && this->_fileExtention.empty())
+	{
+		for (std::vector<std::string>::iterator index = this->_index.begin(); index < this->_index.end(); index++)
+		{
+			path = this->_root + this->_path + *index;
+			verifFile(path);
+			if (this->_code == 200)
+			{
+				this->_path += *index;
+				makeExtentionAndNameFile(*index);
+				return;
+			}
+			verifFile(path);
+		}
+		this->_code = 200;
+	}
+}
+
+void Request::checkIsCgi(ServerConfig &server)
+{
+	if (this->_fileName.empty() || this->_fileExtention.empty())
+		return;
+	std::map<std::string, std::string> mapCgi;
+	if (this->_location && this->_isLocation)
+		mapCgi = this->_location->cgi;
+	else
+		mapCgi = server.cgi;
+
+	std::map<std::string, std::string>::iterator cgi = mapCgi.begin();
+	for (; cgi != mapCgi.end(); cgi++)
+	{
+		if (cgi->first == this->_fileExtention)
+		{
+			this->_isCgi = true;
+			this->_cgiPath = cgi->second;
+			return;
+		}
+	}
+}
+
+void Request::parseAttribut(std::string &line)
+{
 	std::istringstream cut(line);
 	std::string res;
-	std::vector<std::string> parsedLine;
-	while (getline(cut, res, ' '))
-		parsedLine.push_back(res);
-	if (parsedLine.size() != 3)
-	{
-		this->_code = 400;
-		return ;
-	}
-	this->setMethode(parsedLine[0]);
-	this->setAndCheckPath(server, parsedLine[1]);
-	this->setVersion(parsedLine[2]);
-}
-
-void	Request::parseAttribut(std::string &line) {
-	std::istringstream	cut(line);
-	std::string			res;
 
 	getline(cut, res, ' ');
 	std::string headerName = res;
 	if (!headerName.empty() && headerName[headerName.size() - 1] == ':') // take off ':'
 		headerName = headerName.substr(0, headerName.size() - 1);
-	if (res == "Host:") {
+	if (res == "Host:")
+	{
 		getline(cut, res, ' ');
 		this->_host = res;
 		this->_httpHeaders["Host"] = res;
 	}
-	else if (res == "Content-Type:") {
+	else if (res == "Content-Type:")
+	{
 		getline(cut, res);
 		if (!res.empty() && res[0] == ' ')
 			res = res.substr(1);
@@ -181,22 +476,25 @@ void	Request::parseAttribut(std::string &line) {
 		this->_contentType = res;
 		this->_httpHeaders["Content-Type"] = res;
 	}
-	else if (res == "Content-Length:") {
+	else if (res == "Content-Length:")
+	{
 		getline(cut, res, ' ');
 		std::stringstream ss(res);
 		ss >> this->_bodySize;
 		this->_httpHeaders["Content-Length"] = res;
 	}
-	else if (!headerName.empty()) { // Pour tous les autres headers, les stocker dans _httpHeaders
-		std::string	headerValue;
+	else if (!headerName.empty())
+	{ // Pour tous les autres headers, les stocker dans _httpHeaders
+		std::string headerValue;
 		getline(cut, headerValue);
 		// Nettoyer les espaces et \r
 		if (!headerValue.empty() && headerValue[0] == ' ')
 			headerValue = headerValue.substr(1);
 		if (!headerValue.empty() && headerValue[headerValue.size() - 1] == '\r')
 			headerValue = headerValue.substr(0, headerValue.size() - 1);
-		if (headerName == "Transfer-Encoding") {
-			std::string	valueLower;
+		if (headerName == "Transfer-Encoding")
+		{
+			std::string valueLower;
 			for (size_t i = 0; i < headerValue.length(); i++)
 				valueLower += tolower(headerValue[i]);
 			if (valueLower.find("chunked") != std::string::npos)
@@ -208,177 +506,26 @@ void	Request::parseAttribut(std::string &line) {
 	}
 }
 
-size_t	haveVariable(std::string &path) {
-	size_t		findVar;
-
-	std::string	cutPath;
-	findVar = path.find('?');
-	return (findVar);
-}
-
-std::string	Request::getPathVariable(std::string &path) {
-	std::string	cutPath;
-	if (haveVariable(path) == std::string::npos)
-		return (path);
-	cutPath = path.substr(0, haveVariable(path));
-	return (cutPath);
-}
-
-void	Request::getVariable(std::string &path) {
-	std::string variableQuery;
-	if (haveVariable(path) == std::string::npos)
-		return ;
-	variableQuery = path.substr(haveVariable(path) + 1);
-	// while (variableQuery[0] == '?')
-	// {
-	// 	findVar++;
-	// 	variableQuery = path.substr(findVar + 1);
-	// }
-	this->_queryString = variableQuery;
-	std::stringstream varLine(variableQuery);
-	std::string buff;
-	// while (getline(varLine, buff, '?')) {
-	while (getline(varLine, buff, '&')) {
-		std::stringstream varCut(buff);
-		std::string nameBuff;
-		std::string valueBuff;
-		getline(varCut, nameBuff, '=');
-		getline(varCut, valueBuff);
-		this->_varLst[nameBuff] = valueBuff;
-	}
-}
-
-int	Request::getPathType(ServerConfig &server) {
-	struct stat	st;
-
-	if (stat(this->_completPath.c_str(), &st) == -1)
-		return (-1);
-	if (S_ISREG(st.st_mode))
-		return (FILE_PATH);
-	if (S_ISDIR(st.st_mode)) {
-		std::vector<LocationConfig>::iterator it;
-		for (it = server.locations.begin(); it < server.locations.end(); it++) {
-			if (server.root + it->path == this->_completPath)
-				return (SERVER_LOCATION_NO_SLASH);
-			else if (server.root + it->path == this->_completPath + '/')
-				return (SERVER_LOCATION_WI_SLASH);
-		}
-		if (this->_path[this->_path.size() - 1] == '/')
-			return (DIR_WITH_SLASH);
-		return (DIR_NO_SLASH);
-	}
-	return (0);
-}
-
-void	Request::verifFile()
+void Request::checkRequest()
 {
-	struct stat	st;
-
-	if (stat(this->_completPath.c_str(), &st) == -1) {
-		if (errno == ENOENT || errno == ENOTDIR)
-			this->_code = 404;
-		else if (errno == EACCES || errno == ELOOP)
-			this->_code = 403;
-		else
-			this->_code = 500;
-		return ;
-	}
-}
-
-void	Request::getIndex(ServerConfig &server) {
-	for (std::vector<std::string>::iterator it = server.index.begin(); it < server.index.end(); it++) {
-		this->_completPath += *it;
-		verifFile();
-		if (this->_code == 0)
-			return ;
-	}
-}
-
-void	Request::getFilePath(ServerConfig &server, int searchIndex) {
-	if ((this->_completPath == server.root + "/" && server.index.size() > 0)
-		|| searchIndex) {
-		getIndex(server);
-		return ;
-	}
-	verifFile();
-}
-
-void	Request::getServerLocationPath(ServerConfig &server) {
-	DIR				*folder;
-	struct dirent	*readFolder;
-
-	for (std::vector<LocationConfig>::iterator it = server.locations.begin(); it < server.locations.end(); it++) {
-		if (it->path == this->_path) {
-			if (this->_path[this->_path.size() - 1] == '/')
-				this->_path[this->_path.size() - 1] = '\0';
-			if (it->autoindex) {
-				/*case auto index a gerer, generation d'une page auto*/
-				std::string dirPath = server.root + it->path;
-				folder = opendir(dirPath.c_str());
-				if (!folder) {
-					std::cout << BRED << "NOP" << NC << std::endl;
-					this->_code = 404;
-				}
-				else {
-					readFolder = readdir(folder);
-					while (readFolder) {
-						std::cout << GREEN << readFolder->d_name << NC << std::endl;
-						readFolder = readdir(folder);
-					}
-				}
-				this->_path = "/autoindexon.html";
-				this->_completPath = server.root + "/autoindexon.html";
-			}
-			else {
-				this->_path = "/servelocation.html";
-				this->_completPath = server.root + "/servelocation.html";
-			}
-		}
-	}
-}
-
-void	Request::setAndCheckPath(ServerConfig &server, std::string &path) {
-	int	fileType;
-
-	getVariable(path);
-	this->_path = getPathVariable(path);
-	this->_completPath = server.root + getPathVariable(path);
-	fileType = getPathType(server);
-	switch (fileType)
-	{
-	case -1:
-		break ;
-	case FILE_PATH:
-		getFilePath(server, 0);
-		break ;
-	case DIR_WITH_SLASH:
-		getFilePath(server, 1);
-		break ;
-	case DIR_NO_SLASH:
-		this->_path = path + "/";
-		this->_code = 301;
-		break ;
-	case SERVER_LOCATION_NO_SLASH:
-		getServerLocationPath(server);
-		// this->_code = 301;
-		break ;
-	case SERVER_LOCATION_WI_SLASH:
-		getServerLocationPath(server);
-		// this->_code = 301;
-	}
-}
-
-std::ostream	&operator<<(std::ostream &o, Request const &request)
-{
-	o << BGREEN << "mode : " << request.getMethode() << std::endl << "path : " << request.getPath() << std::endl << "version : " << request.getVersion() << std::endl << "host : " << request.getHost() << std::endl << NC;
-	return (o);
+	if (this->_methode.empty() || this->_path.empty() || this->_version.empty() || this->_host.empty())
+		this->_code = 400;
+	std::cout << BGREEN << this->_code << NC << std::endl;
+	verifFile(this->_completPath);
+	std::cout << BRED << this->_code << NC << std::endl;
 }
 
 std::string	Request::getMethode() const {
 	return (this->_methode);
 }
 
-std::string	Request::getPath() const {
+std::string Request::getRoot() const
+{
+	return (this->_root);
+}
+
+std::string Request::getPath() const
+{
 	return (this->_path);
 }
 
@@ -386,7 +533,18 @@ std::string	Request::getCompletPath() const {
 	return (this->_completPath);
 }
 
-std::string	Request::getVersion() const {
+std::string Request::getFileName() const
+{
+	return (this->_fileName);
+}
+
+std::string Request::getFileExtention() const
+{
+	return (this->_fileExtention);
+}
+
+std::string Request::getVersion() const
+{
 	return (this->_version);
 }
 
@@ -398,35 +556,190 @@ std::string	Request::getHost() const {
 	return (this->_host);
 }
 
-bool	Request::getIsComplete(void) const {
+std::string Request::getCgiPath() const
+{
+	return (this->_cgiPath);
+}
+
+std::vector<std::string> Request::getIndex() const
+{
+	return (this->_index);
+}
+
+std::vector<std::string> Request::getCutPath() const
+{
+	return (this->_cutPath);
+}
+
+std::map<std::string, std::string> Request::getVarLst() const
+{
+	return (this->_varLst);
+}
+
+LocationConfig *Request::getLocation() const
+{
+	return (this->_location);
+}
+
+bool Request::getIsLocation() const
+{
+	return (this->_isLocation);
+}
+
+bool Request::getIsPost() const
+{
+	return (this->_isPost);
+}
+
+bool Request::getIsComplete() const
+{
 	return (this->_isComplete);
 }
 
-int	Request::getCode(void) const {
+bool Request::getMakeAutoindex() const
+{
+	return (this->_makeAutoindex);
+}
+
+bool Request::getIsCgi() const
+{
+	return (this->_isCgi);
+}
+
+int Request::getCode() const
+{
 	return (this->_code);
 }
 
-void	Request::setMethode(std::string &methode) {
-	if (methode == "GET" || methode == "POST" || methode == "DELETE"
-		|| methode == "HEAD")
-		this->_methode = methode;
-	else
-		this->_code = 405;
+void Request::setCode(int code)
+{
+	this->_code = code;
 }
 
-void	Request::setPath(std::string &path) {
-	this->_path = path;
+std::string Request::getQueryString() const
+{
+	return (this->_queryString);
 }
 
-void	Request::setVersion(std::string &version) {
-	if (version != "HTTP/1.1\r")
-		this->_code = 400;
-	else
-		this->_version = version;
+std::string Request::getBody() const
+{
+	return (this->_body);
 }
 
-void	Request::setErrorCode(int errorCode) {
-	this->_code = errorCode;
+std::string Request::getContentType() const
+{
+	return (this->_contentType);
+}
+
+size_t Request::getBodySize() const
+{
+	return (this->_bodySize);
+}
+
+const std::map<std::string, std::string> &Request::getHttpHeaders() const
+{
+	return (this->_httpHeaders);
+}
+
+std::string Request::getRemoteAddr() const
+{
+	return (this->_remoteAddr);
+}
+
+int Request::getServerPort() const
+{
+	return (this->_serverPort);
+}
+
+void Request::setRemoteAddr(const std::string &addr)
+{
+	this->_remoteAddr = addr;
+}
+
+void Request::setServerPort(int port)
+{
+	this->_serverPort = port;
+}
+
+std::ostream &operator<<(std::ostream &o, Request const &request)
+{
+	o << BGREEN << std::endl;
+	o << "////////// REQUEST //////////" << std::endl;
+	o << "code      : " << request.getCode() << std::endl;
+	o << "mode      : " << request.getMethode() << std::endl;
+	o << "path      : " << request.getPath() << std::endl;
+	o << "version   : " << request.getVersion() << std::endl;
+	o << "host      : " << request.getHost() << std::endl;
+	o << "filename  : " << request.getFileName() << std::endl;
+	o << "file ext  : " << request.getFileExtention() << std::endl;
+	o << "comp path : " << request.getCompletPath() << std::endl;
+	if (request.getIsCgi())
+		o << "cgi path  : " << request.getCgiPath() << std::endl;
+
+	// o << request.getIsLocation() <<std::endl;
+	if (!request.getVarLst().empty())
+	{
+		o << "var       : " << std::endl;
+		std::map<std::string, std::string> var = request.getVarLst();
+		std::map<std::string, std::string>::const_iterator it = var.begin();
+		for (; it != var.end(); it++)
+			o << "	" << it->first << "=" << it->second << std::endl;
+	}
+	if (request.getIsLocation() && request.getLocation())
+	{
+		o << "location  :" << std::endl;
+		o << "	path      : " << request.getLocation()->path << std::endl;
+		if (!request.getLocation()->root.empty())
+			o << "	root      : " << request.getLocation()->root << std::endl;
+		else
+			o << "	root      : empty" << std::endl;
+
+		if (!request.getLocation()->index.empty())
+		{
+			o << "	index      : ";
+			std::vector<std::string> index = request.getLocation()->index;
+			std::vector<std::string>::iterator it = index.begin();
+			for (; it != index.end(); it++)
+				o << *it << " ";
+			o << std::endl;
+		}
+		if (request.getLocation()->autoindex)
+			o << "	autoindex : true" << std::endl;
+		else
+			o << "	autoindex : false" << std::endl;
+		if (!request.getLocation()->cgi.empty())
+		{
+			o << "	cgi       : ";
+			std::map<std::string, std::string> cgi = request.getLocation()->cgi;
+			std::map<std::string, std::string>::iterator it = cgi.begin();
+			for (; it != cgi.end(); it++)
+				o << it->first << " ";
+			o << std::endl;
+		}
+	}
+	o << "/////////////////////////////" << std::endl;
+	o << NC;
+	return (o);
+}
+
+size_t hexToDecimal(const std::string &hex)
+{
+	size_t value = 0;
+
+	for (size_t i = 0; i < hex.size(); i++)
+	{
+		char c = hex[i];
+		value *= 16;
+		if (c >= '0' && c <= '9')
+			value += c - '0';
+		else if (c >= 'A' && c <= 'F')
+			value += c - 'A' + 10;
+		else if (c >= 'a' && c <= 'f')
+			value += c - 'a' + 10;
+		else
+			break;
+	}
+	return (value);
 }
 
 std::string	Request::getQueryString() const {

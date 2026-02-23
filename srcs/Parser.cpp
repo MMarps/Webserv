@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/01/28 17:50:26 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/17 15:52:20 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,8 +107,6 @@ void	Parser::parseDirective(ServerConfig& srv) {
 		parseErrorPage(srv, args);
 	else if (name == "cgi")
 		parseCgi(srv, args);
-	else if (name == "cgi")
-		parseCgi(srv, args);
 	else if (name == "client_max_body_size") {
 		if (args.size() != 1)
 			throwError("One argument expected for 'client_max_body_size'", true);
@@ -158,7 +156,7 @@ void	Parser::parseDirective(LocationConfig& loc) {
 	else if (name == "return")
 		parseReturn(loc, args);
 	else
-		throwError("Directive unknown1", true);
+		throwError("Directive unknown", true);
 }
 
 Listen			Parser::parseListen(std::vector<std::string>& args) {
@@ -271,7 +269,7 @@ void	Parser::parseCgi(LocationConfig& loc, const std::vector<std::string>& args)
 	}
 }
 
-void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &args) {
+void	Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &args) {
 	if (args.size() != 2)
 		throwError("'return' expects status and target", true);
 	const std::string &s = args[0];
@@ -284,7 +282,7 @@ void Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &ar
 
 void	Parser::putDefaultValues(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
-		ServerConfig &srv = cfg.servers[si];
+		ServerConfig& srv = cfg.servers[si];
 		if (srv.listens.empty()) {
 			Listen l;
 			l.host = "0.0.0.0";
@@ -295,10 +293,24 @@ void	Parser::putDefaultValues(Config &cfg) {
 			srv.root = "var/www";
 		if (srv.index.empty())
 			srv.index.push_back("index.html");
+		if (srv.has_client_max_body_size == false) {
+			srv.client_max_body_size = 1024 * 1024;
+			srv.has_client_max_body_size = true;
+		}
+		if (srv.log.empty()) {
+			getLogFile(srv, si);
+		}
+		for (size_t li = 0; li < srv.locations.size(); li++) {
+			LocationConfig& loc = srv.locations[li];
+			if (loc.has_client_max_body_size == false) {
+				loc.client_max_body_size = srv.client_max_body_size;
+				loc.has_client_max_body_size = true;
+			}
+		}
 	}
 }
 
-void			Parser::checkCgi(Config &cfg) {
+void	Parser::checkCgi(Config &cfg) {
 	for (size_t si = 0; si < cfg.servers.size(); si++) {
 		ServerConfig& srv = cfg.servers[si];
 		std::map<std::string, std::string>::const_iterator	it;
@@ -313,11 +325,39 @@ void			Parser::checkCgi(Config &cfg) {
 	}
 }
 
+void	Parser::getLogFile(ServerConfig& srv, int srvIdx) {
+	std::string::const_iterator it;
+	const std::string& root = srv.root;
+	std::stringstream ss;
+
+
+	if (root.size() == 1 && root[0] == '/')
+		ss << srv.root;
+	else
+		ss << findRootDir(root);
+
+	it = ss.str().end() - 1;
+	if (*it == '/')
+		ss << "log/Server[" << srvIdx << "].log";
+	else
+		ss << "/log/Server[" << srvIdx << "].log";
+
+	srv.log = ss.str();
+}
+
+std::string	Parser::findRootDir(const std::string& root) {
+	size_t pos = root.find('/', 1);
+	if (pos == root.npos)
+		return (root);
+	else
+		return (root.substr(0, pos));
+}
+
 /////////////////////////////////////
 
-void Parser::throwError(const std::string &msg, bool flg) const {
-	const Token &t = flg ? _ts.peekLast() : _ts.peek();
-	std::ostringstream oss;
+void	Parser::throwError(const std::string &msg, bool flg) const {
+	const Token			&t = flg ? _ts.peekLast() : _ts.peek();
+	std::ostringstream	oss;
 	if (t.l > 0)
 		oss << "ligne " << t.l << " " << "col " << t.c << ": " << msg;
 	else
@@ -342,6 +382,3 @@ std::vector<std::string>	Parser::collectArgs() {
 	_ts.next();
 	return (args);
 }
-
-/////////////////////////////////////
-

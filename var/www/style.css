@@ -1,64 +1,170 @@
-*
-{
-    font-family: "Gill Sans", sans-serif;
-    
+* {
+    --bg-color: #233D4C;
+    --color: #FD802E;
+    --border: 0px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+
 }
 
-nav
-{
-    border: 1px solid red;
+nav {
+    border: var(--border) solid red;
     text-align: center;
     align-content: center;
+    padding: 5px 0px;
     width: 100%;
-    height: 40px;
     display: flex;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 45px;
+    background-color: var(--bg-color);
+    box-shadow: 0 15px 10px rgba(26, 46, 57, 0.25);
+    z-index: 1000;
 }
 
-body
-{
+body {
     padding: 0px;
     border: 0px;
-    margin: 0px;
+    margin: 10px;
+    padding-top: 60px;
+    background-color: var(--bg-color);
+    color: var(--color);
 }
 
-.navButton
-{
+.navButton {
+    transition-duration: 0.3s;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
-    color: rgb(41, 41, 41);
-    
+    /* border: var(--border) solid green; */
+    width: 100%;
+    height: 100%;
+    color: var(--color);
+
 }
 
-.divNavButton
-{
-    background-color: blueviolet;
-    width: 120px;
-    height: 30px;
+.navButton:hover {
+    color: var(--bg-color);
+    transition-duration: 0.3s;
+    background-color: var(--color);
+
 }
 
-.title
-{
+.divNavButton {
+    transition-duration: 0.3s;
+
+    border: 2px solid var(--color);
+    width: 100%;
+    height: 40px;
+    margin: 0px 3px;
+    text-align: center;
+    align-items: center;
+    border-radius: 5px;
+    font-weight: bolder;
+    color: var(--color);
+}
+
+
+
+
+.title {
+    width: 100%;
     text-align: center;
 }
 
-.titleDiv
-{
-    border: 1px solid red;
+.titleDiv {
+    border: var(--border) solid red;
 
 }
 
 
-.test
-{
+.test {
     color: green;
-    font-family: 'Times New Roman', Times, serif;
-    border: 1px solid red;
+    border: var(--border) solid red;
     border-radius: 25px;
 }
 
-.test2
-{
-    font-family:Verdana, Geneva, Tahoma, sans-serif;
+.test2 {
     font-size: 20px;
-    border : 3px solid red;
+    border: var(--border) solid red;
+    text-align: center;
+}
+
+
+.tabContainer
+{
+    border: 0px solid yellow;
+
+}
+
+.tab
+{
+    border: 0px solid red;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 5px 15px;
+}
+
+.tab td
+{
+    padding: 20px;
+    width: 50%;
+    font-weight: bold;
+    border: 2px solid var(--color);
+    border-radius: 10px;
+
+}
+
+
+.allMethodContainer
+{
+    border: 2px solid var(--color);
+    border-radius: 10px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.allmethodtitle
+{
+    font-weight: bold;
+}
+
+/* .allmethod
+{
+
+} */
+
+
+
+
+.cgiContainer > h3 
+{
+    text-align: center;
+}
+
+.cardcontainer {
+    border: 0px solid red;
+    display: flex;
+    gap: 10px;
+    
+}
+
+.cardcontainer a {
+    flex: 1;
+    text-decoration: none;
+}
+
+.card {
+    border: 2px solid var(--color);
+    color: var(--color);
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+.card > h4 
+{
     text-align: center;
 }

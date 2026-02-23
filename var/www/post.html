@@ -16,8 +16,28 @@
 			<div class="divNavButton">
 				<a href="post.html" class="navButton">post</a>
 			</div>
+			<div class="divNavButton">
+				<a href="postdoc.html" class="navButton">post</a>
+			</div>
+			<div class="divNavButton">
+				<a href="autoindex" class="navButton">autoindex</a>
+			</div>
 		</nav>
     <form action="index.html" method="POST">
+        <label>
+            Name:
+            <input type="text" name="name">
+        </label>
+        <br>
+        <label>
+            Lastname:
+            <input type="text" name="lastname">
+        </label>
+        <br>
+        <input type="submit" value="Send">
+    </form>
+
+	<form action="index.html" method="GET">
         <label>
             Name:
             <input type="text" name="name">

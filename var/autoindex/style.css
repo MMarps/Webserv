@@ -1,0 +1,68 @@
+* 
+{
+    --bg-color: #233D4C;
+    --color : #FD802E;
+    --border : 0px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body 
+{
+    background-color: var(--bg-color);
+    color: var(--color);
+}
+
+a 
+{
+    font-style: none;
+    color: var(--color);
+    text-decoration: none;
+}
+
+.autoindexText
+{
+    border: 2px solid var(--color);
+    font-weight: bold;
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    margin: 15px 0px ;
+}
+
+.autoindexText:hover
+{
+    transition-duration: 0.3s;
+    background-color: var(--color);
+    color: var(--bg-color);
+}
+
+.autoindexText > .text
+{
+    border: var(--border) solid red;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+
+.autoindexText > .date
+{
+    border: var(--border) solid red;
+    width: 115px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.autoindexDiv 
+{
+    margin: 15px 10%;
+    border: 2px solid var(--color);
+    padding: 0px 20px;
+    border-radius: 15px;
+}
+
+.sep
+{
+    border: 2px solid var(--color);
+    border-radius: 100pc ;
+}

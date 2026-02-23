@@ -47,7 +47,8 @@ class CGI {
 		std::vector<char>	getOutput() const;
 		std::string			getBody() const;
 		std::map<std::string, std::string>	getHeaders() const; // recupere les headers CGI
-		bool				isCGI();
+		// bool				isCGI();
+		bool				isCGI(const Request &req, const ServerConfig &server);
 };
 
 # endif
