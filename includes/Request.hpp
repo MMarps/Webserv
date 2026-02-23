@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/20 18:49:19 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/23 16:14:17 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,9 +80,9 @@ public:
 	void splitVarQuery(std::string &variableQuery);
 	void cutPath();
 	void makeAllPathRules(ServerConfig &server);
-	int checkPathType(ServerConfig &server, std::string &piecePath);
+	int checkPathType(ServerConfig &server, bool slash, std::string &piecePath);
 	void verifFile(std::string path);
-	void copyLocationRules(ServerConfig &server, std::string &folder, std::string &piecePath);
+	void copyLocationRules(ServerConfig &server, std::string &folder);
 	void makeExtentionAndNameFile(std::string file);
 	void formatPath();
 	void makeLocationRules();
