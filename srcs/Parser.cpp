@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 15:52:20 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/24 17:10:50 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -278,6 +278,7 @@ void	Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &ar
 	int st = atoi(s.c_str());
 	loc.return_code = st;
 	loc.return_url = args[1];
+	loc.has_return = true;
 }
 
 void	Parser::putDefaultValues(Config &cfg) {
