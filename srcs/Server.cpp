@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/23 20:42:19 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/02/24 17:04:27 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,7 +223,6 @@ void Server::_closeConnection(int fd) {
 	if (_clientMetadata.count(fd)) // Nettoyer les metadonnees reseau
 		_clientMetadata.erase(fd);
 
-	// std::cout << "Connection closed: " << fd << std::endl;
 	Logger::info(oss.str(), srvIdx);
 }
 
@@ -452,7 +451,6 @@ std::string	Server::_getClientAddr(const struct sockaddr_in& clientAddr) {
 void	Server::_setUploadStream(Client* client) {
 	std::string &header = client->getHeader();
 
-	// 1. Extraction du Content-Type pour détecter le Multipart
 	size_t ctPos = header.find("Content-Type: ");
 	if (ctPos != std::string::npos) {
 		size_t ctEnd = header.find("\r\n", ctPos);
@@ -462,14 +460,12 @@ void	Server::_setUploadStream(Client* client) {
 			size_t bPos = ctLine.find("boundary=");
 			if (bPos != std::string::npos) {
 				client->isMultipart = true;
-				// Le boundary dans le header est "X", dans le body il sera "--X"
 				client->boundary = "--" + ctLine.substr(bPos + 9);
 				client->boundaryEnd = client->boundary + "--";
 			}
 		}
 	}
 
-	// 2. Extraction de la méthode et de l'URI
 	size_t firstLineEnd = header.find("\r\n");
 	if (firstLineEnd == std::string::npos) return;
 
@@ -480,25 +476,20 @@ void	Server::_setUploadStream(Client* client) {
 
 	if (method != "POST") return;
 
-	// 3. Récupération de la configuration de la location
 	const LocationConfig* loc = _findBestLocation(uri, client->getServerIdx());
 	if (loc && !loc->upload_store.empty()) {
 		client->isUpload = true;
 
 		std::string fullpath = loc->upload_store;
-		// Ajout du slash de sécurité si manquant dans la config
 		if (fullpath[fullpath.length() - 1] != '/')
 			fullpath += '/';
 
 		if (client->isMultipart) {
-			// Pour le multipart, on crée un fichier temporaire caché
-			// On utilise le FD du client pour garantir l'unicité
 			std::stringstream oss;
 			oss << fullpath << ".tmp_upload_" << client->getFd();
 			client->uploadFileName = oss.str();
 		}
 		else {
-			// Pour le binaire pur, le nom est dans l'URL
 			std::string filename = "default_upload";
 			size_t lastSlash = uri.rfind('/');
 			if (lastSlash != std::string::npos && lastSlash + 1 < uri.length())
@@ -506,7 +497,6 @@ void	Server::_setUploadStream(Client* client) {
 			client->uploadFileName = fullpath + filename;
 		}
 
-		// 4. Ouverture du stream en mode binaire
 		client->uploadStream.open(client->uploadFileName.c_str(), std::ios::out | std::ios::binary);
 		
 		if (!client->uploadStream.is_open()) {
@@ -582,7 +572,6 @@ void	Server::_closeSocketFds() {
 		close(fd);
 	}
 	_serverSockets.clear();
-	// std::cout << "All sockets closed" << std::endl;
 	Logger::info("All sockets closed");
 }
 
@@ -597,7 +586,6 @@ void	Server::_closeAllClients() {
 		delete it->second;
 	}
 	_clients.clear();
-	// std::cout << "All clients disconnected" << std::endl;
 	Logger::info("All clients disconnected");
 }
 
