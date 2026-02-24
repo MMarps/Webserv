@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/23 16:51:54 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/24 15:56:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -310,9 +310,7 @@ int Request::checkPathType(ServerConfig &server, bool slash, std::string &pieceP
 	struct stat st;
 
 	if (slash)
-	{
 		return (NOTHING);
-	}
 	std::string cPath = this->_root + piecePath;
 	std::vector<LocationConfig>::iterator it = server.locations.begin();
 	for (; it < server.locations.end(); it++)
@@ -322,11 +320,9 @@ int Request::checkPathType(ServerConfig &server, bool slash, std::string &pieceP
 			std::cout << this->_root + it->path << "  | " << this->_root + piecePath << std::endl;
 			copyLocationRules(server, it->path);
 			makeLocationRules();
+			std::cout <<BLACK << this->_code << NC <<std::endl;
 			if (this->_code != 200)
-			{
 				return (-1);
-			}
-			
 			return (SERVER_LOCATION);
 		}
 	}
@@ -409,6 +405,7 @@ void Request::formatPath()
 
 void Request::makeLocationRules()
 {
+	std::cout << BGREEN << "ca passeweeeeeeeeeeeeeeeeeeeeeeee" << std::endl;
 	if (this->_location && this->_location->has_return)
 	{
 		this->_path = this->_location->return_url;
