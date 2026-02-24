@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/24 17:04:27 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/24 17:08:01 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Server::Server(const std::string &confFileName)
 
 	Lexer ts(confFileName);
 	Parser p(ts);
-	// ts.printTokens();
+	ts.printTokens();
 	_conf = p.parseConfig();
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
