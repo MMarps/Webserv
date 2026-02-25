@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/24 17:08:01 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/25 16:59:48 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -347,8 +347,6 @@ void	Server::_parseResponse(Client *c, int errCode) {
 	Response	response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
 	c->getResponse().append(response.getResponse());
-
-	std::cout << response << std::endl;
 	const std::vector<char>	&content = response.getContent();
 
 	if (!content.empty())
