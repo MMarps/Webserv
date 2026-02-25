@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/23 16:02:42 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/25 11:51:25 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,13 +36,13 @@ class Response {
 		// CGI
 		bool								_isCGI;
 		std::map<std::string, std::string>	_cgiHeaders;
+
+		bool	isDirectoryEmpty(const std::string &dirPath);
 	public:
 		Response(Request &req);
 		~Response();
-	
+
 		// generate response
-		void				makeLocation();
-		void				getCodePage();
 		// old
 		// std::string			getRep() const;
 		// void				getText();
@@ -58,6 +58,7 @@ class Response {
 		void				generateHeader();
 		void				generateBody();
 		void				checkFile(bool save);
+		void				handleDelete();
 		std::vector<std::string>	getLstDir();
 		void				generateAutoindex();
 		std::string			intToString(int n);

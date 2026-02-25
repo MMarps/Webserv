@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/23 16:03:04 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/24 17:56:09 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void	signal_handler(int sig) {
 
 /////////////////////////////////////
 
-void Server::_setupServerSockets() {
+void	Server::_setupServerSockets() {
 	struct addrinfo		hints;
 	struct addrinfo		*res;
 	int					status;
@@ -204,7 +204,7 @@ void	Server::run() {
 	}
 }
 
-void Server::_closeConnection(int fd) {
+void	Server::_closeConnection(int fd) {
 	int					srvIdx;
 	std::stringstream	oss;
 	Client*				client = _clients[fd];
@@ -355,7 +355,7 @@ void	Server::_sendResponse(int clientFd) {
 	ssize_t	sent;
 
 	client = _clients[clientFd];
-	std::string &resp = client->getResponse();
+	std::string	&resp = client->getResponse();
 	sent = send(client->getFd(), resp.c_str(), resp.size(), 0);
 	if (sent == -1) {
 		perror("send");

@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/23 16:03:29 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/25 11:47:55 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 Response::Response(Request &req) : _req(req), _isCGI(false) {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
+	_statutMessage.insert(std::make_pair(204, "No Content"));
 	_statutMessage.insert(std::make_pair(301, "Moved Permanently"));
 	_statutMessage.insert(std::make_pair(302, "Found"));
 	_statutMessage.insert(std::make_pair(400, "Bad Request"));
@@ -45,9 +46,14 @@ Response::Response(Request &req) : _req(req), _isCGI(false) {
 Response::~Response() {}
 
 void	Response::makeRep(ServerConfig &server) {
+	if (_req.getMethode() == "DELETE") {
+		handleDelete();
+		generateHeader();
+		return ;
+	}
 	if (isCGIRequest(server)) {
+		std::cout << BRED << "CGI DETECTED" << NC << std::endl;
 		_isCGI = true;
-		std::cout << BRED << "Is Cgi flg" << NC << std::endl;
 		handleCGI(server);
 		if (_req.getCode() == 502) {
 			generateHeader();
@@ -56,13 +62,16 @@ void	Response::makeRep(ServerConfig &server) {
 		buildCGIResponse();
 		return ;
 	}
-	handleCGI(server);
 	generateBody();
 	generateHeader();
 }
 
 void	Response::generateHeader() {
 	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\n";
+	if (this->_req.getCode() == 204) {
+		this->_response += "Connection: close\r\n\r\n";
+		return ;
+	}
 	if (this->_req.getCode() == 301) {
 		this->_response += "location: " + this->_req.getPath() + "\n";
 		this->_response += "Content-length: 0\n";
@@ -74,60 +83,48 @@ void	Response::generateHeader() {
 		this->_response += "\n\n";
 		return ;
 	}
-	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtention()] + "\n";
+	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtension()] + "\n";
 	this->_response += "Content-length: " + this->_contentLength + "\n";
 	this->_response += "\n\n";
 }
 
-void Response::generateBody()
-{
-	if (!this->_req.getFileName().empty())
-	{
+void	Response::generateBody() {
+	if (!this->_req.getFileName().empty()) {
 		if (this->_req.getMethode() == "HEAD")
 			checkFile(false);
 		else
 			checkFile(true);
-		return;
+		return ;
 	}
 	else if (this->_req.getMakeAutoindex() && this->_req.getCode() == 200)
 		generateAutoindex();
 }
 
-void Response::checkFile(bool save)
-{
-	std::ifstream file(this->_req.getCompletPath().c_str(), std::ios::binary);
-	std::istreambuf_iterator<char> first(file);
-	std::istreambuf_iterator<char> last;
+void	Response::checkFile(bool save) {
+	std::ifstream					file(this->_req.getCompletPath().c_str(), std::ios::binary);
+	std::istreambuf_iterator<char>	first(file);
+	std::istreambuf_iterator<char>	last;
+	std::vector<char>				buffer(first, last);
 
-	std::vector<char> buffer(first, last);
 	this->_contentLength = intToString(buffer.size());
 	if (save)
 		this->_content.swap(buffer);
 }
 
-std::string Response::intToString(int n)
-{
-	std::stringstream ss;
+std::string	Response::intToString(int n) {
+	std::stringstream	ss;
 	ss << n;
 	return (ss.str());
 }
 
-void getAutoindexPage()
-{
-	
-}
-
-void	Response::generateAutoindex()
-{
-	std::string htmlpage;
-	std::vector<std::string> lstFiles;
+void	Response::generateAutoindex() {
+	std::string					htmlpage;
+	std::vector<std::string>	lstFiles;
 
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
-	{
 		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
-	}
 	htmlpage += "</body></html>";
 	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
 	this->_content.swap(tmp);
@@ -136,16 +133,14 @@ void	Response::generateAutoindex()
 	this->_contentLength = ss.str();
 }
 
-std::vector<std::string> Response::getLstDir()
-{
-	DIR *folder;
-	struct dirent *readFolder;
-	std::vector<std::string> lstFiles;
+std::vector<std::string>	Response::getLstDir() {
+	DIR				*folder;
+	struct dirent	*readFolder;
+	std::vector<std::string>	lstFiles;
 
 	folder = opendir(this->_req.getCompletPath().c_str());
 	readFolder = readdir(folder);
-	while (readFolder)
-	{
+	while (readFolder) {
 		if (strcmp(readFolder->d_name, ".") != 0 && strcmp(readFolder->d_name, "..") != 0)
 			lstFiles.push_back(readFolder->d_name);
 		readFolder = readdir(folder);
@@ -198,6 +193,63 @@ void	Response::buildCGIResponse() {
 	}
 	_response += "Connection: close\r\n\r\n";
 	_response.append(_content.begin(), _content.end());
+}
+
+bool	Response::isDirectoryEmpty(const std::string &dirPath) {
+	DIR	*dir = opendir(dirPath.c_str());
+	if (!dir)
+		return (false);
+
+	struct dirent	*entry;
+	int	count = 0;
+
+	while ((entry = readdir(dir)) != NULL) { // parcourt le repertoire
+		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) { // si autre chose que ./ ou ../ alors non vide
+			closedir(dir);
+			return (false);
+		}
+		count++;
+	}
+	closedir(dir);
+	return (count == 2); // si = 2 alors pas de fichier trouve => repertoire vide
+}
+
+void	Response::handleDelete() {
+	std::string	filePath = _req.getCompletPath();
+	struct stat	fileStat;
+
+	std::cout << BRED << "HANDLE DELETE" << NC << std::endl;
+	if (stat(filePath.c_str(), &fileStat) != 0) {
+		_req.setCode(404);
+		return ;
+	}
+	if (S_ISDIR(fileStat.st_mode)) { // check si dossier
+		if (access(filePath.c_str(), W_OK | X_OK) != 0) { // check si permissions ecriture/exec
+			_req.setCode(403);
+			return ;
+		}
+		if (!isDirectoryEmpty(filePath)) { // check si vide
+			std::cout << BRED << "DIR NOT EMPTY" << NC << std::endl;
+			_req.setCode(409);
+			return ;
+		}
+		if (rmdir(filePath.c_str()) != 0) { // si vide -> supprimer
+			_req.setCode(500);
+			return ;
+		}
+		_req.setCode(204);
+		return ;
+	}
+	if (access(filePath.c_str(), W_OK) != 0) {
+		_req.setCode(403);
+		std::cout << BRED << "RETURN HERE2" << NC << std::endl;
+		return ;
+	}
+	if (unlink(filePath.c_str()) != 0) {
+		_req.setCode(500);
+		return ;
+	}
+	_req.setCode(204);
 }
 
 std::string	Response::getResponse() const {

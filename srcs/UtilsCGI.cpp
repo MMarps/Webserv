@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/13 16:49:20 by arotondo          #+#    #+#             */
-/*   Updated: 2026/02/23 16:03:09 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/24 16:58:45 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,10 +48,10 @@ std::string	CGI::findInterpreter() {
 }
 
 bool	CGI::isCGI(const Request &req, const ServerConfig &server) {
-	if (req.getFileName().empty() || req.getFileExtention().empty())
+	if (req.getFileName().empty() || req.getFileExtension().empty())
 		return (false);
-	
-	std::string	extension = req.getFileExtention();
+
+	std::string	extension = req.getFileExtension();
 	if (extension.empty())
 		return (false);
 	

@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:15:18 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/17 15:48:16 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/25 12:26:31 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ struct Listen {
 
 	Listen();
 	Listen(const std::string& newHost, const int& newPort);
-	bool	operator==(const Listen& other);
+	bool		operator==(const Listen& other);
 };
 
 struct LocationConfig {
@@ -58,9 +58,9 @@ struct ServerConfig {
 	ServerConfig();
 };
 
-class	Config {
-public:
-	std::vector<ServerConfig>	servers;
+class Config {
+	public:
+		std::vector<ServerConfig>	servers;
 };
 
 #endif
