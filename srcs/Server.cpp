@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/24 17:56:09 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/25 16:26:55 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,7 +223,6 @@ void	Server::_closeConnection(int fd) {
 	if (_clientMetadata.count(fd)) // Nettoyer les metadonnees reseau
 		_clientMetadata.erase(fd);
 
-	// std::cout << "Connection closed: " << fd << std::endl;
 	Logger::info(oss.str(), srvIdx);
 }
 
@@ -311,7 +310,6 @@ void	Server::_handleClientData(int clientFd) {
 			client->appendBody(buf, nbytes);
 	}
 	if (client->isHeaderFinished && (client->actualBodySize >= client->expectedBodySize)) {
-		// std::cout << BRED << client->getHeader() << NC << std::endl;
 		if (client->isUpload && client->uploadStream.is_open()) {
 			client->uploadStream.close();
 			client->isUpload = false;
@@ -363,7 +361,6 @@ void	Server::_sendResponse(int clientFd) {
 		return ;
 	}
 	if (static_cast<size_t>(sent) >= resp.size()) {
-		// std::cout << "Response sent fully." << std::endl;
 		Logger::info("Response sent fully.", client->getServerIdx());
 		client->getHeader().clear();
 		client->getResponse().clear();
@@ -494,7 +491,6 @@ void	Server::_closeSocketFds() {
 		close(fd);
 	}
 	_serverSockets.clear();
-	// std::cout << "All sockets closed" << std::endl;
 	Logger::info("All sockets closed");
 }
 
@@ -509,7 +505,6 @@ void	Server::_closeAllClients() {
 		delete it->second;
 	}
 	_clients.clear();
-	// std::cout << "All clients disconnected" << std::endl;
 	Logger::info("All clients disconnected");
 }
 

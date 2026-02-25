@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/25 11:47:55 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/25 16:22:23 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void	Response::makeRep(ServerConfig &server) {
 }
 
 void	Response::generateHeader() {
-	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\n";
+	this->_response = "HTTP/1.1 " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()] + "\r\n";
 	if (this->_req.getCode() == 204) {
 		this->_response += "Connection: close\r\n\r\n";
 		return ;
@@ -83,9 +83,9 @@ void	Response::generateHeader() {
 		this->_response += "\n\n";
 		return ;
 	}
-	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtension()] + "\n";
-	this->_response += "Content-length: " + this->_contentLength + "\n";
-	this->_response += "\n\n";
+	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtension()] + "\r\n";
+	this->_response += "Content-length: " + this->_contentLength + "\r\n";
+	this->_response += "\r\n";
 }
 
 void	Response::generateBody() {
