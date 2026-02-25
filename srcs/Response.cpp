@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/25 16:22:23 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/25 16:32:50 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,14 +73,14 @@ void	Response::generateHeader() {
 		return ;
 	}
 	if (this->_req.getCode() == 301) {
-		this->_response += "location: " + this->_req.getPath() + "\n";
-		this->_response += "Content-length: 0\n";
-		this->_response += "\n\n";
+		this->_response += "location: " + this->_req.getPath() + "\r\n";
+		this->_response += "Content-length: 0\r\n";
+		this->_response += "\r\n";
 		return ;
 	}
 	if ((this->_isCGI && this->_req.getCode() == 502) || (this->_req.getCode() != 200 && this->_req.getFileName().empty())) {
-		this->_response += "Content-length: 0\n";
-		this->_response += "\n\n";
+		this->_response += "Content-length: 0\r\n";
+		this->_response += "\r\n";
 		return ;
 	}
 	this->_response += "Content-Type: " + this->_contentType[this->_req.getFileExtension()] + "\r\n";
