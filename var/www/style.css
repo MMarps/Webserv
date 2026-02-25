@@ -94,22 +94,19 @@ body {
 }
 
 
-.tabContainer
-{
+.tabContainer {
     border: 0px solid yellow;
 
 }
 
-.tab
-{
+.tab {
     border: 0px solid red;
     width: 100%;
     border-collapse: separate;
     border-spacing: 5px 15px;
 }
 
-.tab td
-{
+.tab td {
     padding: 20px;
     width: 50%;
     font-weight: bold;
@@ -119,16 +116,14 @@ body {
 }
 
 
-.allMethodContainer
-{
+.allMethodContainer {
     border: 2px solid var(--color);
     border-radius: 10px;
     margin: 10px 0;
     text-align: center;
 }
 
-.allmethodtitle
-{
+.allmethodtitle {
     font-weight: bold;
 }
 
@@ -140,8 +135,7 @@ body {
 
 
 
-.cgiContainer > h3 
-{
+.cgiContainer>h3 {
     text-align: center;
 }
 
@@ -149,7 +143,7 @@ body {
     border: 0px solid red;
     display: flex;
     gap: 10px;
-    
+
 }
 
 .cardcontainer a {
@@ -164,7 +158,46 @@ body {
     border-radius: 10px;
 }
 
-.card > h4 
-{
+.card>h4 {
     text-align: center;
 }
+
+.formContainer {
+    border: 1px solid red;
+    display: flex;
+
+}
+
+
+.formContainer .form {
+    flex: 1;
+}
+
+.form {
+    width: 100%;
+    border: 2px solid var(--color);
+    margin: 20px;
+    border-radius: 15px;
+    padding: 20px 30px 20px 20px;
+   
+}
+
+.form h3 {
+    text-align: center;
+    padding: 5px;
+    border-radius: 8px;
+    border: 2px solid var(--color);
+    margin: 20px;
+}
+
+.input {
+    width: 100%;
+    border: 1px solid red;
+    border: 2px solid var(--color);
+    background-color: var(--bg-color);
+    color: #FD802E;
+    padding :5px;
+    border-radius: 5px;
+}
+
+.button {}
