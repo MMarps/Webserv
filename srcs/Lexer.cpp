@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/25 16:14:11 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/27 19:20:55 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,7 +163,6 @@ bool	isNumber(const std::string& str) {
 tokenType	Lexer::findIdentifier(const std::string& str) const {
 	if (str == "server"
 		|| str == "listen"
-		|| str == "server_name"
 		|| str == "root"
 		|| str == "index"
 		|| str == "client_max_body_size"

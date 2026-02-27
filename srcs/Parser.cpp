@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/24 17:10:50 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/27 19:22:01 by mmarps           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,9 +92,6 @@ void	Parser::parseDirective(ServerConfig& srv) {
 
 	if (name == "listen")
 		srv.listens.push_back(parseListen(args));
-	else if (name == "server_name")
-		for (size_t i = 0; i < args.size(); i++)
-			srv.server_names.push_back(args[i]);
 	else if (name == "root") {
 		if (args.size() != 1)
 			throwError("One argument expected for 'root'", true);
