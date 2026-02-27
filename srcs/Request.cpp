@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/25 17:40:53 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/02/27 16:57:59 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,13 @@ Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isCom
 					 _makeAutoindex(false), _isCgi(false), _code(200), _bodySize(0),
 					 _isChunked(false), _serverPort(0)
 {
+	std::cout << BGREEN << "construct req" << NC << std::endl;
 }
 Request::~Request() {}
 
 void Request::parse(ServerConfig &server, std::string &header, int code)
 {
+	std::cout << "debut parsing request" << std::endl;
 	this->_code = code;
 	if (this->_code != 200)
 		return;
@@ -29,9 +31,12 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 	this->_index = server.index;
 	makeRequest(server, header);
 	if (this->_code == 301)
+	{
 		return;
+	}
 	checkRequest();
-	
+	std::cout << *this << std::endl;
+	std::cout << "fin parsing request" << std::endl;
 }
 
 // bool	Request::parseChunkedBody(const std::string &newData) {
@@ -136,6 +141,15 @@ void	Request::prepareReq(ServerConfig &server) {
 		pathType = checkPathType(server, false, this->_path);
 	else
 		pathType = checkPathType(server, true, this->_path);
+	
+	// Vérifier si la location a un return avant de rediriger pour le slash
+	if (pathType == SERVER_LOCATION && this->_location && this->_location->has_return)
+	{
+		this->_path = this->_location->return_url;
+		this->_code = this->_location->return_code;
+		return;
+	}
+	
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
 	{
 		this->_code = 301;
