@@ -6,7 +6,7 @@
 /*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/13 18:32:55 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/02/25 16:14:11 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Token::Token()
 	  c(1) {}
 
 Lexer::Lexer(const std::string& path)
-	: _path(path), _f(), _tok(), _l(1), _c(1), i(0) {
+	: _path(path), _tok(), _f(), _l(1), _c(1), i(0) {
 	makeTokenStream();
 }
 

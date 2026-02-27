@@ -1,54 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <meta charset="UTF-8">
-		<head>
-			<title>photo</title>
-			<link rel="stylesheet" href="style.css">
-		</head>
-	<body>
-		<nav>
-			<div class="divNavButton">
-				<a href="/" class="navButton">index</a>
-			</div>
-			<div class="divNavButton">
-				<a href="photo.html" class="navButton">photo</a>
-			</div>
-			<div class="divNavButton">
-				<a href="post.html" class="navButton">post</a>
-			</div>
-			<div class="divNavButton">
-				<a href="postdoc.html" class="navButton">post</a>
-			</div>
-			<div class="divNavButton">
-				<a href="autoindex" class="navButton">autoindex</a>
-			</div>
-		</nav>
-    <form action="index.html" method="POST">
-        <label>
-            Name:
-            <input type="text" name="name">
-        </label>
-        <br>
-        <label>
-            Lastname:
-            <input type="text" name="lastname">
-        </label>
-        <br>
-        <input type="submit" value="Send">
-    </form>
 
-	<form action="index.html" method="GET">
-        <label>
-            Name:
-            <input type="text" name="name">
-        </label>
-        <br>
-        <label>
-            Lastname:
-            <input type="text" name="lastname">
-        </label>
-        <br>
-        <input type="submit" value="Send">
-    </form>
+<head>
+    <title>photo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav>
+        <div class="divNavButton">
+            <a href="/" class="navButton">index</a>
+        </div>
+        <div class="divNavButton">
+            <a href="photo.html" class="navButton">photo</a>
+        </div>
+        <div class="divNavButton">
+            <a href="post.html" class="navButton">post</a>
+        </div>
+
+        <div class="divNavButton">
+            <a href="location/" class="navButton">autoindex</a>
+        </div>
+    </nav>
+    <div class="formContainer">
+        <form action="index.html" method="POST" class="form">
+            <h3>POST form</h3>
+            <label>
+                Name :<br>
+                <input type="text" name="name" class="input">
+            </label>
+            <br>
+            <label>
+                Lastname :<br>
+                <input type="text" name="lastname" class="input">
+            </label>
+            <br>
+            <input type="submit" value="Send" class="button">
+        </form>
+
+        <form action="index.html" method="GET" class="form">
+            <h3>GET form</h3>
+            
+            <label>
+                Name : <br>
+                <input type="text" name="name" class="input">
+            </label>
+            <br>
+            <label>
+                Lastname : <br>
+                <input type="text" name="lastname" class="input">
+            </label>
+            <br>
+            <input type="submit" value="Send" class="button">
+        </form>
+    </div>
+
 </body>
+
 </html>

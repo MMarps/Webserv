@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:17:46 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/23 16:03:42 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/02/25 17:40:35 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ Client::Client(int clientFd, int serverIdx, const std::string &remoteAddr, int s
 	  expectedBodySize(0),
 	  actualBodySize(0),
 	  isUpload(false),
+	  isMultipart(false),
 	  uploadFileName(),
 	  _fd(clientFd),
 	  _serverIdx(serverIdx),
