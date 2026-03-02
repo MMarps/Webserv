@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/27 19:23:35 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/03/02 18:28:16 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "ConfigPrint.hpp"
 
 Server::Server(const std::string &confFileName)
 	: _conf(),
@@ -168,6 +169,7 @@ void	Server::run() {
 	uint32_t	currentEvent;
 
 	_setupServerSockets();
+	printConfig(this->getConfig());
 	Logger::log("Server Ready");
 	while (true) {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);

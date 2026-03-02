@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/02/25 17:41:21 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/02 18:42:20 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,8 @@
 struct ServerConfig;
 struct LocationConfig;
 
-enum PathType {
+enum PathType
+{
 	NOTHING,
 	FILE_PATH,
 	DIR_WITH_SLASH,
@@ -74,6 +75,7 @@ public:
 	void parseAttribut(std::string &line);
 
 	void prepareReq(ServerConfig &server);
+	void checkErrorPage(ServerConfig &server);
 	void cutVariableToPath();
 	size_t haveVariable();
 	void splitVarQuery(std::string &variableQuery);
@@ -131,7 +133,7 @@ public:
 	void setServerPort(int port);
 };
 
-std::ostream	&operator<<(std::ostream &o, Request const &request);
-size_t			hexToDecimal(const std::string &hex);
+std::ostream &operator<<(std::ostream &o, Request const &request);
+size_t hexToDecimal(const std::string &hex);
 
 #endif
