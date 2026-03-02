@@ -1,0 +1,308 @@
+GET / HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET / HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /test.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /withIndex/ HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+HEAD /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /style.css HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /location/autoindex/ HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /old HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /nonexistent.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /cgi/test1.py?name=John HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /python/env1.py?p1=v1&p2=v2&p3=v3 HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /location/method/ HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /location/autoindex/test/ HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+POST /upload HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 18
+Content-Type: application/x-www-form-urlencoded
+
+'name=John&age=30'
+----chunk-end----
+POST /upload HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 26
+Content-Type: application/x-www-form-urlencoded
+
+'{"name":"John","age":30}'
+----chunk-end----
+POST /upload HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 32
+Content-Type: application/x-www-form-urlencoded
+
+'username=test&password=pass123'
+----chunk-end----
+POST /cgi/post.py HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 26
+Content-Type: application/x-www-form-urlencoded
+
+'name=Alice&message=Hello'
+----chunk-end----
+POST / HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 11
+Content-Type: application/x-www-form-urlencoded
+
+'test=data'
+----chunk-end----
+POST /upload HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 11
+Content-Type: application/x-www-form-urlencoded
+
+'data=test'
+----chunk-end----
+DELETE /uploads/test_delete_1.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/empty_test_dir/ HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_dir_full/ HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/nonexistent.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /readonly.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_multi_1.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_multi_2.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_multi_3.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_multi_4.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_multi_5.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_once.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/delete_once.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/with_query.txt?param=value HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+DELETE /uploads/temp_upload.txt HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+PUT /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+Content-Length: 11
+Content-Type: application/x-www-form-urlencoded
+
+'data=test'
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /cgi/test1.py?name=John%20Doe HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----
+GET /index.html HTTP/1.1
+Host: localhost:8080
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+----chunk-end----

@@ -3,14 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/27 19:23:35 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/03/02 18:38:04 by mmarpaul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include <fstream>
+#include <errno.h>
+#include <cstring>
+#include <algorithm>
+#include <string>
+#include <sstream>
 
 Server::Server(const std::string &confFileName)
 	: _conf(),
@@ -254,17 +260,50 @@ void	Server::_addNewClient(int serverFd) {
 }
 
 void	Server::_handleClientData(int clientFd) {
+	// ensure debug dir exists
+	system("mkdir -p /tmp/webserv_debug");
+
 	char	buf[BUFFER_SIZE];
 	Client	*client;
 	ssize_t	nbytes;
+	std::stringstream	ss;
 
 	client = _clients[clientFd];
 	nbytes = recv(clientFd, buf, BUFFER_SIZE - 1, 0);
 	if (nbytes <= 0) {
+		if (nbytes == 0) {
+			ss << "Peer closed connection (recv 0) fd=" << clientFd;
+			Logger::info(ss.str(), client->getServerIdx());
+		} else {
+			ss << "recv error fd=" << clientFd << ": " << std::strerror(errno);
+			Logger::error(ss.str(), client->getServerIdx());
+		}
+		ss.str("");
+		ss << "/tmp/webserv_debug/" << clientFd << "_recv_err.txt";
+		std::ofstream dbg_close(ss.str().c_str(), std::ios::app);
+		if (dbg_close.is_open()) {
+			if (nbytes == 0)
+				dbg_close << "recv returned 0 (peer closed)\n";
+			else
+				dbg_close << "recv returned " << nbytes << " errno=" << errno << " (" << std::strerror(errno) << ")\n";
+			dbg_close.close();
+		}
 		_closeConnection(clientFd);
-		return ;
+		return;
 	}
 	buf[nbytes] = '\0';
+	// write received chunk to debug file (limit to 64KB per append)
+	{
+		ss.str("");
+		ss << "/tmp/webserv_debug/" << clientFd << "_raw_req.txt";
+		std::ofstream dbg(ss.str().c_str(), std::ios::app | std::ios::binary);
+		if (dbg.is_open()) {
+			size_t to_write = std::min(static_cast<size_t>(nbytes), static_cast<size_t>(65536));
+			dbg.write(buf, to_write);
+			dbg << "\n----chunk-end----\n";
+			dbg.close();
+		}
+	}
 	if (!client->isHeaderFinished) {
 		client->getHeader().append(buf, nbytes);
 		size_t pos = client->getHeader().find("\r\n\r\n");
@@ -310,28 +349,28 @@ void	Server::_handleClientData(int clientFd) {
 			client->appendBody(buf, nbytes);
 	}
 	if (client->isHeaderFinished && (client->actualBodySize >= client->expectedBodySize)) {
-        if (client->isUpload && client->uploadStream.is_open()) {
-            client->uploadStream.close();
-            
-            if (client->isMultipart) {
-                _processMultipart(client);
-                client->isMultipart = false;
-            } 
+		if (client->isUpload && client->uploadStream.is_open()) {
+			client->uploadStream.close();
 
-            client->isUpload = false;
-            client->uploadFileName = "";
-            
-            Logger::info("Upload completed successfully.", client->getServerIdx());
-            _parseResponse(client, 201);
-        }
-        else {
-            Logger::info("Request received completely.", client->getServerIdx());
-            _parseResponse(client, 200);
-        }
-        
-        client->isRequestFinished = true;
-        _modEpoll(clientFd, EPOLLOUT);
-    }
+			if (client->isMultipart) {
+				_processMultipart(client);
+				client->isMultipart = false;
+			}
+
+			client->isUpload = false;
+			client->uploadFileName = "";
+
+			Logger::info("Upload completed successfully.", client->getServerIdx());
+			_parseResponse(client, 200);
+		}
+		else {
+			Logger::info("Request received completely.", client->getServerIdx());
+			_parseResponse(client, 200);
+		}
+
+		client->isRequestFinished = true;
+		_modEpoll(clientFd, EPOLLOUT);
+	}
 }
 
 void	Server::_parseResponse(Client *c, int errCode) {
@@ -343,14 +382,46 @@ void	Server::_parseResponse(Client *c, int errCode) {
 		req.setServerPort(_clientMetadata[clientFd].second);
 	}
 
+	// dump incoming header for debugging
+	{
+		std::ostringstream pth;
+		pth << "/tmp/webserv_debug/" << clientFd << "_header.txt";
+		std::ofstream dbg(pth.str().c_str(), std::ios::trunc);
+		if (dbg.is_open()) {
+			dbg << "ERRCODE_HINT: " << errCode << "\n\n";
+			dbg << c->getHeader() << "\n";
+			dbg.close();
+		}
+	}
+
 	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
 	Response	response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()]);
-	c->getResponse().append(response.getResponse());
+	// capture full serialized response for debug
+	std::string respStr = response.getResponse();
 	const std::vector<char>	&content = response.getContent();
+	if (!content.empty()) {
+		respStr.append(content.begin(), content.end());
+	}
+	// write response to debug file
+	{
+		std::ostringstream pth;
+		pth << "/tmp/webserv_debug/" << clientFd << "_response.txt";
+		std::ofstream dbg_resp(pth.str().c_str(), std::ios::trunc | std::ios::binary);
+		if (dbg_resp.is_open()) {
+			dbg_resp.write(respStr.c_str(), respStr.size());
+			dbg_resp.close();
+		}
+	}
+	// append to client's send buffer
+	c->getResponse().append(respStr);
 
-	if (!content.empty())
-		c->getResponse().append(content.data(), content.size());
+	// Log summary
+	{
+		std::ostringstream oss;
+		oss << "Prepared response for fd=" << clientFd << " size=" << respStr.size() << " code=" << req.getCode();
+		Logger::info(oss.str(), c->getServerIdx());
+	}
 }
 
 void	Server::_sendResponse(int clientFd) {
@@ -359,23 +430,48 @@ void	Server::_sendResponse(int clientFd) {
 
 	client = _clients[clientFd];
 	std::string	&resp = client->getResponse();
+	// try to send, log errors and write debug dump on failure
 	sent = send(client->getFd(), resp.c_str(), resp.size(), 0);
 	if (sent == -1) {
-		perror("send");
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+			std::ostringstream msg;
+			msg << "send would block, will retry later fd=" << clientFd;
+			Logger::info(msg.str(), client->getServerIdx());
+			// keep EPOLLOUT enabled, try later
+			return;
+		}
+		// write response buffer to disk for inspection
+		std::ostringstream pth;
+		pth << "/tmp/webserv_debug/" << clientFd << "_send_err_resp.txt";
+		std::ofstream dbg(pth.str().c_str(), std::ios::trunc | std::ios::binary);
+		if (dbg.is_open()) {
+			dbg.write(resp.c_str(), std::min(resp.size(), static_cast<size_t>(1024*1024))); // cap 1MB
+			dbg.close();
+		}
+		std::ostringstream errm;
+		errm << "send failed fd=" << clientFd << ": " << std::strerror(errno);
+		Logger::error(errm.str(), client->getServerIdx());
 		_closeConnection(clientFd);
-		return ;
+		return;
 	}
 	if (static_cast<size_t>(sent) >= resp.size()) {
-		Logger::info("Response sent fully.", client->getServerIdx());
+		std::ostringstream okm;
+		okm << "Response sent fully fd=" << clientFd;
+		Logger::info(okm.str(), client->getServerIdx());
 		client->getHeader().clear();
 		client->getResponse().clear();
 		client->getBody().clear();
 		client->isHeaderFinished = false;
 		client->isRequestFinished = false;
 		_modEpoll(clientFd, EPOLLIN);
-	}
-	else
+	} else {
+		// partial send: keep remaining bytes and ensure EPOLLOUT stays set
 		resp = resp.substr(sent);
+		std::ostringstream pmsg;
+		pmsg << "Partial send fd=" << clientFd << " sent=" << sent << " remain=" << resp.size();
+		Logger::info(pmsg.str(), client->getServerIdx());
+		_modEpoll(clientFd, EPOLLOUT | EPOLLIN);
+	}
 }
 
 /////////////////////////////////////
