@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/02 19:02:54 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/02 19:21:29 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 		return;
 	}
 	checkRequest();
-	// std::cout << *this << std::endl;
+	std::cout << *this << std::endl;
 }
 
 // bool	Request::parseChunkedBody(const std::string &newData) {
