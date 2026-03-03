@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 12:57:24 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 13:57:15 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,6 @@ void Request::makeRequest(ServerConfig &server, std::string &buffer)
 	std::string line;
 	std::string bodyBuffer;
 	bool headerParsed = false;
-
 	while (getline(request, line))
 	{
 		if (!headerParsed)
@@ -149,12 +148,21 @@ void Request::parseMethode(ServerConfig &server, std::string &line)
 
 void Request::prepareReq(ServerConfig &server)
 {
-	cutVariableToPath();
 	int pathType;
-	if (this->_path != "/")
-		pathType = checkPathType(server, false, this->_path);
+	cutVariableToPath();
+	copyLocationRules(server, this->_path);
+	if (!this->_isLocation)
+	{
+		if (this->_path != "/")
+			pathType = checkPathType(server, false, this->_path);
+		else
+			pathType = checkPathType(server, true, this->_path);
+	}
 	else
-		pathType = checkPathType(server, true, this->_path);
+	{
+		pathType = SERVER_LOCATION;
+		makeLocationRules();
+	}
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
 	{
 		this->_newPath = this->_path + "/";
@@ -198,7 +206,7 @@ void Request::cutVariableToPath()
 	if (haveVariable() == std::string::npos)
 		return;
 	variableQuery = this->_path.substr(haveVariable() + 1);
-	this->_path = this->_path.substr(0, haveVariable());
+	this->_path = this->_path.substr(0, haveVariable() + 1);
 	splitVarQuery(variableQuery);
 }
 
@@ -269,11 +277,14 @@ void Request::makeAllPathRules(ServerConfig &server)
 		case -1:
 			return;
 		case DIR_WITH_SLASH:
+			std::cerr << BBLUE << "is dir" << NC << std::endl;
 			accessFolder(newCompletPath);
 			break;
 		case DIR_NO_SLASH:
+			std::cerr << BBLUE << "is dir" << NC << std::endl;
 			break;
 		case SERVER_LOCATION:
+			std::cerr << BBLUE << "is mf location" << NC << std::endl;
 			copyLocationRules(server, newPath);
 			makeLocationRules();
 			accessFolder(newCompletPath);
@@ -342,12 +353,13 @@ void Request::verifFile(std::string path)
 
 void Request::copyLocationRules(ServerConfig &server, std::string &folder)
 {
-
-	// if (!folder.empty() && folder[folder.size() - 1] == '/')
-	// 	folder.erase(folder.size() - 1);
+	std::string formatPath;
+	formatPath = folder;
+	if (!formatPath.empty() && formatPath[formatPath.size() - 1] == '/')
+		formatPath.erase(formatPath.size() - 1);
 	for (size_t i = 0; i < server.locations.size(); ++i)
 	{
-		if (server.locations[i].path == folder)
+		if (server.locations[i].path == formatPath)
 		{
 			this->_isLocation = true;
 			this->_location = &server.locations[i];
