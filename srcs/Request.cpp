@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 15:52:46 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 16:01:27 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, header);
-	std::cout << *this << std::endl;
+	// std::cout << *this << std::endl;
 	if (this->_code == 301)
 		return;
 	checkRequest();
@@ -180,7 +180,6 @@ void Request::prepareReq(ServerConfig &server)
 		return;
 	}
 	searchIndex();
-	std::cout << BRED << _code << NC << std::endl;
 
 	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
 	{
@@ -191,7 +190,6 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	this->_completPath = this->_root + this->_path;
 	checkIsCgi(server);
-	std::cout << BYELLOW << (this->_code == 200 && this->_fileName.empty()) << _code << std::endl;
 	if (this->_code == 200 && this->_fileName.empty())
 		this->_code = 404;
 	checkErrorPage(server);
@@ -213,7 +211,7 @@ void Request::cutVariableToPath()
 	if (haveVariable() == std::string::npos)
 		return;
 	variableQuery = this->_path.substr(haveVariable() + 1);
-	this->_path = this->_path.substr(0, haveVariable() + 1);
+	this->_path = this->_path.substr(0, haveVariable());
 	splitVarQuery(variableQuery);
 }
 
@@ -273,7 +271,6 @@ void Request::makeAllPathRules(ServerConfig &server)
 	{
 		if (this->_code == 301)
 			return;
-		std::cout << BGREEN << _code << NC << std::endl;
 		newPath += *it;
 		newCompletPath = this->_root + newPath;
 		if (*it == "/")
@@ -286,14 +283,11 @@ void Request::makeAllPathRules(ServerConfig &server)
 			verifFile(newCompletPath);
 			return;
 		case DIR_WITH_SLASH:
-			std::cerr << BBLUE << "is dir" << NC << std::endl;
 			accessFolder(newCompletPath);
 			break;
 		case DIR_NO_SLASH:
-			std::cerr << BBLUE << "is dir" << NC << std::endl;
 			break;
 		case SERVER_LOCATION:
-			std::cerr << BBLUE << "is mf location" << NC << std::endl;
 			copyLocationRules(server, newPath);
 			makeLocationRules();
 			accessFolder(newCompletPath);
