@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/02 18:42:20 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 12:03:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,11 +40,14 @@ private:
 	std::string _header;
 	std::string _host;
 	std::string _cgiPath;
+	std::string _newPath;
 	LocationConfig *_location;
 	bool _isLocation;
 	bool _isPost;
 	bool _isComplete;
 	bool _makeAutoindex;
+	bool _isRedirection;
+	bool _urlIsMessage;
 	bool _isCgi;
 	int _code;
 	std::vector<std::string> _index;
@@ -75,6 +78,7 @@ public:
 	void parseAttribut(std::string &line);
 
 	void prepareReq(ServerConfig &server);
+	void finalLogger();
 	void checkErrorPage(ServerConfig &server);
 	void cutVariableToPath();
 	size_t haveVariable();
@@ -103,16 +107,18 @@ public:
 	std::string getVersion() const;
 	std::string getHeader() const;
 	std::string getHost() const;
+	std::string getNewPath() const;
 	std::string getCgiPath() const;
 	std::vector<std::string> getIndex() const;
 	std::vector<std::string> getCutPath() const;
 	std::map<std::string, std::string> getVarLst() const;
-
 	LocationConfig *getLocation() const;
 	bool getIsLocation() const;
 	bool getIsPost() const;
 	bool getIsComplete() const;
+	bool getIsRedirection() const;
 	bool getMakeAutoindex() const;
+	bool getUrlIsMesssage() const;
 	bool getIsCgi() const;
 	int getCode() const;
 

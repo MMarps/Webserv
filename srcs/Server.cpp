@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/02 18:28:16 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 11:04:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,7 +169,6 @@ void	Server::run() {
 	uint32_t	currentEvent;
 
 	_setupServerSockets();
-	printConfig(this->getConfig());
 	Logger::log("Server Ready");
 	while (true) {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);

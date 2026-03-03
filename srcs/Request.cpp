@@ -6,15 +6,16 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 10:50:44 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 12:57:24 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
+#include "Logger.hpp"
 
 Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isComplete(false),
-					 _makeAutoindex(false), _isCgi(false), _code(200), _bodySize(0),
+					 _makeAutoindex(false), _isRedirection(false), _urlIsMessage(true), _isCgi(false), _code(200), _bodySize(0),
 					 _isChunked(false), _serverPort(0)
 {
 }
@@ -31,6 +32,17 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 	if (this->_code == 301)
 		return;
 	checkRequest();
+	finalLogger();
+}
+
+void Request::finalLogger()
+{
+	if (this->_isLocation)
+	{
+		Logger::info("request " + this->_methode + " location " + this->_path + " parsed");
+		return;
+	}
+	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed");
 }
 
 // bool	Request::parseChunkedBody(const std::string &newData) {
@@ -145,8 +157,9 @@ void Request::prepareReq(ServerConfig &server)
 		pathType = checkPathType(server, true, this->_path);
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
 	{
+		this->_newPath = this->_path + "/";
 		this->_code = 301;
-		this->_path += "/";
+		this->_isRedirection = true;
 		return;
 	}
 	cutPath();
@@ -330,8 +343,8 @@ void Request::verifFile(std::string path)
 void Request::copyLocationRules(ServerConfig &server, std::string &folder)
 {
 
-	if (!folder.empty() && folder[folder.size() - 1] == '/')
-		folder.erase(folder.size() - 1);
+	// if (!folder.empty() && folder[folder.size() - 1] == '/')
+	// 	folder.erase(folder.size() - 1);
 	for (size_t i = 0; i < server.locations.size(); ++i)
 	{
 		if (server.locations[i].path == folder)
@@ -370,8 +383,15 @@ void Request::makeLocationRules()
 {
 	if (this->_location && this->_location->has_return)
 	{
-		this->_path = this->_location->return_url;
 		this->_code = this->_location->return_code;
+		if (this->_code == 301 || this->_code == 200)
+		{
+			this->_newPath = this->_location->return_url;
+			if (this->_code == 200)
+				this->_urlIsMessage = true;
+			else
+				this->_isRedirection = true;
+		}
 		return;
 	}
 	checkAllowMethods();
@@ -547,6 +567,16 @@ std::string Request::getHost() const
 	return (this->_host);
 }
 
+std::string Request::getNewPath() const
+{
+	return (this->_newPath);
+}
+
+bool Request::getUrlIsMesssage() const
+{
+	return (this->_urlIsMessage);
+}
+
 std::string Request::getCgiPath() const
 {
 	return (this->_cgiPath);
@@ -585,6 +615,11 @@ bool Request::getIsPost() const
 bool Request::getIsComplete() const
 {
 	return (this->_isComplete);
+}
+
+bool Request::getIsRedirection() const
+{
+	return (this->_isRedirection);
 }
 
 bool Request::getMakeAutoindex() const
