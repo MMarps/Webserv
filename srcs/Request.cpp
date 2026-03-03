@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/02 19:21:29 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 10:50:44 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,12 +29,8 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 	this->_index = server.index;
 	makeRequest(server, header);
 	if (this->_code == 301)
-	{
-		// std::cout << *this << std::endl;
 		return;
-	}
 	checkRequest();
-	std::cout << *this << std::endl;
 }
 
 // bool	Request::parseChunkedBody(const std::string &newData) {
@@ -157,7 +153,6 @@ void Request::prepareReq(ServerConfig &server)
 	makeAllPathRules(server);
 	if (this->_code != 200)
 	{
-		// std::cout << "ca passe" << std::endl;
 		checkErrorPage(server);
 		return;
 	}
@@ -261,20 +256,16 @@ void Request::makeAllPathRules(ServerConfig &server)
 		case -1:
 			return;
 		case DIR_WITH_SLASH:
-			// std::cout << "dir with /" << *it << std::endl;
 			accessFolder(newCompletPath);
 			break;
 		case DIR_NO_SLASH:
-			// std::cout << "dir no slash" << *it << std::endl;
 			break;
 		case SERVER_LOCATION:
-			// std::cout << "server location" << *it << std::endl;
 			copyLocationRules(server, newPath);
 			makeLocationRules();
 			accessFolder(newCompletPath);
 			break;
 		case FILE_PATH:
-			// std::cout << "file path" << *it << std::endl;
 			makeExtentionAndNameFile(*it);
 			if (access(newCompletPath.c_str(), R_OK) != 0)
 			{
@@ -324,7 +315,6 @@ int Request::checkPathType(ServerConfig &server, bool slash, std::string &pieceP
 void Request::verifFile(std::string path)
 {
 	struct stat st;
-	// std::cout << BRED << path << NC << std::endl;
 	if (stat(path.c_str(), &st) == -1)
 	{
 		if (errno == ENOENT || errno == ENOTDIR)
@@ -384,7 +374,6 @@ void Request::makeLocationRules()
 		this->_code = this->_location->return_code;
 		return;
 	}
-	// std::cout << "ca passe" << std::endl;
 	checkAllowMethods();
 	if (_code != 200)
 		return;
@@ -396,18 +385,14 @@ void Request::makeLocationRules()
 
 void Request::checkAllowMethods()
 {
-	// std::cout << BBLUE << this->_location->methods.empty() << NC << std::endl;
 	if (this->_location && !this->_location->methods.empty())
 	{
 		for (size_t i = 0; i < this->_location->methods.size(); i++)
 		{
-			// std::cout << this->_location->methods[i] << " " << this->_methode << std::endl;
 			if (this->_location->methods[i] == this->_methode)
 				return;
 		}
 		this->_code = 405;
-
-		// std::cout << BRED << "not allowed method" << NC << std::endl;
 	}
 }
 
