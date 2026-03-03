@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 12:56:29 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 15:46:58 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,7 +169,7 @@ void Response::generateAutoindex()
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
-		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i] + "/" + "\">" + lstFiles[i] + "</a></br>";
+		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i]  + "\">" + lstFiles[i] + "</a></br>";
 	htmlpage += "</body></html>";
 	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
 	this->_content.swap(tmp);

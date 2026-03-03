@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 15:35:27 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 15:52:46 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,7 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
 	{
+		std::cout << "ca passe " << this->_path << std::endl;
 		this->_newPath = this->_path + "/";
 		this->_code = 301;
 		this->_isRedirection = true;
@@ -178,8 +179,9 @@ void Request::prepareReq(ServerConfig &server)
 		checkErrorPage(server);
 		return;
 	}
-	std::cout << BRED << _code << NC << std::endl;
 	searchIndex();
+	std::cout << BRED << _code << NC << std::endl;
+
 	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
 	{
 		this->_makeAutoindex = true;
@@ -189,6 +191,9 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	this->_completPath = this->_root + this->_path;
 	checkIsCgi(server);
+	std::cout << BYELLOW << (this->_code == 200 && this->_fileName.empty()) << _code << std::endl;
+	if (this->_code == 200 && this->_fileName.empty())
+		this->_code = 404;
 	checkErrorPage(server);
 }
 
