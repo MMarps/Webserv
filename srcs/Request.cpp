@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 13:57:15 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 15:35:27 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ void Request::parse(ServerConfig &server, std::string &header, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, header);
+	std::cout << *this << std::endl;
 	if (this->_code == 301)
 		return;
 	checkRequest();
@@ -177,6 +178,7 @@ void Request::prepareReq(ServerConfig &server)
 		checkErrorPage(server);
 		return;
 	}
+	std::cout << BRED << _code << NC << std::endl;
 	searchIndex();
 	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
 	{
@@ -266,6 +268,7 @@ void Request::makeAllPathRules(ServerConfig &server)
 	{
 		if (this->_code == 301)
 			return;
+		std::cout << BGREEN << _code << NC << std::endl;
 		newPath += *it;
 		newCompletPath = this->_root + newPath;
 		if (*it == "/")
@@ -275,6 +278,7 @@ void Request::makeAllPathRules(ServerConfig &server)
 		switch (pathType)
 		{
 		case -1:
+			verifFile(newCompletPath);
 			return;
 		case DIR_WITH_SLASH:
 			std::cerr << BBLUE << "is dir" << NC << std::endl;
