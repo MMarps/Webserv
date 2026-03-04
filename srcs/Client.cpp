@@ -60,7 +60,7 @@ std::string	Client::getAllInfos() const {
 	return (oss.str());
 }
 
-void Client::setBody(std::vector<char> body) {
+void	Client::setBody(std::vector<char> body) {
 	this->_body.swap(body);
 }
 
