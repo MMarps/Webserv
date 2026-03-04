@@ -6,11 +6,12 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/25 17:41:46 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/03 13:14:35 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "ConfigPrint.hpp"
 
 Server::Server(const std::string &confFileName)
 	: _conf(),
@@ -21,7 +22,7 @@ Server::Server(const std::string &confFileName)
 
 	Lexer ts(confFileName);
 	Parser p(ts);
-	ts.printTokens();
+	// ts.printTokens();
 	_conf = p.parseConfig();
 	_epollFd = epoll_create(1);
 	if (_epollFd < 0)
@@ -168,6 +169,7 @@ void	Server::run() {
 	uint32_t	currentEvent;
 
 	_setupServerSockets();
+	// printConfig(getConfig());
 	Logger::log("Server Ready");
 	while (true) {
 		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
