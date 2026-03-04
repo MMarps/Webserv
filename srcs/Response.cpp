@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 15:46:58 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/04 15:47:51 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -272,44 +272,37 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 
 void Response::handleDelete()
 {
-	std::string filePath = _req.getCompletPath();
-	struct stat fileStat;
+	std::string	filePath = _req.getCompletPath();
+	struct stat	fileStat;
 
 	std::cout << BRED << "HANDLE DELETE" << NC << std::endl;
-	if (stat(filePath.c_str(), &fileStat) != 0)
-	{
+	if (stat(filePath.c_str(), &fileStat) != 0) {
 		_req.setCode(404);
 		return;
 	}
-	if (S_ISDIR(fileStat.st_mode))
-	{ // check si dossier
-		if (access(filePath.c_str(), W_OK | X_OK) != 0)
-		{ // check si permissions ecriture/exec
+	if (S_ISDIR(fileStat.st_mode)) { // check si dossier
+		if (access(filePath.c_str(), W_OK | X_OK) != 0) { // check si permissions ecriture/exec
 			_req.setCode(403);
 			return;
 		}
-		if (!isDirectoryEmpty(filePath))
-		{ // check si vide
+		if (!isDirectoryEmpty(filePath)) { // check si vide
 			std::cout << BRED << "DIR NOT EMPTY" << NC << std::endl;
 			_req.setCode(409);
 			return;
 		}
-		if (rmdir(filePath.c_str()) != 0)
-		{ // si vide -> supprimer
+		if (rmdir(filePath.c_str()) != 0) { // si vide -> supprimer
 			_req.setCode(500);
 			return;
 		}
 		_req.setCode(204);
 		return;
 	}
-	if (access(filePath.c_str(), W_OK) != 0)
-	{
+	if (access(filePath.c_str(), W_OK) != 0) {
 		_req.setCode(403);
 		std::cout << BRED << "RETURN HERE2" << NC << std::endl;
 		return;
 	}
-	if (unlink(filePath.c_str()) != 0)
-	{
+	if (unlink(filePath.c_str()) != 0) {
 		_req.setCode(500);
 		return;
 	}

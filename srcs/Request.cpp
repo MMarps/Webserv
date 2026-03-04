@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 16:01:27 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/04 16:23:39 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,7 +190,8 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	this->_completPath = this->_root + this->_path;
 	checkIsCgi(server);
-	if (this->_code == 200 && this->_fileName.empty())
+	if (this->_code == 200 && this->_fileName.empty() && this->_methode != "DELETE" && 
+		!(this->_methode == "POST" && this->_location && !this->_location->upload_store.empty()))
 		this->_code = 404;
 	checkErrorPage(server);
 }
@@ -318,19 +319,20 @@ int Request::checkPathType(ServerConfig &server, bool slash, std::string &pieceP
 
 	if (slash)
 		return (NOTHING);
+	
+	// check si c est une location serveur
+	std::vector<LocationConfig>::iterator it = server.locations.begin();
+	for (; it < server.locations.end(); it++) {
+		if (this->_root + it->path == this->_root + piecePath)
+			return (SERVER_LOCATION);
+	}
+	// chekc le systeme de fichiers
 	std::string cPath = this->_root + piecePath;
-
 	if (stat(cPath.c_str(), &st) == -1)
 		return (-1);
 	if (S_ISREG(st.st_mode))
 		return (FILE_PATH);
 	if (S_ISDIR(st.st_mode)) {
-		std::vector<LocationConfig>::iterator it = server.locations.begin();
-		for (; it < server.locations.end(); it++)
-		{
-			if (this->_root + it->path == this->_root + piecePath)
-				return (SERVER_LOCATION);
-		}
 		if (this->_path[this->_path.size() - 1] == '/')
 			return (DIR_WITH_SLASH);
 		return (DIR_NO_SLASH);

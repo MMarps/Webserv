@@ -151,10 +151,10 @@ test_post_simple() {
     echo -e "${PURPLE}║                   TESTS POST - SIMPLES                         ║${NC}"
     echo -e "${PURPLE}╚════════════════════════════════════════════════════════════════╝${NC}\n"
     
-    test_request "POST - Données simples" "200" "${HOST}/upload" "-X POST -d 'name=John&age=30'"
-    test_request "POST - Fichier texte" "200" "${HOST}/upload" "-X POST -F 'file=@/tmp/webserv_test/test_post.txt'"
-    test_request "POST - Données JSON" "200" "${HOST}/upload" "-X POST -H 'Content-Type: application/json' -d '{\"name\":\"John\",\"age\":30}'"
-    test_request "POST - Form data" "200" "${HOST}/upload" "-X POST -d 'username=test&password=pass123'"
+    test_request "POST - Données simples" "201" "${HOST}/upload/" "-X POST -d 'name=John&age=30'"
+    test_request "POST - Fichier texte" "201" "${HOST}/upload/" "-X POST -F 'file=@/tmp/webserv_test/test_post.txt'"
+    test_request "POST - Données JSON" "201" "${HOST}/upload/" "-X POST -H 'Content-Type: application/json' -d '{\"name\":\"John\",\"age\":30}'"
+    test_request "POST - Form data" "201" "${HOST}/upload/" "-X POST -d 'username=test&password=pass123'"
 }
 
 # ============================================================================
@@ -165,25 +165,25 @@ test_post_complex() {
     echo -e "${PURPLE}║                  TESTS POST - COMPLEXES                        ║${NC}"
     echo -e "${PURPLE}╚════════════════════════════════════════════════════════════════╝${NC}\n"
     
-    test_request "POST - Multiple files" "200" "${HOST}/upload" \
+    test_request "POST - Multiple files" "201" "${HOST}/upload/" \
         "-X POST -F 'file1=@/tmp/webserv_test/file1.txt' -F 'file2=@/tmp/webserv_test/file2.txt'"
     
-    test_request "POST - Gros fichier (5MB)" "200" "${HOST}/upload" \
+    test_request "POST - Gros fichier (5MB)" "201" "${HOST}/upload/" \
         "-X POST -F 'file=@/tmp/webserv_test/big_file.bin'"
     
-    test_request "POST - Fichier trop gros (413)" "413" "${HOST}/upload" \
+    test_request "POST - Fichier trop gros (413)" "413" "${HOST}/upload/" \
         "-X POST -F 'file=@/tmp/webserv_test/too_big.bin'"
     
     test_request "POST - CGI avec données" "200" "${HOST}/cgi/post.py" \
         "-X POST -d 'name=Alice&message=Hello'"
     
-    test_request "POST - Multipart form" "200" "${HOST}/upload" \
+    test_request "POST - Multipart form" "201" "${HOST}/upload/" \
         "-X POST -F 'name=John' -F 'email=john@example.com' -F 'file=@/tmp/webserv_test/test_post.txt'"
     
     test_request "POST - Method Not Allowed (405)" "405" "${HOST}/" \
         "-X POST -d 'test=data'"
     
-    test_request "POST - Headers custom" "200" "${HOST}/upload" \
+    test_request "POST - Headers custom" "201" "${HOST}/upload/" \
         "-X POST -H 'X-Custom-Header: test' -H 'User-Agent: MyClient/1.0' -d 'data=test'"
 }
 
@@ -253,7 +253,7 @@ test_edge_cases() {
     
     # Séquence POST puis DELETE
     echo "temp" > /tmp/webserv_test/temp_upload.txt
-    test_request "POST puis DELETE - Upload" "200" "${HOST}/upload" \
+    test_request "POST puis DELETE - Upload" "201" "${HOST}/upload/" \
         "-X POST -F 'file=@/tmp/webserv_test/temp_upload.txt'"
     
     # Attendre un peu que le fichier soit écrit
