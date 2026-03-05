@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 16:06:30 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 17:18:38 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,9 +29,9 @@ void Request::parse(ServerConfig &server, Client *client, int code)
 		return;
 	this->_root = server.root;
 	this->_index = server.index;
-	makeRequest(server, client->getHeader());
+	makeRequest(server, client);
 	// std::cout << *this << std::endl;
-	if ( this->_code == 301 || (this->_location && this->_location->has_return))
+	if (this->_code == 301 || (this->_location && this->_location->has_return))
 		return;
 	checkRequest();
 	finalLogger(client);
@@ -44,7 +44,7 @@ void Request::finalLogger(Client *c)
 		Logger::info("request " + this->_methode + " location " + this->_path + " parsed", c->getServerIdx());
 		return;
 	}
-	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed",c->getServerIdx());
+	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed", c->getServerIdx());
 }
 
 // bool	Request::parseChunkedBody(const std::string &newData) {
@@ -89,43 +89,34 @@ void Request::finalLogger(Client *c)
 // 	return (false); // pas fini -> attendre + de donnees
 // }
 
-void Request::makeRequest(ServerConfig &server, std::string &buffer)
+void Request::makeRequest(ServerConfig &server, Client *c)
 {
-	std::istringstream request(buffer.c_str());
+	std::istringstream request(c->getHeader().c_str());
 	std::string line;
-	std::string bodyBuffer;
-	bool headerParsed = false;
+	// std::string bodyBuffer;
+	// bool headerParsed = false;
 	while (getline(request, line))
 	{
-		if (!headerParsed)
-		{
-			std::istringstream cut(line);
-			std::string res;
-			cut >> res;
-			if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
-				parseMethode(server, line);
-			else
-				parseAttribut(line);
-			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0)
-				headerParsed = true;
-		}
+		std::istringstream cut(line);
+		std::string res;
+		cut >> res;
+		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
+			parseMethode(server, line);
 		else
-		{
-			// accumuler les lignes du body
-			if (!bodyBuffer.empty())
-				bodyBuffer += "\n";
-			bodyBuffer += line;
-		}
+			parseAttribut(line);
 	}
 
-	if (headerParsed && !bodyBuffer.empty())
+	if (!c->getBody().empty())
 	{
 		// if (_isChunked)
 		// parseChunkedBody(bodyBuffer); // pour les requetes chunked, parser les chunks
 		// else {
 		// pour les requetes normales, stocker directement
-		this->_body += bodyBuffer;
+		std::vector<char> &bodyVec = c->getBody();
+		this->_body = std::string(bodyVec.begin(), bodyVec.end());
 		this->_bodySize = this->_body.size();
+		std::cout << BGREEN << _body << NC << std::endl;
+		std::cout << BGREEN << _bodySize << NC << std::endl;
 
 		std::map<std::string, std::string>::iterator it = _httpHeaders.find("Content-Length");
 		if (it != _httpHeaders.end())
@@ -162,7 +153,7 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	else
 	{
-		pathType = SERVER_LOCATION;		
+		pathType = SERVER_LOCATION;
 		makeLocationRules();
 		if (this->_location && this->_location->has_return)
 			return;

@@ -1,6 +1,19 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+import os
 import sys
-print("Content-Type: text/html\r")
-print("\r")
-body = sys.stdin.read()
-print(f"<html><body><h1>POST Data Received</h1><pre>{body}</pre></body></html>")
+
+content_length = os.environ.get("CONTENT_LENGTH")
+
+body = ""
+if content_length:
+    body = sys.stdin.read(int(content_length))
+
+sys.stdout.write("Content-Type: text/html\r\n")
+sys.stdout.write("\r\n")
+
+sys.stdout.write("<html><body>")
+sys.stdout.write("<h1>POST DATA</h1>")
+sys.stdout.write("<pre> body : " + body + "</pre>")
+sys.stdout.write("<pre> content length :" + content_length + "</pre>")
+sys.stdout.write("</body></html>")
+
