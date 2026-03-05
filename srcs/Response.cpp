@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/04 18:42:08 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 15:52:01 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,55 +53,52 @@ void Response::makeRep(ServerConfig &server, Client *client)
 	{
 		handleDelete();
 		generateHeader();
-		finalLogger();
+		finalLogger(client->getServerIdx());
 		return;
 	}
 	if (this->_req.getMethode() == "POST")
 	{
-		std::cout << BRED << this->_req.getMethode() << NC << std::endl;
 		this->_content.swap(client->getBody());
 		this->_contentLength = client->getBodySize();
 		generateHeader();
 		return;
 	}
-	
+
 	if (isCGIRequest(server))
 	{
-		std::cout << BRED << "CGI DETECTED" << NC << std::endl;
 		_isCGI = true;
 		handleCGI(server);
 		if (_req.getCode() == 502)
 		{
 			generateHeader();
-			finalLogger();
+			finalLogger(client->getServerIdx());
 			return;
 		}
 		buildCGIResponse();
-		finalLogger();
+		finalLogger(client->getServerIdx());
 		return;
 	}
-	std::cout << BGREEN<< "LA" << std::endl;
 	generateBody();
 	generateHeader();
-	finalLogger();
+	finalLogger(client->getServerIdx());
 }
 
-void Response::finalLogger()
+void Response::finalLogger(int serverIdx)
 {
 	std::string m;
 
 	m = this->_req.getMethode() + " " + this->_req.getPath() + " " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()];
 	if (this->_req.getCode() != 200 && this->_req.getCode() != 301)
 	{
-		Logger::error(m);
+		Logger::error(m, serverIdx);
 		return;
 	}
 	if (this->_req.getIsRedirection())
 	{
-		Logger::info(m + " location : " + this->_req.getNewPath());
+		Logger::info(m + " location : " + this->_req.getNewPath(), serverIdx);
 		return;
 	}
-	Logger::info(m);
+	Logger::info(m, serverIdx);
 }
 
 void Response::generateHeader()
@@ -132,20 +129,16 @@ void Response::generateHeader()
 
 void Response::generateBody()
 {
-	
+
 	if (this->_req.getUrlIsMesssage())
 	{
-		std::cout << BRED << this->_req.getNewPath() << _req.getCode() << std::endl;
-		std::stringstream str(this->_req.getNewPath(), std::ios::binary);
-		std::istreambuf_iterator<char> first(str);
-		std::istreambuf_iterator<char> last;
-		std::vector<char> buffer(first, last);
-		this->_content.swap(buffer);
-		this->_contentLength = intToString(this->_req.getNewPath().size());
+		std::string message = this->_req.getNewPath();
+		this->_content.assign(message.begin(), message.end());
+		this->_contentLength = intToString(message.size());
+		return;
 	}
 	if (!this->_req.getFileName().empty())
 	{
-		std::cout << BGREEN<< "LALA" << std::endl;
 		if (this->_req.getMethode() == "HEAD")
 			checkFile(false);
 		else
@@ -166,14 +159,12 @@ void Response::checkFile(bool save)
 
 	if (save)
 		this->_content.swap(buffer);
-	
 }
 
 std::string Response::intToString(int n)
 {
 	std::stringstream ss;
 
-	std::cout << BYELLOW << n << NC << std::endl;
 	ss << n;
 	return (ss.str());
 }
@@ -202,6 +193,8 @@ std::vector<std::string> Response::getLstDir()
 	std::vector<std::string> lstFiles;
 
 	folder = opendir(this->_req.getCompletPath().c_str());
+	if (!folder)
+		this->_req.setCode(500);
 	readFolder = readdir(folder);
 	while (readFolder)
 	{
@@ -209,6 +202,7 @@ std::vector<std::string> Response::getLstDir()
 			lstFiles.push_back(readFolder->d_name);
 		readFolder = readdir(folder);
 	}
+	closedir(folder);
 	std::sort(lstFiles.begin(), lstFiles.end());
 	return (lstFiles);
 }
@@ -228,7 +222,6 @@ void Response::handleCGI(ServerConfig &server)
 
 	if (_cgi.isCGI(_req, server) && !_cgi.execute(_req))
 	{
-		std::cout << BRED << "cgi execute" << NC << std::endl;
 		this->_req.setCode(502);
 		return;
 	}
@@ -292,7 +285,6 @@ void Response::handleDelete()
 	std::string filePath = _req.getCompletPath();
 	struct stat fileStat;
 
-	std::cout << BRED << "HANDLE DELETE" << NC << std::endl;
 	if (stat(filePath.c_str(), &fileStat) != 0)
 	{
 		_req.setCode(404);
@@ -307,7 +299,6 @@ void Response::handleDelete()
 		}
 		if (!isDirectoryEmpty(filePath))
 		{ // check si vide
-			std::cout << BRED << "DIR NOT EMPTY" << NC << std::endl;
 			_req.setCode(409);
 			return;
 		}
@@ -322,7 +313,6 @@ void Response::handleDelete()
 	if (access(filePath.c_str(), W_OK) != 0)
 	{
 		_req.setCode(403);
-		std::cout << BRED << "RETURN HERE2" << NC << std::endl;
 		return;
 	}
 	if (unlink(filePath.c_str()) != 0)

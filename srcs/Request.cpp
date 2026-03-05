@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 15:23:42 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 15:48:47 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,22 +30,21 @@ void Request::parse(ServerConfig &server, Client *client, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, client->getHeader());
-	// std::cout << client->getHeader() << std::endl << std::endl;
-	std::cout << *this << std::endl;
+	// std::cout << *this << std::endl;
 	if ( this->_code == 301 || (this->_location && this->_location->has_return))
 		return;
 	checkRequest();
-	finalLogger();
+	finalLogger(client);
 }
 
-void Request::finalLogger()
+void Request::finalLogger(Client *c)
 {
 	if (this->_isLocation)
 	{
-		Logger::info("request " + this->_methode + " location " + this->_path + " parsed");
+		Logger::info("request " + this->_methode + " location " + this->_path + " parsed", c->getServerIdx());
 		return;
 	}
-	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed");
+	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed",c->getServerIdx());
 }
 
 // bool	Request::parseChunkedBody(const std::string &newData) {
@@ -163,15 +162,13 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	else
 	{
-		pathType = SERVER_LOCATION;
+		pathType = SERVER_LOCATION;		
 		makeLocationRules();
-		
 		if (this->_location && this->_location->has_return)
 			return;
 	}
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
 	{
-		std::cout << "ca passe " << this->_path << std::endl;
 		this->_newPath = this->_path + "/";
 		this->_code = 301;
 		this->_isRedirection = true;
@@ -179,9 +176,8 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	cutPath();
 	makeAllPathRules(server);
-	if (this->_location && this->_location->has_return)
+	if (this->_code != 200)
 	{
-		std::cout << BRED << "ca passe " << this->_code << NC << std::endl;
 		checkErrorPage(server);
 		return;
 	}
@@ -296,8 +292,6 @@ void Request::makeAllPathRules(ServerConfig &server)
 		case SERVER_LOCATION:
 			copyLocationRules(server, newPath);
 			makeLocationRules();
-			std::cout << BBLUE << "code " << _code << NC << std::endl;
-
 			accessFolder(newCompletPath);
 			break;
 		case FILE_PATH:
@@ -407,7 +401,6 @@ void Request::makeLocationRules()
 	if (this->_location && this->_location->has_return)
 	{
 		this->_code = this->_location->return_code;
-		std::cout << BBLUE << _code << std::endl;
 		if (!this->_location->return_url.empty())
 		{
 			this->_newPath = this->_location->return_url;

@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/04 18:06:28 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 15:51:26 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ public:
 
 	// refactor
 	void makeRep(ServerConfig &server , Client *client);
-	void finalLogger();
+	void finalLogger(int serverIdx);
 	void generateHeader();
 	void generateBody();
 	void checkFile(bool save);

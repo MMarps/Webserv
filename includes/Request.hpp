@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/04 16:24:48 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 15:48:19 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,7 @@ public:
 	void parseAttribut(std::string &line);
 
 	void prepareReq(ServerConfig &server);
-	void finalLogger();
+	void finalLogger(Client *c);
 	void checkErrorPage(ServerConfig &server);
 	void cutVariableToPath();
 	size_t haveVariable();
