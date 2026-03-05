@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 15:48:47 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 16:06:30 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -401,7 +401,7 @@ void Request::makeLocationRules()
 	if (this->_location && this->_location->has_return)
 	{
 		this->_code = this->_location->return_code;
-		if (!this->_location->return_url.empty())
+		if (this->_code == 200 || !this->_location->return_url.empty())
 		{
 			this->_newPath = this->_location->return_url;
 			if (this->_code == 200)
