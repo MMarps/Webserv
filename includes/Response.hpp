@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:28 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 11:19:22 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/04 18:06:28 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,12 @@
 #include "Webserv.hpp"
 #include "CGI.hpp"
 #include "Logger.hpp"
+#include "Client.hpp"
 
 struct ServerConfig;
 class Request;
 class CGI;
+class Client;
 
 class Response
 {
@@ -57,7 +59,7 @@ public:
 	// void				makeRedirect();
 
 	// refactor
-	void makeRep(ServerConfig &server);
+	void makeRep(ServerConfig &server , Client *client);
 	void finalLogger();
 	void generateHeader();
 	void generateBody();

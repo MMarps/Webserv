@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 12:03:24 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/04 16:24:48 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 
 struct ServerConfig;
 struct LocationConfig;
+class Client;
 
 enum PathType
 {
@@ -72,7 +73,7 @@ public:
 	Request();
 	~Request();
 
-	void parse(ServerConfig &server, std::string &header, int code);
+	void parse(ServerConfig &server, Client *client, int code);
 	void makeRequest(ServerConfig &server, std::string &buffer);
 	void parseMethode(ServerConfig &server, std::string &line);
 	void parseAttribut(std::string &line);

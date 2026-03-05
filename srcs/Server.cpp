@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/03 13:14:35 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/04 18:33:19 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -345,9 +345,10 @@ void	Server::_parseResponse(Client *c, int errCode) {
 		req.setServerPort(_clientMetadata[clientFd].second);
 	}
 
-	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
+	req.parse(_conf.servers[c->getServerIdx()], c, errCode);
 	Response	response(req);
-	response.makeRep(this->_conf.servers[c->getServerIdx()]);
+	response.makeRep(this->_conf.servers[c->getServerIdx()], c);
+	std::cout << BYELLOW << response << NC << std::endl; 
 	c->getResponse().append(response.getResponse());
 	const std::vector<char>	&content = response.getContent();
 

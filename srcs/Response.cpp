@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 15:46:58 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/04 18:42:08 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,9 @@ Response::Response(Request &req) : _req(req), _isCGI(false)
 
 Response::~Response() {}
 
-void Response::makeRep(ServerConfig &server)
+void Response::makeRep(ServerConfig &server, Client *client)
 {
+	(void)client;
 	if (_req.getMethode() == "DELETE")
 	{
 		handleDelete();
@@ -55,6 +56,15 @@ void Response::makeRep(ServerConfig &server)
 		finalLogger();
 		return;
 	}
+	if (this->_req.getMethode() == "POST")
+	{
+		std::cout << BRED << this->_req.getMethode() << NC << std::endl;
+		this->_content.swap(client->getBody());
+		this->_contentLength = client->getBodySize();
+		generateHeader();
+		return;
+	}
+	
 	if (isCGIRequest(server))
 	{
 		std::cout << BRED << "CGI DETECTED" << NC << std::endl;
@@ -70,6 +80,7 @@ void Response::makeRep(ServerConfig &server)
 		finalLogger();
 		return;
 	}
+	std::cout << BGREEN<< "LA" << std::endl;
 	generateBody();
 	generateHeader();
 	finalLogger();
@@ -121,17 +132,20 @@ void Response::generateHeader()
 
 void Response::generateBody()
 {
+	
 	if (this->_req.getUrlIsMesssage())
 	{
+		std::cout << BRED << this->_req.getNewPath() << _req.getCode() << std::endl;
 		std::stringstream str(this->_req.getNewPath(), std::ios::binary);
 		std::istreambuf_iterator<char> first(str);
 		std::istreambuf_iterator<char> last;
 		std::vector<char> buffer(first, last);
-		this->_contentLength = intToString(buffer.size());
 		this->_content.swap(buffer);
+		this->_contentLength = intToString(this->_req.getNewPath().size());
 	}
 	if (!this->_req.getFileName().empty())
 	{
+		std::cout << BGREEN<< "LALA" << std::endl;
 		if (this->_req.getMethode() == "HEAD")
 			checkFile(false);
 		else
@@ -148,15 +162,18 @@ void Response::checkFile(bool save)
 	std::istreambuf_iterator<char> first(file);
 	std::istreambuf_iterator<char> last;
 	std::vector<char> buffer(first, last);
-
 	this->_contentLength = intToString(buffer.size());
+
 	if (save)
 		this->_content.swap(buffer);
+	
 }
 
 std::string Response::intToString(int n)
 {
 	std::stringstream ss;
+
+	std::cout << BYELLOW << n << NC << std::endl;
 	ss << n;
 	return (ss.str());
 }
@@ -169,7 +186,7 @@ void Response::generateAutoindex()
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
-		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i]  + "\">" + lstFiles[i] + "</a></br>";
+		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
 	htmlpage += "</body></html>";
 	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
 	this->_content.swap(tmp);

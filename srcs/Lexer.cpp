@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 18:34:52 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/27 19:20:55 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/03/04 17:42:33 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,13 +61,18 @@ void	Lexer::makeTokenStream() {
 			_tok.push_back(newToken);
 		}
 		else if (isSep(_f[i])) {
-			newToken.content = _f.substr(i, 1);
-			newToken.type = findIdentifier(newToken.content);
-			newToken.l = _l;
-			newToken.c = _c;
-			_tok.push_back(newToken);
-			i++;
-			_c++;
+			if (_f[i] == '"') {
+				getMessage();
+			}
+			else {
+				newToken.content = _f.substr(i, 1);
+				newToken.type = findIdentifier(newToken.content);
+				newToken.l = _l;
+				newToken.c = _c;
+				_tok.push_back(newToken);
+				i++;
+				_c++;
+			}
 		}
 	}
 	if (_tok.empty())
@@ -145,7 +150,7 @@ void	Lexer::SkipWhiteSpaceAndComment() {
 }
 
 bool	Lexer::isSep(const char& c) const {
-	if (std::isspace(static_cast<unsigned char>(c)) || c == '{' || c == '}' || c == ';')
+	if (std::isspace(static_cast<unsigned char>(c)) || c == '{' || c == '}' || c == ';' || c == '"')
 		return (true);
 	return (false);
 }
@@ -158,6 +163,25 @@ bool	isNumber(const std::string& str) {
 			return (false);
 	}
 	return (true);
+}
+
+void	Lexer::getMessage() {
+	Token	newToken;
+
+	i++;
+	size_t	pos = _f.find('\"', i);
+	if (pos == _f.npos)
+		ParserError("Missing quote");
+	newToken.content = _f.substr(i, pos - i);
+	newToken.type = findIdentifier(newToken.content);
+	newToken.l = _l;
+	newToken.c = _c;
+	_tok.push_back(newToken);
+	for (;i < pos; i++) {
+		if (_f[i] == '\n')
+			_l++;
+	}
+	i = pos + 1;
 }
 
 tokenType	Lexer::findIdentifier(const std::string& str) const {

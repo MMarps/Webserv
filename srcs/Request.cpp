@@ -6,31 +6,33 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/03 16:01:27 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 15:23:42 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "Request.hpp"
 #include "Logger.hpp"
+#include "Client.hpp"
 
 Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isComplete(false),
-					 _makeAutoindex(false), _isRedirection(false), _urlIsMessage(true), _isCgi(false), _code(200), _bodySize(0),
+					 _makeAutoindex(false), _isRedirection(false), _urlIsMessage(false), _isCgi(false), _code(200), _bodySize(0),
 					 _isChunked(false), _serverPort(0)
 {
 }
 Request::~Request() {}
 
-void Request::parse(ServerConfig &server, std::string &header, int code)
+void Request::parse(ServerConfig &server, Client *client, int code)
 {
 	this->_code = code;
 	if (this->_code != 200)
 		return;
 	this->_root = server.root;
 	this->_index = server.index;
-	makeRequest(server, header);
-	// std::cout << *this << std::endl;
-	if (this->_code == 301)
+	makeRequest(server, client->getHeader());
+	// std::cout << client->getHeader() << std::endl << std::endl;
+	std::cout << *this << std::endl;
+	if ( this->_code == 301 || (this->_location && this->_location->has_return))
 		return;
 	checkRequest();
 	finalLogger();
@@ -163,6 +165,9 @@ void Request::prepareReq(ServerConfig &server)
 	{
 		pathType = SERVER_LOCATION;
 		makeLocationRules();
+		
+		if (this->_location && this->_location->has_return)
+			return;
 	}
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
 	{
@@ -174,8 +179,9 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	cutPath();
 	makeAllPathRules(server);
-	if (this->_code != 200)
+	if (this->_location && this->_location->has_return)
 	{
+		std::cout << BRED << "ca passe " << this->_code << NC << std::endl;
 		checkErrorPage(server);
 		return;
 	}
@@ -290,6 +296,8 @@ void Request::makeAllPathRules(ServerConfig &server)
 		case SERVER_LOCATION:
 			copyLocationRules(server, newPath);
 			makeLocationRules();
+			std::cout << BBLUE << "code " << _code << NC << std::endl;
+
 			accessFolder(newCompletPath);
 			break;
 		case FILE_PATH:
@@ -399,11 +407,15 @@ void Request::makeLocationRules()
 	if (this->_location && this->_location->has_return)
 	{
 		this->_code = this->_location->return_code;
-		if (this->_code == 301 || this->_code == 200)
+		std::cout << BBLUE << _code << std::endl;
+		if (!this->_location->return_url.empty())
 		{
 			this->_newPath = this->_location->return_url;
 			if (this->_code == 200)
+			{
 				this->_urlIsMessage = true;
+				this->_fileExtention = "nodotdetected";
+			}
 			else
 				this->_isRedirection = true;
 		}
