@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 16:06:08 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 16:36:48 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,13 +56,13 @@ void Response::makeRep(ServerConfig &server, Client *client)
 		finalLogger(client->getServerIdx());
 		return;
 	}
-	if (this->_req.getMethode() == "POST")
-	{
-		this->_content.swap(client->getBody());
-		this->_contentLength = client->getBodySize();
-		generateHeader();
-		return;
-	}
+	// if (this->_req.getMethode() == "POST")
+	// {
+	// 	this->_content.swap(client->getBody());
+	// 	this->_contentLength = client->getBodySize();
+	// 	generateHeader();
+	// 	return;
+	// }
 
 	if (isCGIRequest(server))
 	{
