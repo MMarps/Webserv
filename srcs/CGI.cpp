@@ -1,8 +1,12 @@
 #include "CGI.hpp"
 
 CGI::CGI(Request &req, ServerConfig &server) 
-	: _req(req), _server(server), _statusCode(200), _timeout(30) {
+	: _req(req), _server(server), _statusCode(200), _timeout(30), _writtenBytes(0), _pid(-1), _readComplete(false) {
 	_scriptPath = _req.getCompletPath();
+	_pipeIn[0] = -1;
+	_pipeIn[1] = -1;
+	_pipeOut[0] = -1;
+	_pipeOut[1] = -1;
 }
 
 CGI::~CGI() {}
@@ -136,96 +140,99 @@ bool	CGI::execute(const Request &req) {
 	return (false);
 }
 
-void	CGI::parentProcess(int *fdIn, int *fdOut) {
-	close(fdIn[0]);
-	close(fdOut[1]);
-	if (_req.getMethode() == "POST") { // Si POST : écrire le body dans le pipe d'entrée
-		std::string body = _req.getBody();
-		write(fdIn[1], body.c_str(), body.size());
-	}
-	close(fdIn[1]);
+// void	CGI::parentProcess(int *fdIn, int *fdOut) {
+// 	close(fdIn[0]);
+// 	close(fdOut[1]);
+// 	if (_req.getMethode() == "POST") { // Si POST : écrire le body dans le pipe d'entrée
+// 		std::string body = _req.getBody();
+// 		write(fdIn[1], body.c_str(), body.size());
+// 	}
+// 	close(fdIn[1]);
 
-	char	buffer[4096];
-	ssize_t	bytesRead;
-	while ((bytesRead = read(fdOut[0], buffer, sizeof(buffer))) > 0) {
-		_output.insert(_output.end(), buffer, buffer + bytesRead);
-	}
-	close(fdOut[0]);
-}
+// 	char	buffer[4096];
+// 	ssize_t	bytesRead;
+// 	while ((bytesRead = read(fdOut[0], buffer, sizeof(buffer))) > 0) {
+// 		_output.insert(_output.end(), buffer, buffer + bytesRead);
+// 	}
+// 	close(fdOut[0]);
+// }
 
 bool	CGI::processScript(char **env) {
-	int		pipeIn[2];
-	int		pipeOut[2];
+	if (pipe(_pipeIn) < 0 || pipe(_pipeOut) < 0)
+		return (false);
 
-	if (pipe(pipeIn) < 0)
-		return (false);
-	if (pipe(pipeOut) < 0)
-		return (false);
+	fcntl(_pipeIn[1], F_SETFL, O_NONBLOCK);
+	fcntl(_pipeOut[0], F_SETFL, O_NONBLOCK);
+
 	pid_t	pid = fork();
 	if (pid < 0)
 		return (false);
 	if (pid == 0) {
-		close(pipeIn[1]);
-		close(pipeOut[0]);
+		close(_pipeIn[1]);
+		close(_pipeOut[0]);
 
 		std::string	scriptDir = _scriptPath.substr(0, _scriptPath.find_last_of('/')); // on change de dir pour aller ou se trouve le script
 		if (!scriptDir.empty() && chdir(scriptDir.c_str()) != 0) {
-			freePipes(pipeIn, pipeOut);
+			freePipes(_pipeIn, _pipeOut);
 			exit(1);
 		}
-		if (dup2(pipeIn[0], STDIN_FILENO) < 0) {
-			freePipes(pipeIn, pipeOut);
+		if (dup2(_pipeIn[0], STDIN_FILENO) < 0) {
+			freePipes(_pipeIn, _pipeOut);
 			exit(false);
 		}
-		close(pipeIn[0]);
-		if (dup2(pipeOut[1], STDOUT_FILENO) < 0) {
-			freePipes(pipeIn, pipeOut);
+		close(_pipeIn[0]);
+		if (dup2(_pipeOut[1], STDOUT_FILENO) < 0) {
+			freePipes(_pipeIn, _pipeOut);
 			exit(false);
 		}
-		dup2(pipeOut[1], STDERR_FILENO);
-		close(pipeOut[1]);
+		dup2(_pipeOut[1], STDERR_FILENO);
+		close(_pipeOut[1]);
 		executeScript(env);
 	}
-	parentProcess(pipeIn, pipeOut);
-	return (waitProcess(pid));
+	// parentProcess(_pipeIn, _pipeOut);
+	close(_pipeIn[0]);
+	close(_pipeOut[1]);
+	_startTime = time(NULL);
+	_readComplete = false;
+	return (true);
 }
 
-bool	CGI::waitProcess(pid_t pid) {
-	time_t	startTime = time(NULL);
-	int		status;
-	bool	isTimeout = false;
+// bool	CGI::waitProcess(pid_t pid) {
+// 	time_t	startTime = time(NULL);
+// 	int		status;
+// 	bool	isTimeout = false;
 
-	while (true) {
-		pid_t	ret = waitpid(pid, &status, WNOHANG);
-		if (ret == pid)
-			break ; // process termine
-		else if (ret < 0)
-			return (false); // error
-		time_t	elapsedTime = time(NULL) - startTime;
-		if (elapsedTime >= _timeout) {
-			kill(pid, SIGKILL);
-			waitpid(pid, &status, 0);
-			isTimeout = true;
-			break ;
-		}
-		usleep(100000); // attendre pour pas consommer trop de CPU
-	}
-	if (isTimeout) {
-		_statusCode = 504;
-		return (false);
-	}
-	if (WIFEXITED(status)) {
-		if (!WEXITSTATUS(status))
-			return (true);
-		_statusCode = 502;
-		return (false);
-	}
-	if (WIFSIGNALED(status)) {
-		_statusCode = 502;
-		return (false);
-	}
-	return (false);
-}
+// 	while (true) {
+// 		pid_t	ret = waitpid(pid, &status, WNOHANG);
+// 		if (ret == pid)
+// 			break ; // process termine
+// 		else if (ret < 0)
+// 			return (false); // error
+// 		time_t	elapsedTime = time(NULL) - startTime;
+// 		if (elapsedTime >= _timeout) {
+// 			kill(pid, SIGKILL);
+// 			waitpid(pid, &status, 0);
+// 			isTimeout = true;
+// 			break ;
+// 		}
+// 		usleep(100000); // attendre pour pas consommer trop de CPU
+// 	}
+// 	if (isTimeout) {
+// 		_statusCode = 504;
+// 		return (false);
+// 	}
+// 	if (WIFEXITED(status)) {
+// 		if (!WEXITSTATUS(status))
+// 			return (true);
+// 		_statusCode = 502;
+// 		return (false);
+// 	}
+// 	if (WIFSIGNALED(status)) {
+// 		_statusCode = 502;
+// 		return (false);
+// 	}
+// 	return (false);
+// }
 
 int	CGI::getStatusCode() const {
 	return (this->_statusCode);
@@ -241,4 +248,126 @@ std::string	CGI::getBody() const {
 
 std::map<std::string, std::string>	CGI::getHeaders() const {
 	return (this->_cgiHeaders);
+}
+
+// ===== Methodes pour gestion asynchrone avec epoll =====
+
+void	CGI::appendOutput(const char* buffer, size_t size) {
+	_output.insert(_output.end(), buffer, buffer + size);
+}
+
+pid_t	CGI::getPid() const {
+	return (_pid);
+}
+
+void	CGI::finalizeCGI(int status) {
+	if (WIFEXITED(status)) {
+		if (WEXITSTATUS(status) != 0)
+			_statusCode = 502;
+	}
+	else if (WIFSIGNALED(status)) {
+		_statusCode = 502;
+	}
+	parseOutput();
+}
+
+int	CGI::getPipeOut() const {
+	return (_pipeOut[0]);
+}
+
+int	CGI::getPipeIn() const {
+	return (_pipeIn[1]);
+}
+
+size_t	CGI::getWrittenBytes() const {
+	return (_writtenBytes);
+}
+
+void	CGI::addWrittenBytes(size_t bytes) {
+	_writtenBytes += bytes;
+}
+
+bool	CGI::executeAsync(const Request &req) {
+	this->_interpreter = findInterpreter();
+	if (this->_interpreter.empty())
+		return (false);
+
+	if (_server.cgi.find(this->_interpreter) == _server.cgi.end())
+		return (false);
+	
+	std::string	interpreterPath = _server.cgi[_interpreter];
+	if (access(interpreterPath.c_str(), X_OK) != 0)
+		return (false);
+	
+	int	scriptFd = open(_scriptPath.c_str(), O_RDONLY);
+	if (scriptFd < 0)
+		return (false);
+	close(scriptFd);
+
+	char	**cgiEnv = setupEnv(req);
+	
+	if (pipe(_pipeIn) < 0) {
+		freeEnv(cgiEnv);
+		return (false);
+	}
+	if (pipe(_pipeOut) < 0) {
+		close(_pipeIn[0]);
+		close(_pipeIn[1]);
+		freeEnv(cgiEnv);
+		return (false);
+	}
+
+	// Rendre les pipes non-bloquants
+	fcntl(_pipeIn[1], F_SETFL, O_NONBLOCK);
+	fcntl(_pipeOut[0], F_SETFL, O_NONBLOCK);
+
+	_pid = fork();
+	if (_pid < 0) {
+		close(_pipeIn[0]);
+		close(_pipeIn[1]);
+		close(_pipeOut[0]);
+		close(_pipeOut[1]);
+		freeEnv(cgiEnv);
+		return (false);
+	}
+
+	if (_pid == 0) {
+		// Processus enfant
+		close(_pipeIn[1]);
+		close(_pipeOut[0]);
+
+		std::string	scriptDir = _scriptPath.substr(0, _scriptPath.find_last_of('/'));
+		if (!scriptDir.empty() && chdir(scriptDir.c_str()) != 0) {
+			close(_pipeIn[0]);
+			close(_pipeOut[1]);
+			exit(1);
+		}
+
+		if (dup2(_pipeIn[0], STDIN_FILENO) < 0) {
+			close(_pipeIn[0]);
+			close(_pipeOut[1]);
+			exit(1);
+		}
+		close(_pipeIn[0]);
+
+		if (dup2(_pipeOut[1], STDOUT_FILENO) < 0) {
+			close(_pipeOut[1]);
+			exit(1);
+		}
+		dup2(_pipeOut[1], STDERR_FILENO);
+		close(_pipeOut[1]);
+
+		executeScript(cgiEnv);
+		// Si executeScript retourne, c'est une erreur
+		exit(127);
+	}
+
+	// Processus parent
+	close(_pipeIn[0]);
+	close(_pipeOut[1]);
+	_startTime = time(NULL);
+	_readComplete = false;
+
+	freeEnv(cgiEnv);
+	return (true);
 }

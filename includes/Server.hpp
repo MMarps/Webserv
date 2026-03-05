@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/25 17:40:19 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 19:23:01 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,13 @@ class Server {
 		void					_setUploadStream(Client* client);
 		void					_processMultipart(Client* client);
 		std::string				_getUploadPath(Client* client);
+
+		void					_handleCGIData(int cgiFd, uint32_t events);
+	bool					_isCgiRequest(Request req, Client *C, int clientFd);
+	void					_buildCGIResponse(Client* client);
+	void					_handleCGIError(Client* client, int errCode);
+	
+	std::map<int, int>		_cgiFdToClientFd;
 };
 
 #endif
