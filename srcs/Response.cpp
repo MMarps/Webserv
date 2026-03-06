@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/04 15:47:51 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/06 11:57:52 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -233,13 +233,11 @@ void Response::buildCGIResponse()
 	_response = statusLine.str();
 
 	std::map<std::string, std::string>::iterator it = _cgiHeaders.begin();
-	while (it != _cgiHeaders.end())
-	{
+	while (it != _cgiHeaders.end()) {
 		_response += it->first + ": " + it->second + "\r\n";
 		it++;
 	}
-	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end())
-	{ // ajouter content-length si pas deja present
+	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) { // ajouter content-length si pas deja present
 		std::ostringstream contentLengthStream;
 		contentLengthStream << _content.size();
 		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
@@ -257,10 +255,8 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 	struct dirent *entry;
 	int count = 0;
 
-	while ((entry = readdir(dir)) != NULL)
-	{ // parcourt le repertoire
-		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
-		{ // si autre chose que ./ ou ../ alors non vide
+	while ((entry = readdir(dir)) != NULL) { // parcourt le repertoire
+		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) { // si autre chose que ./ ou ../ alors non vide
 			closedir(dir);
 			return (false);
 		}

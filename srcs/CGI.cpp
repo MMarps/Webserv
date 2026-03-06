@@ -250,8 +250,6 @@ std::map<std::string, std::string>	CGI::getHeaders() const {
 	return (this->_cgiHeaders);
 }
 
-// ===== Methodes pour gestion asynchrone avec epoll =====
-
 void	CGI::appendOutput(const char* buffer, size_t size) {
 	_output.insert(_output.end(), buffer, buffer + size);
 }
@@ -331,8 +329,7 @@ bool	CGI::executeAsync(const Request &req) {
 		return (false);
 	}
 
-	if (_pid == 0) {
-		// Processus enfant
+	if (_pid == 0) { // child process
 		close(_pipeIn[1]);
 		close(_pipeOut[0]);
 
@@ -358,11 +355,11 @@ bool	CGI::executeAsync(const Request &req) {
 		close(_pipeOut[1]);
 
 		executeScript(cgiEnv);
-		// Si executeScript retourne, c'est une erreur
+
 		exit(127);
 	}
 
-	// Processus parent
+	// parent process
 	close(_pipeIn[0]);
 	close(_pipeOut[1]);
 	_startTime = time(NULL);

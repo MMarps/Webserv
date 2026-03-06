@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/06 11:24:10 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/06 11:57:02 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,8 +110,7 @@ void Request::makeRequest(ServerConfig &server, std::string &buffer)
 			if (line == "\r" || line.empty() || strcmp(line.c_str(), "\r\n") == 0)
 				headerParsed = true;
 		}
-		else {
-			// accumuler les lignes du body
+		else { // accumuler les lignes du body
 			if (!bodyBuffer.empty())
 				bodyBuffer += "\n";
 			bodyBuffer += line;
@@ -119,26 +118,20 @@ void Request::makeRequest(ServerConfig &server, std::string &buffer)
 	}
 
 	if (headerParsed && !bodyBuffer.empty()) {
-		// if (_isChunked)
-		// parseChunkedBody(bodyBuffer); // pour les requetes chunked, parser les chunks
-		// else {
 		// pour les requetes normales, stocker directement
 		this->_body += bodyBuffer;
 		this->_bodySize = this->_body.size();
 
 		std::map<std::string, std::string>::iterator it = _httpHeaders.find("Content-Length");
-		if (it != _httpHeaders.end())
-		{ // verifier si le body est complet
+		if (it != _httpHeaders.end()) { // verifier si le body est complet
 			size_t expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
 			if (this->_bodySize >= expectedSize)
 				_isComplete = true;
 		}
-		// }
 	}
 }
 
-void Request::parseMethode(ServerConfig &server, std::string &line)
-{
+void Request::parseMethode(ServerConfig &server, std::string &line) {
 	std::stringstream ss(line);
 	std::string path;
 
@@ -152,20 +145,17 @@ void Request::prepareReq(ServerConfig &server)
 	int pathType;
 	cutVariableToPath();
 	copyLocationRules(server, this->_path);
-	if (!this->_isLocation)
-	{
+	if (!this->_isLocation) {
 		if (this->_path != "/")
 			pathType = checkPathType(server, false, this->_path);
 		else
 			pathType = checkPathType(server, true, this->_path);
 	}
-	else
-	{
+	else {
 		pathType = SERVER_LOCATION;
 		makeLocationRules();
 	}
-	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
-	{
+	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/')) {
 		std::cout << "ca passe " << this->_path << std::endl;
 		this->_newPath = this->_path + "/";
 		this->_code = 301;
@@ -174,15 +164,13 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	cutPath();
 	makeAllPathRules(server);
-	if (this->_code != 200)
-	{
+	if (this->_code != 200) {
 		checkErrorPage(server);
 		return;
 	}
 	searchIndex();
 
-	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
-	{
+	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex) {
 		this->_makeAutoindex = true;
 		this->_fileExtention = ".html";
 		this->_completPath = this->_root + this->_path;
@@ -196,10 +184,8 @@ void Request::prepareReq(ServerConfig &server)
 	checkErrorPage(server);
 }
 
-void Request::checkErrorPage(ServerConfig &server)
-{
-	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
-	{
+void	Request::checkErrorPage(ServerConfig &server) {
+	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty()) {
 		this->_completPath = server.error_pages[this->_code];
 		makeExtentionAndNameFile(this->_completPath);
 		return;
@@ -327,7 +313,7 @@ int Request::checkPathType(ServerConfig &server, bool slash, std::string &pieceP
 		if (this->_root + it->path == this->_root + piecePath)
 			return (SERVER_LOCATION);
 	}
-	// chekc le systeme de fichiers
+	// check le systeme de fichiers
 	std::string cPath = this->_root + piecePath;
 	if (stat(cPath.c_str(), &st) == -1)
 		return (-1);
