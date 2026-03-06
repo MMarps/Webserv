@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/05 20:05:30 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/06 11:20:02 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -416,40 +416,109 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 		return;
 	}
 
-	if (events & EPOLLIN) { // handle reading
-		std::cout << "[DEBUG] EPOLLIN event on CGI pipe fd=" << cgiFd << std::endl;
-		char	buffer[4096];
-		ssize_t	bytesRead = read(cgiFd, buffer, sizeof(buffer));
+	// Handle EPOLLHUP/EPOLLERR - pipe closed by CGI
+	if (events & (EPOLLHUP | EPOLLERR)) {
+		std::cout << "[DEBUG] EPOLLHUP/EPOLLERR on CGI pipe fd=" << cgiFd << std::endl;
 		
-		std::cout << "[DEBUG] Read " << bytesRead << " bytes from CGI" << std::endl;
-		
-		if (bytesRead > 0) { // ajt les donnees lues au buffer CGI
-			cgi->appendOutput(buffer, bytesRead);
-			std::cout << "[DEBUG] Appended " << bytesRead << " bytes to CGI output" << std::endl;
-		}
-		else if (!bytesRead) { // fin de lecture, le cgi a ferme STDOUT
-			std::cout << "[DEBUG] EOF on CGI pipe, closing and waiting for process" << std::endl;
-			epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
-			close(cgiFd);
-			_cgiFdToClientFd.erase(cgiFd);
-
-			int	status;
-			pid_t	result = waitpid(cgi->getPid(), &status, WNOHANG); // check si process est termine
-			std::cout << "[DEBUG] waitpid returned: " << result << std::endl;
-			if (result > 0) { // process done
-				std::cout << "[DEBUG] CGI process terminated, building response" << std::endl;
-				cgi->finalizeCGI(status);
-				_buildCGIResponse(client); // build response w/ CGI data
-				_modEpoll(clientFd, EPOLLOUT); // bascule le client en mode EPOLLOUT pour envoyer
-				Logger::info("CGI completed, response ready", client->getServerIdx());
+		// Try to read any remaining data
+		while (true) {
+			char buffer[4096];
+			ssize_t bytesRead = read(cgiFd, buffer, sizeof(buffer));
+			if (bytesRead > 0) {
+				cgi->appendOutput(buffer, bytesRead);
+				std::cout << "[DEBUG] Read final " << bytesRead << " bytes from CGI" << std::endl;
 			}
 			else {
-				std::cout << "[DEBUG] Process not yet terminated, will wait for it later" << std::endl;
+				break; // EOF or error
 			}
 		}
-		else if (errno != EAGAIN && errno != EWOULDBLOCK) { // read error
-			Logger::error("CGI read error", client->getServerIdx());
+		
+		// Cleanup and finalize
+		std::cout << "[DEBUG] Finalizing CGI after EPOLLHUP" << std::endl;
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+		close(cgiFd);
+		_cgiFdToClientFd.erase(cgiFd);
+		
+		int status;
+		pid_t result = waitpid(cgi->getPid(), &status, WNOHANG);
+		std::cout << "[DEBUG] waitpid returned: " << result << std::endl;
+		
+		// If process not done yet, try waiting briefly
+		if (result == 0) {
+			std::cout << "[DEBUG] Process not done yet, waiting..." << std::endl;
+			usleep(10000); // Wait 10ms
+			result = waitpid(cgi->getPid(), &status, WNOHANG);
+			std::cout << "[DEBUG] After wait, waitpid returned: " << result << std::endl;
+		}
+		
+		if (result > 0) {
+			cgi->finalizeCGI(status);
+			_buildCGIResponse(client);
+			_modEpoll(clientFd, EPOLLOUT);
+			Logger::info("CGI completed after EPOLLHUP, response ready", client->getServerIdx());
+		}
+		else if (result == 0) {
+			// Process still not done - force it
+			std::cout << "[DEBUG] Process still running, sending error response" << std::endl;
 			_handleCGIError(client, 502);
+		}
+		else {
+			// waitpid error
+			std::cout << "[DEBUG] waitpid error, sending error response" << std::endl;
+			_handleCGIError(client, 502);
+		}
+		return;
+	}
+
+	if (events & EPOLLIN) { // handle reading
+		std::cout << "[DEBUG] EPOLLIN event on CGI pipe fd=" << cgiFd << std::endl;
+		
+		// Read loop: continue until EOF or EAGAIN
+		while (true) {
+			char	buffer[4096];
+			ssize_t	bytesRead = read(cgiFd, buffer, sizeof(buffer));
+			
+			std::cout << "[DEBUG] Read " << bytesRead << " bytes from CGI" << std::endl;
+			
+			if (bytesRead > 0) { // ajt les donnees lues au buffer CGI
+				cgi->appendOutput(buffer, bytesRead);
+				std::cout << "[DEBUG] Appended " << bytesRead << " bytes to CGI output" << std::endl;
+				// Continue reading
+			}
+			else if (bytesRead == 0) { // fin de lecture, le cgi a ferme STDOUT
+				std::cout << "[DEBUG] EOF on CGI pipe, closing and waiting for process" << std::endl;
+				epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+				close(cgiFd);
+				_cgiFdToClientFd.erase(cgiFd);
+
+				int	status;
+				pid_t	result = waitpid(cgi->getPid(), &status, WNOHANG); // check si process est termine
+				std::cout << "[DEBUG] waitpid returned: " << result << std::endl;
+				if (result > 0) { // process done
+					std::cout << "[DEBUG] CGI process terminated, building response" << std::endl;
+					cgi->finalizeCGI(status);
+					_buildCGIResponse(client); // build response w/ CGI data
+					_modEpoll(clientFd, EPOLLOUT); // bascule le client en mode EPOLLOUT pour envoyer
+					Logger::info("CGI completed, response ready", client->getServerIdx());
+				}
+				else {
+					std::cout << "[DEBUG] Process not yet terminated, will wait for it later" << std::endl;
+				}
+				break; // Exit loop after EOF
+			}
+			else { // bytesRead < 0 (error)
+				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+					// No more data available now, will get another EPOLLIN later
+					std::cout << "[DEBUG] EAGAIN - no more data available now" << std::endl;
+					break;
+				}
+				else {
+					// Real error
+					Logger::error("CGI read error", client->getServerIdx());
+					_handleCGIError(client, 502);
+					break;
+				}
+			}
 		}
 	}
 

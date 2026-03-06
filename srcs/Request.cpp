@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/04 16:23:39 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/06 11:24:10 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -212,6 +212,7 @@ void Request::cutVariableToPath()
 	if (haveVariable() == std::string::npos)
 		return;
 	variableQuery = this->_path.substr(haveVariable() + 1);
+	this->_queryString = variableQuery; // Store the raw query string
 	this->_path = this->_path.substr(0, haveVariable());
 	splitVarQuery(variableQuery);
 }
