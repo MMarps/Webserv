@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 16:47:00 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/06 17:39:59 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,20 +55,15 @@ private:
 	std::vector<std::string> _cutPath;
 	std::map<std::string, std::string> _varLst;
 	std::map<std::string, std::string> _httpHeaders;
-
-	// CGI part
-	std::string _queryString; // partie apres le '?' dans l'URL
-	std::string _body;		  // contenu du body pour la requete POST
-	size_t _bodySize;		  // taille du body
-	std::string _contentType; // contentType de la requete
-
+	std::string _queryString;
+	std::string _body;
+	size_t _bodySize;
+	std::string _contentType;
 	bool _isChunked;
-	// bool			_headersParser;
 	std::string _rawBuffer;
+	std::string _remoteAddr;
+	int _serverPort;
 
-	// Network metadata
-	std::string _remoteAddr; // stocke l'IP du client
-	int _serverPort;		 // stocke le port d ecoute du serv
 public:
 	Request();
 	~Request();
@@ -98,7 +93,6 @@ public:
 	void getErrorPage(ServerConfig &server);
 	void checkRequest();
 	void setCode(int code);
-
 	std::string getMethode() const;
 	std::string getRoot() const;
 	std::string getPath() const;
@@ -122,18 +116,13 @@ public:
 	bool getUrlIsMesssage() const;
 	bool getIsCgi() const;
 	int getCode() const;
-
 	void accessFolder(std::string newCompletPath);
-
-	// CGI part
 	bool parseChunkedBody(const std::string &newData);
 	std::string getQueryString() const;
 	std::string getBody() const;
 	std::string getContentType() const;
 	size_t getBodySize() const;
 	const std::map<std::string, std::string> &getHttpHeaders() const;
-
-	// Network metadata
 	std::string getRemoteAddr() const;
 	int getServerPort() const;
 	void setRemoteAddr(const std::string &addr);

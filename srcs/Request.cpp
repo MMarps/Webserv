@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 17:18:38 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/06 17:38:13 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ void Request::parse(ServerConfig &server, Client *client, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, client);
-	// std::cout << *this << std::endl;
 	if (this->_code == 301 || (this->_location && this->_location->has_return))
 		return;
 	checkRequest();
@@ -47,54 +46,10 @@ void Request::finalLogger(Client *c)
 	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed", c->getServerIdx());
 }
 
-// bool	Request::parseChunkedBody(const std::string &newData) {
-// 	_rawBuffer += newData;
-// 	size_t	pos = 0;
-
-// 	while (pos < _rawBuffer.size()) {
-// 		size_t	lineEnd = _rawBuffer.find("\r\n", pos); // chercher
-// 		if (lineEnd == std::string::npos)
-// 			return (false); // donnees incompletes -> attendre
-// 		std::string	chunkSizeStr = _rawBuffer.substr(pos, lineEnd - pos);
-// 		ssize_t		chunkSize = hexToDecimal(chunkSizeStr);
-// 		if (chunkSize == static_cast<ssize_t>(-1)) {
-// 			_code = 400;
-// 			return (false);
-// 		}
-// 		if (chunkSize == 0) { // check si chunk final
-// 			size_t	finalEnd = _rawBuffer.find("\r\n", lineEnd + 2);
-// 			if (finalEnd == std::string::npos)
-// 				return (false); // si \r\n final pas trouve -> attendre
-// 			// dechunking done
-// 			_bodySize = _body.size();
-// 			_isComplete = true;
-// 			_rawBuffer.clear();
-// 			return (true);
-// 		}
-// 		// verifier qu on a assez de donnees pour ce chunk
-// 		size_t	dataStart = lineEnd + 2; // Position après "\r\n"
-// 		size_t	dataEnd = dataStart + chunkSize;
-// 		size_t	nextChunkStart = dataEnd + 2; // apres les données + "\r\n"
-
-// 		if (nextChunkStart > _rawBuffer.size())
-// 			return (false); // pas assez de donnees -> attendre
-// 		std::string	chunkData = _rawBuffer.substr(dataStart, chunkSize);
-
-// 		_body += chunkData;
-// 		pos = nextChunkStart;
-// 	}
-// 	if (pos > 0)
-// 		_rawBuffer = _rawBuffer.substr(pos);
-
-// 	return (false); // pas fini -> attendre + de donnees
-// }
-
 void Request::makeRequest(ServerConfig &server, Client *c)
 {
 	std::istringstream request(c->getHeader().c_str());
 	std::string line;
-	// std::string bodyBuffer;
-	// bool headerParsed = false;
 	while (getline(request, line))
 	{
 		std::istringstream cut(line);
@@ -108,24 +63,16 @@ void Request::makeRequest(ServerConfig &server, Client *c)
 
 	if (!c->getBody().empty())
 	{
-		// if (_isChunked)
-		// parseChunkedBody(bodyBuffer); // pour les requetes chunked, parser les chunks
-		// else {
-		// pour les requetes normales, stocker directement
 		std::vector<char> &bodyVec = c->getBody();
 		this->_body = std::string(bodyVec.begin(), bodyVec.end());
 		this->_bodySize = this->_body.size();
-		std::cout << BGREEN << _body << NC << std::endl;
-		std::cout << BGREEN << _bodySize << NC << std::endl;
-
 		std::map<std::string, std::string>::iterator it = _httpHeaders.find("Content-Length");
 		if (it != _httpHeaders.end())
-		{ // verifier si le body est complet
+		{
 			size_t expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
 			if (this->_bodySize >= expectedSize)
 				_isComplete = true;
 		}
-		// }
 	}
 }
 
@@ -476,7 +423,7 @@ void Request::parseAttribut(std::string &line)
 
 	getline(cut, res, ' ');
 	std::string headerName = res;
-	if (!headerName.empty() && headerName[headerName.size() - 1] == ':') // take off ':'
+	if (!headerName.empty() && headerName[headerName.size() - 1] == ':')
 		headerName = headerName.substr(0, headerName.size() - 1);
 	if (res == "Host:")
 	{
@@ -502,10 +449,9 @@ void Request::parseAttribut(std::string &line)
 		this->_httpHeaders["Content-Length"] = res;
 	}
 	else if (!headerName.empty())
-	{ // Pour tous les autres headers, les stocker dans _httpHeaders
+	{
 		std::string headerValue;
 		getline(cut, headerValue);
-		// Nettoyer les espaces et \r
 		if (!headerValue.empty() && headerValue[0] == ' ')
 			headerValue = headerValue.substr(1);
 		if (!headerValue.empty() && headerValue[headerValue.size() - 1] == '\r')
