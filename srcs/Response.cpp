@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/05 16:36:48 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/08 16:32:16 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -243,13 +243,11 @@ void Response::buildCGIResponse()
 	_response = statusLine.str();
 
 	std::map<std::string, std::string>::iterator it = _cgiHeaders.begin();
-	while (it != _cgiHeaders.end())
-	{
+	while (it != _cgiHeaders.end()) {
 		_response += it->first + ": " + it->second + "\r\n";
 		it++;
 	}
-	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end())
-	{ // ajouter content-length si pas deja present
+	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) { // ajouter content-length si pas deja present
 		std::ostringstream contentLengthStream;
 		contentLengthStream << _content.size();
 		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
@@ -267,10 +265,8 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 	struct dirent *entry;
 	int count = 0;
 
-	while ((entry = readdir(dir)) != NULL)
-	{ // parcourt le repertoire
-		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
-		{ // si autre chose que ./ ou ../ alors non vide
+	while ((entry = readdir(dir)) != NULL) { // parcourt le repertoire
+		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) { // si autre chose que ./ ou ../ alors non vide
 			closedir(dir);
 			return (false);
 		}
@@ -282,41 +278,36 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 
 void Response::handleDelete()
 {
-	std::string filePath = _req.getCompletPath();
-	struct stat fileStat;
+	std::string	filePath = _req.getCompletPath();
+	struct stat	fileStat;
 
-	if (stat(filePath.c_str(), &fileStat) != 0)
-	{
+	std::cout << BRED << "HANDLE DELETE" << NC << std::endl;
+	if (stat(filePath.c_str(), &fileStat) != 0) {
 		_req.setCode(404);
 		return;
 	}
-	if (S_ISDIR(fileStat.st_mode))
-	{ // check si dossier
-		if (access(filePath.c_str(), W_OK | X_OK) != 0)
-		{ // check si permissions ecriture/exec
+	if (S_ISDIR(fileStat.st_mode)) { // check si dossier
+		if (access(filePath.c_str(), W_OK | X_OK) != 0) { // check si permissions ecriture/exec
 			_req.setCode(403);
 			return;
 		}
-		if (!isDirectoryEmpty(filePath))
-		{ // check si vide
+		if (!isDirectoryEmpty(filePath)) { // check si vide
+			std::cout << BRED << "DIR NOT EMPTY" << NC << std::endl;
 			_req.setCode(409);
 			return;
 		}
-		if (rmdir(filePath.c_str()) != 0)
-		{ // si vide -> supprimer
+		if (rmdir(filePath.c_str()) != 0) { // si vide -> supprimer
 			_req.setCode(500);
 			return;
 		}
 		_req.setCode(204);
 		return;
 	}
-	if (access(filePath.c_str(), W_OK) != 0)
-	{
+	if (access(filePath.c_str(), W_OK) != 0) {
 		_req.setCode(403);
 		return;
 	}
-	if (unlink(filePath.c_str()) != 0)
-	{
+	if (unlink(filePath.c_str()) != 0) {
 		_req.setCode(500);
 		return;
 	}

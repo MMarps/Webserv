@@ -6,32 +6,35 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/06 17:38:13 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/08 16:39:46 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config.hpp"
-#include "Request.hpp"
-#include "Logger.hpp"
 #include "Client.hpp"
+#include "Config.hpp"
+#include "Logger.hpp"
+#include "Request.hpp"
 
-Request::Request() : _location(NULL), _isLocation(false), _isPost(false), _isComplete(false),
-					 _makeAutoindex(false), _isRedirection(false), _urlIsMessage(false), _isCgi(false), _code(200), _bodySize(0),
-					 _isChunked(false), _serverPort(0)
+Request::Request() : _location(NULL), _isLocation(false), _isPost(false),
+	_isComplete(false), _makeAutoindex(false), _isRedirection(false),
+	_urlIsMessage(false), _isCgi(false), _code(200), _bodySize(0),
+	_isChunked(false), _serverPort(0)
 {
 }
-Request::~Request() {}
+Request::~Request()
+{
+}
 
 void Request::parse(ServerConfig &server, Client *client, int code)
 {
 	this->_code = code;
 	if (this->_code != 200)
-		return;
+		return ;
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, client);
 	if (this->_code == 301 || (this->_location && this->_location->has_return))
-		return;
+		return ;
 	checkRequest();
 	finalLogger(client);
 }
@@ -40,36 +43,56 @@ void Request::finalLogger(Client *c)
 {
 	if (this->_isLocation)
 	{
-		Logger::info("request " + this->_methode + " location " + this->_path + " parsed", c->getServerIdx());
-		return;
+		Logger::info("request " + this->_methode + " location " + this->_path
+			+ " parsed", c->getServerIdx());
+		return ;
 	}
-	Logger::info("request " + this->_methode + " ressource " + this->_path + " parsed", c->getServerIdx());
+	Logger::info("request " + this->_methode + " ressource " + this->_path
+		+ " parsed", c->getServerIdx());
 }
 
 void Request::makeRequest(ServerConfig &server, Client *c)
 {
-	std::istringstream request(c->getHeader().c_str());
+	bool	headerParsed;
+	size_t	expectedSize;
+
+	std::istringstream request(c->getHeader());
 	std::string line;
+	std::string bodyBuffer;
+	headerParsed = false;
 	while (getline(request, line))
 	{
-		std::istringstream cut(line);
-		std::string res;
-		cut >> res;
-		if (res == "GET" || res == "POST" || res == "DELETE" || res == "HEAD")
-			parseMethode(server, line);
-		else
-			parseAttribut(line);
-	}
-
-	if (!c->getBody().empty())
-	{
-		std::vector<char> &bodyVec = c->getBody();
-		this->_body = std::string(bodyVec.begin(), bodyVec.end());
-		this->_bodySize = this->_body.size();
-		std::map<std::string, std::string>::iterator it = _httpHeaders.find("Content-Length");
-		if (it != _httpHeaders.end())
+		if (!headerParsed)
 		{
-			size_t expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
+			std::istringstream cut(line);
+			std::string res;
+			cut >> res;
+			if (res == "GET" || res == "POST" || res == "DELETE"
+				|| res == "HEAD")
+				parseMethode(server, line);
+			else
+				parseAttribut(line);
+			if (line == "\r" || line.empty() || strcmp(line.c_str(),
+					"\r\n") == 0)
+				headerParsed = true;
+		}
+		else
+		{ // accumuler les lignes du body
+			if (!bodyBuffer.empty())
+				bodyBuffer += "\n";
+			bodyBuffer += line;
+		}
+	}
+	if (headerParsed && !bodyBuffer.empty())
+	{
+		// pour les requetes normales, stocker directement
+		this->_body += bodyBuffer;
+		this->_bodySize = this->_body.size();
+		std::map<std::string,
+			std::string>::iterator it = _httpHeaders.find("Content-Length");
+		if (it != _httpHeaders.end())
+		{ // verifier si le body est complet
+			expectedSize = atoi(_httpHeaders["Content-Length"].c_str());
 			if (this->_bodySize >= expectedSize)
 				_isComplete = true;
 		}
@@ -80,15 +103,14 @@ void Request::parseMethode(ServerConfig &server, std::string &line)
 {
 	std::stringstream ss(line);
 	std::string path;
-
 	ss >> this->_methode >> this->_path >> this->_version;
-
 	prepareReq(server);
 }
 
 void Request::prepareReq(ServerConfig &server)
 {
-	int pathType;
+	int	pathType;
+
 	cutVariableToPath();
 	copyLocationRules(server, this->_path);
 	if (!this->_isLocation)
@@ -103,45 +125,50 @@ void Request::prepareReq(ServerConfig &server)
 		pathType = SERVER_LOCATION;
 		makeLocationRules();
 		if (this->_location && this->_location->has_return)
-			return;
+			return ;
 	}
-	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION && this->_path[this->_path.size() - 1] != '/'))
+	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION
+			&& this->_path[this->_path.size() - 1] != '/'))
 	{
+		std::cout << "ca passe " << this->_path << std::endl;
 		this->_newPath = this->_path + "/";
 		this->_code = 301;
 		this->_isRedirection = true;
-		return;
+		return ;
 	}
 	cutPath();
 	makeAllPathRules(server);
 	if (this->_code != 200)
 	{
 		checkErrorPage(server);
-		return;
+		return ;
 	}
 	searchIndex();
-
-	if (this->_code == 200 && this->_fileName.empty() && this->_location && this->_location->autoindex)
+	if (this->_code == 200 && this->_fileName.empty() && this->_location
+		&& this->_location->autoindex)
 	{
 		this->_makeAutoindex = true;
 		this->_fileExtention = ".html";
 		this->_completPath = this->_root + this->_path;
-		return;
+		return ;
 	}
 	this->_completPath = this->_root + this->_path;
 	checkIsCgi(server);
-	if (this->_code == 200 && this->_fileName.empty())
+	if (this->_code == 200 && this->_fileName.empty()
+		&& this->_methode != "DELETE" && !(this->_methode == "POST"
+			&& this->_location && !this->_location->upload_store.empty()))
 		this->_code = 404;
 	checkErrorPage(server);
 }
 
 void Request::checkErrorPage(ServerConfig &server)
 {
-	if (this->_code != 200 && !server.error_pages.empty() && !server.error_pages[this->_code].empty())
+	if (this->_code != 200 && !server.error_pages.empty()
+		&& !server.error_pages[this->_code].empty())
 	{
 		this->_completPath = server.error_pages[this->_code];
 		makeExtentionAndNameFile(this->_completPath);
-		return;
+		return ;
 	}
 }
 
@@ -149,17 +176,18 @@ void Request::cutVariableToPath()
 {
 	std::string variableQuery;
 	if (haveVariable() == std::string::npos)
-		return;
+		return ;
 	variableQuery = this->_path.substr(haveVariable() + 1);
+	this->_queryString = variableQuery; // Store the raw query string
 	this->_path = this->_path.substr(0, haveVariable());
 	splitVarQuery(variableQuery);
 }
 
 size_t Request::haveVariable()
 {
-	size_t findVar;
-	std::string cutPath;
+	size_t	findVar;
 
+	std::string cutPath;
 	findVar = this->_path.find('?');
 	return (findVar);
 }
@@ -181,8 +209,9 @@ void Request::splitVarQuery(std::string &variableQuery)
 
 void Request::cutPath()
 {
-	size_t findPos;
-	size_t lastFindPos;
+	size_t	findPos;
+	size_t	lastFindPos;
+
 	std::string res;
 	std::string path = this->_path;
 	std::istringstream cut(path);
@@ -203,14 +232,15 @@ void Request::cutPath()
 
 void Request::makeAllPathRules(ServerConfig &server)
 {
-	int pathType;
+	int	pathType;
+
 	std::string newPath;
 	std::string newCompletPath;
 	std::vector<std::string>::iterator it = this->_cutPath.begin();
 	for (; it != this->_cutPath.end(); it++)
 	{
 		if (this->_code == 301)
-			return;
+			return ;
 		newPath += *it;
 		newCompletPath = this->_root + newPath;
 		if (*it == "/")
@@ -221,25 +251,25 @@ void Request::makeAllPathRules(ServerConfig &server)
 		{
 		case -1:
 			verifFile(newCompletPath);
-			return;
+			return ;
 		case DIR_WITH_SLASH:
 			accessFolder(newCompletPath);
-			break;
+			break ;
 		case DIR_NO_SLASH:
-			break;
+			break ;
 		case SERVER_LOCATION:
 			copyLocationRules(server, newPath);
 			makeLocationRules();
 			accessFolder(newCompletPath);
-			break;
+			break ;
 		case FILE_PATH:
 			makeExtentionAndNameFile(*it);
 			if (access(newCompletPath.c_str(), R_OK) != 0)
 			{
 				this->_code = 403;
-				break;
+				break ;
 			}
-			break;
+			break ;
 		}
 	}
 }
@@ -252,26 +282,28 @@ void Request::accessFolder(std::string newCompletPath)
 	}
 }
 
-int Request::checkPathType(ServerConfig &server, bool slash, std::string &piecePath)
+int Request::checkPathType(ServerConfig &server, bool slash,
+	std::string &piecePath)
 {
-	struct stat st;
+	struct stat	st;
 
 	if (slash)
 		return (NOTHING);
+	// check si c est une location serveur
+	std::vector<LocationConfig>::iterator it = server.locations.begin();
+	for (; it < server.locations.end(); it++)
+	{
+		if (this->_root + it->path == this->_root + piecePath)
+			return (SERVER_LOCATION);
+	}
+	// check le systeme de fichiers
 	std::string cPath = this->_root + piecePath;
-
 	if (stat(cPath.c_str(), &st) == -1)
 		return (-1);
 	if (S_ISREG(st.st_mode))
 		return (FILE_PATH);
 	if (S_ISDIR(st.st_mode))
 	{
-		std::vector<LocationConfig>::iterator it = server.locations.begin();
-		for (; it < server.locations.end(); it++)
-		{
-			if (this->_root + it->path == this->_root + piecePath)
-				return (SERVER_LOCATION);
-		}
 		if (this->_path[this->_path.size() - 1] == '/')
 			return (DIR_WITH_SLASH);
 		return (DIR_NO_SLASH);
@@ -281,7 +313,8 @@ int Request::checkPathType(ServerConfig &server, bool slash, std::string &pieceP
 
 void Request::verifFile(std::string path)
 {
-	struct stat st;
+	struct stat	st;
+
 	if (stat(path.c_str(), &st) == -1)
 	{
 		if (errno == ENOENT || errno == ENOTDIR)
@@ -290,7 +323,7 @@ void Request::verifFile(std::string path)
 			this->_code = 403;
 		else
 			this->_code = 500;
-		return;
+		return ;
 	}
 }
 
@@ -306,14 +339,14 @@ void Request::copyLocationRules(ServerConfig &server, std::string &folder)
 		{
 			this->_isLocation = true;
 			this->_location = &server.locations[i];
-			return;
+			return ;
 		}
 	}
 }
 
 void Request::makeExtentionAndNameFile(std::string file)
 {
-	size_t dotPos;
+	size_t	dotPos;
 
 	dotPos = file.rfind('.');
 	if (dotPos == std::string::npos)
@@ -350,11 +383,11 @@ void Request::makeLocationRules()
 			else
 				this->_isRedirection = true;
 		}
-		return;
+		return ;
 	}
 	checkAllowMethods();
 	if (_code != 200)
-		return;
+		return ;
 	if (this->_location && !this->_location->root.empty())
 		this->_root = this->_location->root;
 	if (this->_location && !this->_location->index.empty())
@@ -368,7 +401,7 @@ void Request::checkAllowMethods()
 		for (size_t i = 0; i < this->_location->methods.size(); i++)
 		{
 			if (this->_location->methods[i] == this->_methode)
-				return;
+				return ;
 		}
 		this->_code = 405;
 	}
@@ -387,7 +420,7 @@ void Request::searchIndex()
 			{
 				this->_path += *index;
 				makeExtentionAndNameFile(*index);
-				return;
+				return ;
 			}
 		}
 		this->_code = 200;
@@ -397,13 +430,12 @@ void Request::searchIndex()
 void Request::checkIsCgi(ServerConfig &server)
 {
 	if (this->_fileName.empty() || this->_fileExtention.empty())
-		return;
+		return ;
 	std::map<std::string, std::string> mapCgi;
 	if (this->_location && this->_isLocation)
 		mapCgi = this->_location->cgi;
 	else
 		mapCgi = server.cgi;
-
 	std::map<std::string, std::string>::iterator cgi = mapCgi.begin();
 	for (; cgi != mapCgi.end(); cgi++)
 	{
@@ -411,7 +443,7 @@ void Request::checkIsCgi(ServerConfig &server)
 		{
 			this->_isCgi = true;
 			this->_cgiPath = cgi->second;
-			return;
+			return ;
 		}
 	}
 }
@@ -420,10 +452,10 @@ void Request::parseAttribut(std::string &line)
 {
 	std::istringstream cut(line);
 	std::string res;
-
 	getline(cut, res, ' ');
 	std::string headerName = res;
 	if (!headerName.empty() && headerName[headerName.size() - 1] == ':')
+		// take off ':'
 		headerName = headerName.substr(0, headerName.size() - 1);
 	if (res == "Host:")
 	{
@@ -449,7 +481,7 @@ void Request::parseAttribut(std::string &line)
 		this->_httpHeaders["Content-Length"] = res;
 	}
 	else if (!headerName.empty())
-	{
+	{ // Pour tous les autres headers, les stocker dans _httpHeaders
 		std::string headerValue;
 		getline(cut, headerValue);
 		if (!headerValue.empty() && headerValue[0] == ' ')
@@ -473,8 +505,9 @@ void Request::parseAttribut(std::string &line)
 void Request::checkRequest()
 {
 	if (this->_code != 200)
-		return;
-	if (this->_methode.empty() || this->_path.empty() || this->_version.empty() || this->_host.empty())
+		return ;
+	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
+		|| this->_host.empty())
 		this->_code = 400;
 	verifFile(this->_completPath);
 }
@@ -658,7 +691,6 @@ std::ostream &operator<<(std::ostream &o, Request const &request)
 	o << "comp path : " << request.getCompletPath() << std::endl;
 	if (request.getIsCgi())
 		o << "cgi path  : " << request.getCgiPath() << std::endl;
-
 	// o << request.getIsLocation() <<std::endl;
 	if (!request.getVarLst().empty())
 	{
@@ -676,7 +708,6 @@ std::ostream &operator<<(std::ostream &o, Request const &request)
 			o << "	root      : " << request.getLocation()->root << std::endl;
 		else
 			o << "	root      : empty" << std::endl;
-
 		if (!request.getLocation()->index.empty())
 		{
 			o << "	index      : ";
@@ -705,7 +736,7 @@ std::ostream &operator<<(std::ostream &o, Request const &request)
 	return (o);
 }
 
-size_t hexToDecimal(const std::string &hex)
+size_t	hexToDecimal(const std::string &hex)
 {
 	size_t value = 0;
 
@@ -720,7 +751,7 @@ size_t hexToDecimal(const std::string &hex)
 		else if (c >= 'a' && c <= 'f')
 			value += c - 'a' + 10;
 		else
-			break;
+			break ;
 	}
 	return (value);
 }

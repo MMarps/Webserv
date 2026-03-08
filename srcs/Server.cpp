@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/05 16:44:41 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/08 16:35:33 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,9 +189,23 @@ void	Server::run() {
 		for (int i = 0; i < nfds; i++) {
 			currentFd = _events[i].data.fd;
 			currentEvent = _events[i].events;
-			if (currentEvent & (EPOLLHUP | EPOLLERR)) {
-				_closeConnection(currentFd);
+			if (currentEvent & (EPOLLHUP | EPOLLERR)) { // d'abord check si c'est un pipe CGI
+				if (_cgiFdToClientFd.find(currentFd) != _cgiFdToClientFd.end()) {
+					_handleCGIData(currentFd, currentEvent);
+				}
+				else if (_clients.find(currentFd) != _clients.end()) { // sinon si c'est un client -> le close
+					_closeConnection(currentFd);
+				}
+				else { // sinon nettoyer le FD
+					epoll_ctl(_epollFd, EPOLL_CTL_DEL, currentFd, NULL);
+					close(currentFd);
+				}
 				continue ;
+			}
+
+			if (_cgiFdToClientFd.find(currentFd) != _cgiFdToClientFd.end()) {
+				_handleCGIData(currentFd, currentEvent);
+				continue; // passer au next event
 			}
 			if (_serverSockets.find(currentFd) != _serverSockets.end())
 				_addNewClient(currentFd);
@@ -209,10 +223,42 @@ void	Server::run() {
 void	Server::_closeConnection(int fd) {
 	int					srvIdx;
 	std::stringstream	oss;
+	
+	if (_clients.find(fd) == _clients.end()) { // check que le client exist
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL); // si non -> close le FD
+		close(fd);
+		return;
+	}
+	
 	Client*				client = _clients[fd];
 
 	srvIdx = client->getServerIdx();
 	oss << "Connection closed: " << client->getAllInfos();
+
+	if (client->_cgi) { // clear les CGi en cours si besoin
+		int pipeIn = client->_cgi->getPipeIn();
+		int pipeOut = client->_cgi->getPipeOut();
+		
+		// delete les pipes de epoll et de la map
+		if (_cgiFdToClientFd.find(pipeIn) != _cgiFdToClientFd.end()) {
+			epoll_ctl(_epollFd, EPOLL_CTL_DEL, pipeIn, NULL);
+			close(pipeIn);
+			_cgiFdToClientFd.erase(pipeIn);
+		}
+		
+		if (_cgiFdToClientFd.find(pipeOut) != _cgiFdToClientFd.end()) {
+			epoll_ctl(_epollFd, EPOLL_CTL_DEL, pipeOut, NULL);
+			close(pipeOut);
+			_cgiFdToClientFd.erase(pipeOut);
+		}
+		
+		// tuer le processus CGI s'il est encore en vie
+		pid_t pid = client->_cgi->getPid();
+		if (pid > 0) {
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+		}
+	}
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
 		perror("epoll_ctl");
@@ -222,7 +268,7 @@ void	Server::_closeConnection(int fd) {
 	if (_clients.count(fd))
 		_clients.erase(fd);
 
-	if (_clientMetadata.count(fd)) // Nettoyer les metadonnees reseau
+	if (_clientMetadata.count(fd)) // clear les metadonnees reseau
 		_clientMetadata.erase(fd);
 
 	Logger::info(oss.str(), srvIdx);
@@ -332,9 +378,268 @@ void	Server::_handleClientData(int clientFd) {
         }
         
         client->isRequestFinished = true;
-        _modEpoll(clientFd, EPOLLOUT);
+        
+        if (!client->_cgi) { // ne basculer en EPOLLOUT que si ce n'est pas un CGI en cours
+            _modEpoll(clientFd, EPOLLOUT);
+        }
     }
 }
+
+/////////////////////////////////////
+
+void	Server::_handleCGIData(int cgiFd, uint32_t events) {
+	int		clientFd = _cgiFdToClientFd[cgiFd];
+	
+	// check que le client existe toujours
+	if (_clients.find(clientFd) == _clients.end()) {
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+		close(cgiFd);
+		_cgiFdToClientFd.erase(cgiFd);
+		return;
+	}
+	
+	Client	*client = _clients[clientFd];
+	CGI		*cgi = client->_cgi;
+
+	if (!cgi) { // si cgi n existe plus
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+		close(cgiFd);
+		_cgiFdToClientFd.erase(cgiFd);
+		return;
+	}
+
+	// Handle EPOLLHUP/EPOLLERR - pipe closed by CGI
+	if (events & (EPOLLHUP | EPOLLERR)) {
+		// Try to read any remaining data
+		while (true) {
+			char buffer[4096];
+			ssize_t bytesRead = read(cgiFd, buffer, sizeof(buffer));
+			if (bytesRead > 0) {
+				cgi->appendOutput(buffer, bytesRead);
+			}
+			else {
+				break; // EOF or error
+			}
+		}
+		
+		// Cleanup and finalize
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+		close(cgiFd);
+		_cgiFdToClientFd.erase(cgiFd);
+		
+		int status;
+		pid_t result = waitpid(cgi->getPid(), &status, WNOHANG);
+		
+		if (result == 0) { // If process not done yet, try waiting briefly
+			usleep(10000); // Wait 10ms
+			result = waitpid(cgi->getPid(), &status, WNOHANG);
+		}
+		
+		if (result > 0) {
+			cgi->finalizeCGI(status);
+			_buildCGIResponse(client);
+			_modEpoll(clientFd, EPOLLOUT);
+			Logger::info("CGI completed after EPOLLHUP, response ready", client->getServerIdx());
+		}
+		else if (result == 0) { // Process still not done - force it
+			_handleCGIError(client, 502);
+		}
+		else { // waitpid error
+			_handleCGIError(client, 502);
+		}
+		return;
+	}
+
+	if (events & EPOLLIN) { // handle reading
+		while (true) { // Read loop: continue until EOF or EAGAIN
+			char	buffer[4096];
+			ssize_t	bytesRead = read(cgiFd, buffer, sizeof(buffer));
+			
+			
+			if (bytesRead > 0) { // ajt les donnees lues au buffer CGI
+				cgi->appendOutput(buffer, bytesRead);
+				// Continue reading
+			}
+			else if (bytesRead == 0) { // fin de lecture, le cgi a ferme STDOUT
+				epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+				close(cgiFd);
+				_cgiFdToClientFd.erase(cgiFd);
+
+				int	status;
+				pid_t	result = waitpid(cgi->getPid(), &status, WNOHANG); // check si process est termine
+				if (result > 0) { // process done
+					cgi->finalizeCGI(status);
+					_buildCGIResponse(client); // build response w/ CGI data
+					_modEpoll(clientFd, EPOLLOUT); // bascule le client en mode EPOLLOUT pour envoyer
+					Logger::info("CGI completed, response ready", client->getServerIdx());
+				}
+				else
+					break; // Exit loop after EOF
+			}
+			else { // bytesRead < 0 (error)
+				if (errno == EAGAIN || errno == EWOULDBLOCK) {
+					// No more data available now, will get another EPOLLIN later
+					break;
+				}
+				else {
+					// Real error
+					Logger::error("CGI read error", client->getServerIdx());
+					_handleCGIError(client, 502);
+					break;
+				}
+			}
+		}
+	}
+
+	if (events & EPOLLOUT) { // handle writing
+		std::vector<char>	&bodyVec = client->getBody();
+		size_t	toWrite = bodyVec.size() - cgi->getWrittenBytes();
+		if (toWrite > 0) {
+			ssize_t written = write(cgiFd, bodyVec.data() + cgi->getWrittenBytes(), toWrite);
+			if (written > 0) {
+				cgi->addWrittenBytes(written);
+				if (cgi->getWrittenBytes() >= bodyVec.size()) { // si tout a ete write, close le pipe d'entree
+					epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+					close(cgiFd);
+					_cgiFdToClientFd.erase(cgiFd);
+					Logger::info("POST body sent to CGI", client->getServerIdx());
+				}
+			}
+			else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+				Logger::error("CGI write error", client->getServerIdx());
+				_handleCGIError(client, 502);
+			}
+		}
+	}
+}
+
+bool	Server::_isCgiRequest(Request req, Client *c, int clientFd) {
+	CGI	_tmpCgi(req, _conf.servers[c->getServerIdx()]);
+
+	if (_tmpCgi.isCGI(req, _conf.servers[c->getServerIdx()])) {
+		c->_cgi = new CGI(req, _conf.servers[c->getServerIdx()]);
+		if (!c->_cgi->executeAsync(req)) {
+			delete c->_cgi;
+			c->_cgi = NULL;
+			Response	response(req);
+
+			response.makeRep(this->_conf.servers[c->getServerIdx()], c);
+			c->getResponse().append(response.getResponse());
+			const std::vector<char>	&content = response.getContent();
+
+			if (!content.empty())
+				c->getResponse().append(content.data(), content.size());
+			
+			_modEpoll(clientFd, EPOLLOUT); // basculer en EPOLLOUT pour envoyer la reponse d'erreur
+			return (false);
+		}
+
+		int pipeOutFd = c->_cgi->getPipeOut();
+		_addToEpoll(pipeOutFd, EPOLLIN);
+		_cgiFdToClientFd[pipeOutFd] = clientFd;
+
+		if (req.getMethode() == "POST") {
+			int	pipeInFd = c->_cgi->getPipeIn();
+       		_addToEpoll(pipeInFd, EPOLLOUT);
+    		_cgiFdToClientFd[pipeInFd] = clientFd;
+    	}
+    	Logger::info("CGI process started, pipes added to epoll", c->getServerIdx());
+    	return (false); // ne pas build la reponse maintenant
+	}
+	return (true);
+}
+
+/////////////////////////////////////
+
+void	Server::_buildCGIResponse(Client* client) {
+	CGI* cgi = client->_cgi;
+	if (!cgi)
+		return;
+
+	int statusCode = cgi->getStatusCode();
+	std::map<std::string, std::string> cgiHeaders = cgi->getHeaders();
+	std::string body = cgi->getBody();
+
+	// build la status line
+	std::ostringstream statusLine;
+	statusLine << "HTTP/1.1 " << statusCode << " ";
+
+	// trouver le message de statut (simple mapping)
+	if (statusCode == 200) statusLine << "OK";
+	else if (statusCode == 502) statusLine << "Bad Gateway";
+	else if (statusCode == 504) statusLine << "Gateway Timeout";
+	else statusLine << "Unknown";
+
+	statusLine << "\r\n";
+	client->getResponse().append(statusLine.str());
+
+	// Ajouter les headers CGI
+	for (std::map<std::string, std::string>::iterator it = cgiHeaders.begin(); it != cgiHeaders.end(); ++it)
+		client->getResponse().append(it->first + ": " + it->second + "\r\n");
+
+	// Si pas de Content-Length, l'ajouter
+	if (cgiHeaders.find("Content-Length") == cgiHeaders.end()) {
+		std::ostringstream cl;
+		cl << "Content-Length: " << body.size() << "\r\n";
+		client->getResponse().append(cl.str());
+	}
+
+	client->getResponse().append("\r\n");
+	client->getResponse().append(body);
+
+	// Nettoyer le CGI
+	delete client->_cgi;
+	client->_cgi = NULL;
+
+	Logger::info("CGI response built", client->getServerIdx());
+}
+
+void	Server::_handleCGIError(Client* client, int errCode) {
+	// Nettoyer le CGI
+	if (client->_cgi) {
+		// Fermer les pipes s'ils sont ouverts
+		int pipeIn = client->_cgi->getPipeIn();
+		int pipeOut = client->_cgi->getPipeOut();
+		
+		if (_cgiFdToClientFd.find(pipeIn) != _cgiFdToClientFd.end()) {
+			epoll_ctl(_epollFd, EPOLL_CTL_DEL, pipeIn, NULL);
+			close(pipeIn);
+			_cgiFdToClientFd.erase(pipeIn);
+		}
+
+		if (_cgiFdToClientFd.find(pipeOut) != _cgiFdToClientFd.end()) {
+			epoll_ctl(_epollFd, EPOLL_CTL_DEL, pipeOut, NULL);
+			close(pipeOut);
+			_cgiFdToClientFd.erase(pipeOut);
+		}
+
+		// Tuer le processus s'il est encore en vie
+		pid_t pid = client->_cgi->getPid();
+		if (pid > 0) {
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+		}
+
+		delete client->_cgi;
+		client->_cgi = NULL;
+	}
+
+	// Construire une réponse d'erreur
+	Request req;
+	req.setCode(errCode);
+	Response response(req);
+	response.makeRep(_conf.servers[client->getServerIdx()], client);
+	
+	client->getResponse().append(response.getResponse());
+	const std::vector<char>& content = response.getContent();
+	if (!content.empty())
+		client->getResponse().append(content.data(), content.size());
+
+	_modEpoll(client->getFd(), EPOLLOUT);
+	Logger::error("CGI error handled", client->getServerIdx());
+}
+
+/////////////////////////////////////
 
 void	Server::_parseResponse(Client *c, int errCode) {
 	Request	req;
@@ -346,6 +651,9 @@ void	Server::_parseResponse(Client *c, int errCode) {
 	}
 
 	req.parse(_conf.servers[c->getServerIdx()], c, errCode);
+
+	if (!_isCgiRequest(req, c, clientFd))
+		return;
 	Response	response(req);
 	response.makeRep(this->_conf.servers[c->getServerIdx()], c);
 	// std::cout << response << std::endl;
