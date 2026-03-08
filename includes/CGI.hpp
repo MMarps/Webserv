@@ -23,6 +23,7 @@ class CGI {
 		std::map<std::string, std::string> _cgiHeaders; // header retourne
 		int					_statusCode; // statut de l'output du script
 		int					_timeout; // timeout en secondes
+		size_t				_writtenBytes;
 
 		void				addHTTPHeaders(std::vector<std::string> &env);
 		void				parseOutput();
@@ -39,16 +40,31 @@ class CGI {
 		char				**vectorToEnv(std::vector<std::string> &env);
 		char				**setupEnv(const Request &req);
 
+		pid_t				_pid;
+		int					_pipeIn[2];
+		int					_pipeOut[2];
+		time_t				_startTime;
+		bool				_readComplete;
+
 	public:
 		CGI(Request &req, ServerConfig &server);
 		~CGI();
 		bool				execute(const Request &req);
+		bool				executeAsync(const Request &req);
 		int					getStatusCode() const;
 		std::vector<char>	getOutput() const;
 		std::string			getBody() const;
 		std::map<std::string, std::string>	getHeaders() const; // recupere les headers CGI
-		// bool				isCGI();
 		bool				isCGI(const Request &req, const ServerConfig &server);
+	
+		// Methodes pour epoll
+		void				appendOutput(const char* buffer, size_t size);
+		pid_t				getPid() const;
+		void				finalizeCGI(int status);
+		int					getPipeOut() const;
+		int					getPipeIn() const;
+		size_t				getWrittenBytes() const;
+		void				addWrittenBytes(size_t bytes);
 };
 
 # endif

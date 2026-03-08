@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:17:46 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/25 17:40:35 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 17:45:33 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,16 @@ Client::Client(int clientFd, int serverIdx, const std::string &remoteAddr, int s
 	  isUpload(false),
 	  isMultipart(false),
 	  uploadFileName(),
+	  _cgi(NULL),
 	  _fd(clientFd),
 	  _serverIdx(serverIdx),
 	  _addr(remoteAddr),
 	  _port(serverPort) {}
 
-Client::~Client() {}
+Client::~Client() {
+	if (_cgi)
+		delete _cgi;
+}
 
 //////////////////////////////////////
 
@@ -60,7 +64,7 @@ std::string	Client::getAllInfos() const {
 	return (oss.str());
 }
 
-void Client::setBody(std::vector<char> body) {
+void	Client::setBody(std::vector<char> body) {
 	this->_body.swap(body);
 }
 

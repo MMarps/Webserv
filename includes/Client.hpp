@@ -3,23 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/25 17:41:55 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/05 19:22:24 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-# include "Webserv.hpp"
+#include "Webserv.hpp"
+
+class CGI;
 
 enum MultipartState {
-    WAITING_BOUNDARY,
-    WAITING_HEADERS,
-    WRITING_BODY,
-    FINISHED
+	WAITING_BOUNDARY,
+	WAITING_HEADERS,
+	WRITING_BODY,
+	FINISHED
 };
 
 class	Client {
@@ -53,10 +55,13 @@ class	Client {
 		std::ofstream		uploadStream;
 		std::string			uploadFileName;
 		MultipartState		multipartState;
-    	std::string			boundary;
-    	std::string			boundaryEnd;
+		std::string			boundary;
+		std::string			boundaryEnd;
 		
+		CGI					*_cgi;
+
 	private:
+
 		int					_fd;
 		int					_serverIdx;
 		std::string			_addr;
