@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Lexer.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/09 16:55:59 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/25 12:26:06 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/04 17:28:00 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,6 +83,7 @@ class Lexer {
 		void		SkipWhiteSpaceAndComment();
 		bool		isSep(const char& c) const;
 		tokenType	findIdentifier(const std::string& str) const;
+		void		getMessage();
 };
 
 bool	isNumber(const std::string& str);

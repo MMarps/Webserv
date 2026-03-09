@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/06 11:57:52 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/08 16:32:16 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,51 +46,59 @@ Response::Response(Request &req) : _req(req), _isCGI(false)
 
 Response::~Response() {}
 
-void Response::makeRep(ServerConfig &server)
+void Response::makeRep(ServerConfig &server, Client *client)
 {
+	(void)client;
 	if (_req.getMethode() == "DELETE")
 	{
 		handleDelete();
 		generateHeader();
-		finalLogger();
+		finalLogger(client->getServerIdx());
 		return;
 	}
+	// if (this->_req.getMethode() == "POST")
+	// {
+	// 	this->_content.swap(client->getBody());
+	// 	this->_contentLength = client->getBodySize();
+	// 	generateHeader();
+	// 	return;
+	// }
+
 	if (isCGIRequest(server))
 	{
-		std::cout << BRED << "CGI DETECTED" << NC << std::endl;
 		_isCGI = true;
 		handleCGI(server);
 		if (_req.getCode() == 502)
 		{
 			generateHeader();
-			finalLogger();
+			finalLogger(client->getServerIdx());
 			return;
 		}
 		buildCGIResponse();
-		finalLogger();
+		finalLogger(client->getServerIdx());
 		return;
 	}
 	generateBody();
 	generateHeader();
-	finalLogger();
+	finalLogger(client->getServerIdx());
 }
 
-void Response::finalLogger()
+void Response::finalLogger(int serverIdx)
 {
 	std::string m;
 
 	m = this->_req.getMethode() + " " + this->_req.getPath() + " " + intToString(this->_req.getCode()) + " " + this->_statutMessage[this->_req.getCode()];
 	if (this->_req.getCode() != 200 && this->_req.getCode() != 301)
 	{
-		Logger::error(m);
+		Logger::error(m, serverIdx);
 		return;
 	}
 	if (this->_req.getIsRedirection())
 	{
-		Logger::info(m + " location : " + this->_req.getNewPath());
+		Logger::info(m + " location : " + this->_req.getNewPath(), serverIdx);
 		return;
 	}
-	Logger::info(m);
+	Logger::info(m, serverIdx);
 }
 
 void Response::generateHeader()
@@ -121,14 +129,13 @@ void Response::generateHeader()
 
 void Response::generateBody()
 {
+
 	if (this->_req.getUrlIsMesssage())
 	{
-		std::stringstream str(this->_req.getNewPath(), std::ios::binary);
-		std::istreambuf_iterator<char> first(str);
-		std::istreambuf_iterator<char> last;
-		std::vector<char> buffer(first, last);
-		this->_contentLength = intToString(buffer.size());
-		this->_content.swap(buffer);
+		std::string message = this->_req.getNewPath();
+		this->_content.assign(message.begin(), message.end());
+		this->_contentLength = intToString(message.size());
+		return;
 	}
 	if (!this->_req.getFileName().empty())
 	{
@@ -148,8 +155,8 @@ void Response::checkFile(bool save)
 	std::istreambuf_iterator<char> first(file);
 	std::istreambuf_iterator<char> last;
 	std::vector<char> buffer(first, last);
-
 	this->_contentLength = intToString(buffer.size());
+
 	if (save)
 		this->_content.swap(buffer);
 }
@@ -157,6 +164,7 @@ void Response::checkFile(bool save)
 std::string Response::intToString(int n)
 {
 	std::stringstream ss;
+
 	ss << n;
 	return (ss.str());
 }
@@ -169,7 +177,7 @@ void Response::generateAutoindex()
 	htmlpage = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Document</title></head><body>";
 	lstFiles = getLstDir();
 	for (long unsigned int i = 0; i < lstFiles.size(); i++)
-		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i]  + "\">" + lstFiles[i] + "</a></br>";
+		htmlpage += "<a href=\"" + this->_req.getPath() + lstFiles[i] + "\">" + lstFiles[i] + "</a></br>";
 	htmlpage += "</body></html>";
 	std::vector<char> tmp(htmlpage.begin(), htmlpage.end());
 	this->_content.swap(tmp);
@@ -185,6 +193,8 @@ std::vector<std::string> Response::getLstDir()
 	std::vector<std::string> lstFiles;
 
 	folder = opendir(this->_req.getCompletPath().c_str());
+	if (!folder)
+		this->_req.setCode(500);
 	readFolder = readdir(folder);
 	while (readFolder)
 	{
@@ -192,6 +202,7 @@ std::vector<std::string> Response::getLstDir()
 			lstFiles.push_back(readFolder->d_name);
 		readFolder = readdir(folder);
 	}
+	closedir(folder);
 	std::sort(lstFiles.begin(), lstFiles.end());
 	return (lstFiles);
 }
@@ -211,7 +222,6 @@ void Response::handleCGI(ServerConfig &server)
 
 	if (_cgi.isCGI(_req, server) && !_cgi.execute(_req))
 	{
-		std::cout << BRED << "cgi execute" << NC << std::endl;
 		this->_req.setCode(502);
 		return;
 	}
@@ -295,7 +305,6 @@ void Response::handleDelete()
 	}
 	if (access(filePath.c_str(), W_OK) != 0) {
 		_req.setCode(403);
-		std::cout << BRED << "RETURN HERE2" << NC << std::endl;
 		return;
 	}
 	if (unlink(filePath.c_str()) != 0) {

@@ -3,7 +3,7 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
 /*   Updated: 2026/03/09 15:40:51 by arotondo         ###   ########.fr       */
@@ -533,7 +533,7 @@ bool	Server::_isCgiRequest(Request req, Client *c, int clientFd) {
 			c->_cgi = NULL;
 			Response	response(req);
 
-			response.makeRep(this->_conf.servers[c->getServerIdx()]);
+			response.makeRep(this->_conf.servers[c->getServerIdx()], c);
 			c->getResponse().append(response.getResponse());
 			const std::vector<char>	&content = response.getContent();
 
@@ -635,7 +635,7 @@ void	Server::_handleCGIError(Client* client, int errCode) {
 	Request req;
 	req.setCode(errCode);
 	Response response(req);
-	response.makeRep(_conf.servers[client->getServerIdx()]);
+	response.makeRep(_conf.servers[client->getServerIdx()], client);
 	
 	client->getResponse().append(response.getResponse());
 	const std::vector<char>& content = response.getContent();
@@ -657,12 +657,13 @@ void	Server::_parseResponse(Client *c, int errCode) {
 		req.setServerPort(_clientMetadata[clientFd].second);
 	}
 
-	req.parse(_conf.servers[c->getServerIdx()], c->getHeader(), errCode);
+	req.parse(_conf.servers[c->getServerIdx()], c, errCode);
 
 	if (!_isCgiRequest(req, c, clientFd))
 		return;
 	Response	response(req);
-	response.makeRep(this->_conf.servers[c->getServerIdx()]);
+	response.makeRep(this->_conf.servers[c->getServerIdx()], c);
+	// std::cout << response << std::endl;
 	c->getResponse().append(response.getResponse());
 	const std::vector<char>	&content = response.getContent();
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Parser.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarps <mmarps@student.42.fr>              +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/02/27 19:22:01 by mmarps           ###   ########.fr       */
+/*   Updated: 2026/03/04 17:23:22 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -267,14 +267,15 @@ void	Parser::parseCgi(LocationConfig& loc, const std::vector<std::string>& args)
 }
 
 void	Parser::parseReturn(LocationConfig &loc, const std::vector<std::string> &args) {
-	if (args.size() != 2)
+	if (args.size() != 2 && args.size() != 1)
 		throwError("'return' expects status and target", true);
 	const std::string &s = args[0];
 	if (!isNumber(s))
 		throwError("Invalid return status", true);
 	int st = atoi(s.c_str());
 	loc.return_code = st;
-	loc.return_url = args[1];
+	if (args.size() == 2)
+		loc.return_url = args[1];
 	loc.has_return = true;
 }
 
