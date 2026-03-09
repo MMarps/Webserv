@@ -6,7 +6,7 @@
 /*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/05 19:23:01 by arotondo         ###   ########.fr       */
+/*   Updated: 2026/03/09 14:34:02 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,38 +47,36 @@ class Server {
 	public:
 		Server(const std::string& confFileName);
 		~Server();
-	
+
 		const Config&	getConfig() const;
-	
 		void			run();
-	
 	private:
 		Config					_conf;
-	
+
 		int						_epollFd;
 		struct epoll_event		_events[MAX_EVENTS];
-	
+
 		std::map<int, int>		_serverSockets;
 		std::map<int, int>		_serverPorts;
-	
+
 		std::map<int, Client*>	_clients;
-	
+
 		std::map<int, std::pair<std::string, int> >	_clientMetadata; // map de metadata, au format: fd, IP client, port serv
-	
+
 		void					_setupServerSockets();
 		int						_setNonBlocking(int fd);
 		int						_addToEpoll(int fd, uint32_t events);
 		int						_modEpoll(int fd, uint32_t newEvents);
-	
+
 		void					_closeConnection(int fd);
 		void					_addNewClient(int serverFd);
 		void					_handleClientData(int clientFd);
 		void					_parseResponse(Client* c, int errCode);
 		void					_sendResponse(int clientFd);
-	
+
 		void					_closeSocketFds();
 		void					_closeAllClients();
-	
+
 		long					_extractContentLen(const std::string& header);
 		long					_getLocationMaxBodySize(Client* client);
 		const LocationConfig*	_findBestLocation(const std::string& uri, int serverIdx);
@@ -89,11 +87,11 @@ class Server {
 		std::string				_getUploadPath(Client* client);
 
 		void					_handleCGIData(int cgiFd, uint32_t events);
-	bool					_isCgiRequest(Request req, Client *C, int clientFd);
-	void					_buildCGIResponse(Client* client);
-	void					_handleCGIError(Client* client, int errCode);
-	
-	std::map<int, int>		_cgiFdToClientFd;
+		bool					_isCgiRequest(Request req, Client *C, int clientFd);
+		void					_buildCGIResponse(Client* client);
+		void					_handleCGIError(Client* client, int errCode);
+
+		std::map<int, int>		_cgiFdToClientFd;
 };
 
 #endif
