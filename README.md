@@ -22,7 +22,7 @@ The server is capable of:
 ### Installation & Compilation
 1. **Clone the repository:**
    ```Bash
-	git clone [https://github.com/jle-doua/webserv.git](https://github.com/jle-doua/webserv.git)
+	git clone https://github.com/MMarps/Webserv.git
 	cd webserv
 
 2.	**Compile the project:**
