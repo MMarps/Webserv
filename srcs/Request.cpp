@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/08 16:53:36 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/10 15:14:18 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,7 +130,6 @@ void Request::prepareReq(ServerConfig &server)
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION
 			&& this->_path[this->_path.size() - 1] != '/'))
 	{
-		std::cout << "ca passe " << this->_path << std::endl;
 		this->_newPath = this->_path + "/";
 		this->_code = 301;
 		this->_isRedirection = true;
@@ -178,7 +177,7 @@ void Request::cutVariableToPath()
 	if (haveVariable() == std::string::npos)
 		return ;
 	variableQuery = this->_path.substr(haveVariable() + 1);
-	this->_queryString = variableQuery; // Store the raw query string
+	this->_queryString = variableQuery;
 	this->_path = this->_path.substr(0, haveVariable());
 	splitVarQuery(variableQuery);
 }
@@ -289,14 +288,12 @@ int Request::checkPathType(ServerConfig &server, bool slash,
 
 	if (slash)
 		return (NOTHING);
-	// check si c est une location serveur
 	std::vector<LocationConfig>::iterator it = server.locations.begin();
 	for (; it < server.locations.end(); it++)
 	{
 		if (this->_root + it->path == this->_root + piecePath)
 			return (SERVER_LOCATION);
 	}
-	// check le systeme de fichiers
 	std::string cPath = this->_root + piecePath;
 	if (stat(cPath.c_str(), &st) == -1)
 		return (-1);
@@ -455,7 +452,6 @@ void Request::parseAttribut(std::string &line)
 	getline(cut, res, ' ');
 	std::string headerName = res;
 	if (!headerName.empty() && headerName[headerName.size() - 1] == ':')
-		// take off ':'
 		headerName = headerName.substr(0, headerName.size() - 1);
 	if (res == "Host:")
 	{
@@ -481,7 +477,7 @@ void Request::parseAttribut(std::string &line)
 		this->_httpHeaders["Content-Length"] = res;
 	}
 	else if (!headerName.empty())
-	{ // Pour tous les autres headers, les stocker dans _httpHeaders
+	{ 
 		std::string headerValue;
 		getline(cut, headerValue);
 		if (!headerValue.empty() && headerValue[0] == ' ')
@@ -691,7 +687,6 @@ std::ostream &operator<<(std::ostream &o, Request const &request)
 	o << "comp path : " << request.getCompletPath() << std::endl;
 	if (request.getIsCgi())
 		o << "cgi path  : " << request.getCgiPath() << std::endl;
-	// o << request.getIsLocation() <<std::endl;
 	if (!request.getVarLst().empty())
 	{
 		o << "var       : " << std::endl;

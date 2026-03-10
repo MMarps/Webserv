@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/08 16:32:16 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/10 15:16:04 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,8 @@ Response::Response(Request &req) : _req(req), _isCGI(false)
 	_statutMessage.insert(std::make_pair(409, "Conflict"));
 	_statutMessage.insert(std::make_pair(413, "Payload Too Large"));
 	_statutMessage.insert(std::make_pair(500, "Internal Server Error"));
-	_statutMessage.insert(std::make_pair(502, "Bad Gateway"));	   // script CGI a crash ou n'a pas pu etre exec
-	_statutMessage.insert(std::make_pair(504, "Gateway Timeout")); // script CGI a pris trop de temps
+	_statutMessage.insert(std::make_pair(502, "Bad Gateway"));
+	_statutMessage.insert(std::make_pair(504, "Gateway Timeout"));
 	_contentType.insert(std::make_pair(".html", "text/html"));
 	_contentType.insert(std::make_pair(".css", "text/css"));
 	_contentType.insert(std::make_pair(".js", "text/javascript"));
@@ -39,9 +39,6 @@ Response::Response(Request &req) : _req(req), _isCGI(false)
 	_contentType.insert(std::make_pair(".mp4", "video/mp4"));
 	_contentType.insert(std::make_pair(".mp3", "audio/mpeg"));
 	_contentType.insert(std::make_pair("nodotdetected", "text/plain"));
-
-	/*telecharge automatiquement la ressource*/
-	// _contentType.insert(std::make_pair("...", "application/octet-stream"));
 }
 
 Response::~Response() {}
@@ -56,14 +53,6 @@ void Response::makeRep(ServerConfig &server, Client *client)
 		finalLogger(client->getServerIdx());
 		return;
 	}
-	// if (this->_req.getMethode() == "POST")
-	// {
-	// 	this->_content.swap(client->getBody());
-	// 	this->_contentLength = client->getBodySize();
-	// 	generateHeader();
-	// 	return;
-	// }
-
 	if (isCGIRequest(server))
 	{
 		_isCGI = true;
@@ -209,7 +198,7 @@ std::vector<std::string> Response::getLstDir()
 
 bool Response::isCGIRequest(ServerConfig &server)
 {
-	if (_req.getCode() != 200) // requete incorrecte
+	if (_req.getCode() != 200)
 		return (false);
 
 	CGI tmpCGI(_req, server);
@@ -225,15 +214,12 @@ void Response::handleCGI(ServerConfig &server)
 		this->_req.setCode(502);
 		return;
 	}
-
 	int statusCode = _cgi.getStatusCode();
 	if (statusCode != 200)
 		this->_req.setCode(statusCode);
-
 	_cgiHeaders = _cgi.getHeaders();
-
 	std::string body = _cgi.getBody();
-	_content.assign(body.begin(), body.end()); // converti body (std::string) en std::vector pour assigner a _content
+	_content.assign(body.begin(), body.end()); 
 }
 
 void Response::buildCGIResponse()
@@ -247,7 +233,7 @@ void Response::buildCGIResponse()
 		_response += it->first + ": " + it->second + "\r\n";
 		it++;
 	}
-	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) { // ajouter content-length si pas deja present
+	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) {
 		std::ostringstream contentLengthStream;
 		contentLengthStream << _content.size();
 		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
@@ -265,15 +251,15 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 	struct dirent *entry;
 	int count = 0;
 
-	while ((entry = readdir(dir)) != NULL) { // parcourt le repertoire
-		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) { // si autre chose que ./ ou ../ alors non vide
+	while ((entry = readdir(dir)) != NULL) {
+		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
 			closedir(dir);
 			return (false);
 		}
 		count++;
 	}
 	closedir(dir);
-	return (count == 2); // si = 2 alors pas de fichier trouve => repertoire vide
+	return (count == 2);
 }
 
 void Response::handleDelete()
@@ -281,22 +267,22 @@ void Response::handleDelete()
 	std::string	filePath = _req.getCompletPath();
 	struct stat	fileStat;
 
-	std::cout << BRED << "HANDLE DELETE" << NC << std::endl;
+
 	if (stat(filePath.c_str(), &fileStat) != 0) {
 		_req.setCode(404);
 		return;
 	}
-	if (S_ISDIR(fileStat.st_mode)) { // check si dossier
-		if (access(filePath.c_str(), W_OK | X_OK) != 0) { // check si permissions ecriture/exec
+	if (S_ISDIR(fileStat.st_mode)) {
+		if (access(filePath.c_str(), W_OK | X_OK) != 0) {
 			_req.setCode(403);
 			return;
 		}
-		if (!isDirectoryEmpty(filePath)) { // check si vide
-			std::cout << BRED << "DIR NOT EMPTY" << NC << std::endl;
+		if (!isDirectoryEmpty(filePath)) {
+		
 			_req.setCode(409);
 			return;
 		}
-		if (rmdir(filePath.c_str()) != 0) { // si vide -> supprimer
+		if (rmdir(filePath.c_str()) != 0) {
 			_req.setCode(500);
 			return;
 		}

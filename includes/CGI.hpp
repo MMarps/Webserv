@@ -13,16 +13,15 @@ struct	ServerConfig;
 
 class CGI {
 	private:
-		Request				&_req; // reference vers la Requete
-		ServerConfig		&_server; // reference vers la Config-Serveur
-		// Client				&_client; // reference vers le Client
-		std::string			_scriptPath; // path du script a exec
-		std::string			_interpreter; // path de l interpreter (.php, .py...)
-		std::vector<char>	_output; // output du script
-		std::string			_body; // body de la sortie (apres headers)
-		std::map<std::string, std::string> _cgiHeaders; // header retourne
-		int					_statusCode; // statut de l'output du script
-		int					_timeout; // timeout en secondes
+		Request				&_req;
+		ServerConfig		&_server;
+		std::string			_scriptPath;
+		std::string			_interpreter;
+		std::vector<char>	_output;
+		std::string			_body;
+		std::map<std::string, std::string> _cgiHeaders;
+		int					_statusCode;
+		int					_timeout;
 		size_t				_writtenBytes;
 
 		void				addHTTPHeaders(std::vector<std::string> &env);
@@ -31,7 +30,6 @@ class CGI {
 		bool				processScript(char **env);
 		void				executeScript(char **env);
 		void				parentProcess(int *fdIn, int *fdOut);
-		// UtilsCGI.hpp
 		std::string			findInterpreter();
 		std::string			integerToString(size_t value);
 		void				freePipes(int *fdIn, int *fdOut);
@@ -54,10 +52,9 @@ class CGI {
 		int					getStatusCode() const;
 		std::vector<char>	getOutput() const;
 		std::string			getBody() const;
-		std::map<std::string, std::string>	getHeaders() const; // recupere les headers CGI
+		std::map<std::string, std::string>	getHeaders() const;
 		bool				isCGI(const Request &req, const ServerConfig &server);
-	
-		// Methodes pour epoll
+
 		void				appendOutput(const char* buffer, size_t size);
 		pid_t				getPid() const;
 		void				finalizeCGI(int status);

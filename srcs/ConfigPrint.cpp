@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigPrint.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mmarpaul <mmarpaul@student.42.fr>          +#+  +:+       +#+        */
+/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 16:44:36 by mmarps            #+#    #+#             */
-/*   Updated: 2026/01/23 14:10:26 by mmarpaul         ###   ########.fr       */
+/*   Updated: 2026/03/10 15:11:59 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,12 +47,6 @@ void	printConfig(Config const &cfg, std::ostream &os) {
 			if (i) os << ", ";
 			os << srv.listens[i].host << ":" << srv.listens[i].port;
 		}
-		os << "\n";
-
-		// server names
-		indent(os, 1); os << "server_names: ";
-		if (srv.server_names.empty()) os << "(none)";
-		else printStringList(os, srv.server_names);
 		os << "\n";
 
 		// root

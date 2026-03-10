@@ -38,11 +38,11 @@ void	CGI::parseOutput() {
 	size_t		separatorPos = output.find("\r\n\r\n");
 	size_t		separatorSize = 4;
 
-	if (separatorPos == std::string::npos) { // si pas trouve de separateur, chercher \n\n
+	if (separatorPos == std::string::npos) {
 		separatorPos = output.find("\n\n");
 		separatorSize = 2;
 	}
-	if (separatorPos == std::string::npos) { // si pas trouve, pas de header et tout dans le body
+	if (separatorPos == std::string::npos) { 
 		_body = output;
 		return ;
 	}
@@ -56,7 +56,7 @@ void	CGI::parseOutput() {
 	std::string			line;
 
 	while (std::getline(headerStream, line)) {
-		if (!line.empty() && line[line.size() - 1] == '\r') // Enlever le \r à la fin si présent
+		if (!line.empty() && line[line.size() - 1] == '\r')
 			line = line.substr(0, line.size() - 1);
 		size_t	colonPos = line.find(':');
 		if (colonPos == std::string::npos)
@@ -107,24 +107,17 @@ void	CGI::executeScript(char **env) {
 bool	CGI::execute(const Request &req) {
 	this->_interpreter = findInterpreter();
 	if (this->_interpreter.empty()){
-		std::cout << BRED << "cgi false 1" << NC << std::endl;
-
 		return (false);
 	}
 
-	if (_server.cgi.find(this->_interpreter) == _server.cgi.end()){ // check si dans les interpreter valides dans la config
-		std::cout << BRED << "cgi false 2" << NC << std::endl;
+	if (_server.cgi.find(this->_interpreter) == _server.cgi.end()){
 		return (false);
 	}
 	std::string	interpreterPath = _server.cgi[_interpreter];
-	if (access(interpreterPath.c_str(), X_OK) != 0){ // check si executable
-		std::cout << BRED << "cgi false 3" << NC << std::endl;
-		
+	if (access(interpreterPath.c_str(), X_OK) != 0){
 		return (false);
 	}
 	if (open(_scriptPath.c_str(), O_RDONLY, O_EXCL) < 0){
-		std::cout << BRED << "cgi false 4" << NC << std::endl;
-		
 		return (false);
 	}
 
@@ -135,27 +128,9 @@ bool	CGI::execute(const Request &req) {
 		return (true);
 	}
 	freeEnv(cgiEnv);
-	std::cout << BRED << "cgi false 5" << NC << std::endl;
 
 	return (false);
 }
-
-// void	CGI::parentProcess(int *fdIn, int *fdOut) {
-// 	close(fdIn[0]);
-// 	close(fdOut[1]);
-// 	if (_req.getMethode() == "POST") { // Si POST : écrire le body dans le pipe d'entrée
-// 		std::string body = _req.getBody();
-// 		write(fdIn[1], body.c_str(), body.size());
-// 	}
-// 	close(fdIn[1]);
-
-// 	char	buffer[4096];
-// 	ssize_t	bytesRead;
-// 	while ((bytesRead = read(fdOut[0], buffer, sizeof(buffer))) > 0) {
-// 		_output.insert(_output.end(), buffer, buffer + bytesRead);
-// 	}
-// 	close(fdOut[0]);
-// }
 
 bool	CGI::processScript(char **env) {
 	if (pipe(_pipeIn) < 0 || pipe(_pipeOut) < 0)
@@ -171,7 +146,7 @@ bool	CGI::processScript(char **env) {
 		close(_pipeIn[1]);
 		close(_pipeOut[0]);
 
-		std::string	scriptDir = _scriptPath.substr(0, _scriptPath.find_last_of('/')); // on change de dir pour aller ou se trouve le script
+		std::string	scriptDir = _scriptPath.substr(0, _scriptPath.find_last_of('/'));
 		if (!scriptDir.empty() && chdir(scriptDir.c_str()) != 0) {
 			freePipes(_pipeIn, _pipeOut);
 			exit(1);
@@ -189,50 +164,12 @@ bool	CGI::processScript(char **env) {
 		close(_pipeOut[1]);
 		executeScript(env);
 	}
-	// parentProcess(_pipeIn, _pipeOut);
 	close(_pipeIn[0]);
 	close(_pipeOut[1]);
 	_startTime = time(NULL);
 	_readComplete = false;
 	return (true);
 }
-
-// bool	CGI::waitProcess(pid_t pid) {
-// 	time_t	startTime = time(NULL);
-// 	int		status;
-// 	bool	isTimeout = false;
-
-// 	while (true) {
-// 		pid_t	ret = waitpid(pid, &status, WNOHANG);
-// 		if (ret == pid)
-// 			break ; // process termine
-// 		else if (ret < 0)
-// 			return (false); // error
-// 		time_t	elapsedTime = time(NULL) - startTime;
-// 		if (elapsedTime >= _timeout) {
-// 			kill(pid, SIGKILL);
-// 			waitpid(pid, &status, 0);
-// 			isTimeout = true;
-// 			break ;
-// 		}
-// 		usleep(100000); // attendre pour pas consommer trop de CPU
-// 	}
-// 	if (isTimeout) {
-// 		_statusCode = 504;
-// 		return (false);
-// 	}
-// 	if (WIFEXITED(status)) {
-// 		if (!WEXITSTATUS(status))
-// 			return (true);
-// 		_statusCode = 502;
-// 		return (false);
-// 	}
-// 	if (WIFSIGNALED(status)) {
-// 		_statusCode = 502;
-// 		return (false);
-// 	}
-// 	return (false);
-// }
 
 int	CGI::getStatusCode() const {
 	return (this->_statusCode);
@@ -314,8 +251,6 @@ bool	CGI::executeAsync(const Request &req) {
 		freeEnv(cgiEnv);
 		return (false);
 	}
-
-	// Rendre les pipes non-bloquants
 	fcntl(_pipeIn[1], F_SETFL, O_NONBLOCK);
 	fcntl(_pipeOut[0], F_SETFL, O_NONBLOCK);
 
@@ -329,7 +264,7 @@ bool	CGI::executeAsync(const Request &req) {
 		return (false);
 	}
 
-	if (_pid == 0) { // child process
+	if (_pid == 0) {
 		close(_pipeIn[1]);
 		close(_pipeOut[0]);
 
@@ -358,8 +293,6 @@ bool	CGI::executeAsync(const Request &req) {
 
 		exit(127);
 	}
-
-	// parent process
 	close(_pipeIn[0]);
 	close(_pipeOut[1]);
 	_startTime = time(NULL);
