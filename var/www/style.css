@@ -163,7 +163,7 @@ body {
 }
 
 .formContainer {
-    border: 1px solid red;
+    /* border: 1px solid red; */
     display: flex;
 
 }
@@ -192,7 +192,6 @@ body {
 
 .input {
     width: 100%;
-    border: 1px solid red;
     border: 2px solid var(--color);
     background-color: var(--bg-color);
     color: #FD802E;
@@ -200,4 +199,12 @@ body {
     border-radius: 5px;
 }
 
-.button {}
+.upload-card
+{
+    border:  0px solid red;
+    align-items: center;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 600px;
+}

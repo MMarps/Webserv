@@ -3,20 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Webserv - Upload Test</title>
-    <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background-color: #f4f4f9; }
-        .upload-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 400px; text-align: center; }
-        h2 { color: #333; }
-        input[type="file"] { margin: 20px 0; border: 1px dashed #ccc; padding: 10px; width: 100%; border-radius: 5px; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        #status { margin-top: 20px; padding: 10px; border-radius: 5px; display: none; }
-        .success { display: block !important; background-color: #d4edda; color: #155724; }
-        .error { display: block !important; background-color: #f8d7da; color: #721c24; }
-    </style>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <nav>
+		<div class="divNavButton">
+			<a href="/" class="navButton">index</a>
+		</div>
+		<div class="divNavButton">
+			<a href="photo.html" class="navButton">photo</a>
+		</div>
+		<div class="divNavButton">
+			<a href="post.html" class="navButton">post</a>
+		</div>
+		<div class="divNavButton">
+			<a href="upload_test.html" class="navButton">upload</a>
+		</div>
+		<div class="divNavButton">
+			<a href="postdoc.html" class="navButton">upload2</a>
+		</div>
+		<div class="divNavButton">
+			<a href="location/" class="navButton">autoindex</a>
+		</div>
+	</nav>
+    
     <div class="upload-card">
         <h2>📁 Upload de Fichier</h2>
         <p>Ce test simule un <code>curl --data-binary</code></p>
