@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/11 16:59:26 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/11 17:26:41 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ void Request::parse(ServerConfig &server, Client *client, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, client);
-	std::cout << *this << std::endl;
+	// std::cout << *this << std::endl;
 	if (this->_code == 301 || (this->_location && this->_location->has_return))
 		return ;
 	checkRequest();
@@ -138,7 +138,6 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	cutPath();
 	makeAllPathRules(server);
-	std::cout << _code << std::endl;
 	if (this->_code != 200)
 	{
 		checkErrorPage(server);

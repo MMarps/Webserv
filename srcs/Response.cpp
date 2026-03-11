@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/11 16:44:23 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/11 17:27:05 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,8 +50,6 @@ void Response::makeRep(ServerConfig &server, Client *client)
 	{
 		handleDelete();
 		generateHeader();
-		std::cout << *this << std::endl;
-
 		finalLogger(client->getServerIdx());
 		return;
 	}
@@ -71,7 +69,6 @@ void Response::makeRep(ServerConfig &server, Client *client)
 	}
 	generateBody();
 	generateHeader();
-	std::cout << *this << std::endl;
 	finalLogger(client->getServerIdx());
 }
 
