@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/02 16:52:31 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/04 17:23:22 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/10 15:32:14 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,8 +48,6 @@ ServerConfig	Parser::parseServer() {
 		else if (t.type == T_IDENT) {
 			parseDirective(srv);
 		}
-		// else if (t.type == T_EOF/*  || _ts.eof() */)
-		// 	break ;
 		else
 			throwError("Unexpected token inside 'server' block", false);
 	}
@@ -255,7 +253,6 @@ void	Parser::parseCgi(LocationConfig& loc, const std::vector<std::string>& args)
 		throwError("extension and executable expected by 'cgi'", true);
 	for (size_t i = 0; i < args.size(); i += 2) {
 		const std::string &ext = args[i];
-		// std::cout << BRED << ext[0] << NC << std::endl;
 		if (ext[0] != '.') {
 			std::ostringstream	oss;
 			oss << "\'" << ext << "\' " << "is not a valide extension";

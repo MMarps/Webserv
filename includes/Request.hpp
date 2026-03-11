@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/06 17:39:59 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/11 16:49:26 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ public:
 	void cutPath();
 	void makeAllPathRules(ServerConfig &server);
 	int checkPathType(ServerConfig &server, bool slash, std::string &piecePath);
-	void verifFile(std::string path);
+	bool verifFile(std::string path);
 	void copyLocationRules(ServerConfig &server, std::string &folder);
 	void makeExtentionAndNameFile(std::string file);
 	void formatPath();

@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/13 02:32:29 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/10 15:16:04 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/11 16:44:23 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,8 @@ void Response::makeRep(ServerConfig &server, Client *client)
 	{
 		handleDelete();
 		generateHeader();
+		std::cout << *this << std::endl;
+
 		finalLogger(client->getServerIdx());
 		return;
 	}
@@ -69,6 +71,7 @@ void Response::makeRep(ServerConfig &server, Client *client)
 	}
 	generateBody();
 	generateHeader();
+	std::cout << *this << std::endl;
 	finalLogger(client->getServerIdx());
 }
 
@@ -105,7 +108,7 @@ void Response::generateHeader()
 		this->_response += "\r\n";
 		return;
 	}
-	if ((this->_isCGI && this->_req.getCode() == 502) || (this->_req.getCode() != 200 && this->_req.getFileName().empty()))
+	if ((this->_isCGI && this->_req.getCode() == 502) || this->_req.getMethode() == "DELETE" || (this->_req.getCode() != 200 && this->_req.getFileName().empty()))
 	{
 		this->_response += "Content-length: 0\r\n";
 		this->_response += "\r\n";
@@ -219,7 +222,7 @@ void Response::handleCGI(ServerConfig &server)
 		this->_req.setCode(statusCode);
 	_cgiHeaders = _cgi.getHeaders();
 	std::string body = _cgi.getBody();
-	_content.assign(body.begin(), body.end()); 
+	_content.assign(body.begin(), body.end());
 }
 
 void Response::buildCGIResponse()
@@ -229,11 +232,13 @@ void Response::buildCGIResponse()
 	_response = statusLine.str();
 
 	std::map<std::string, std::string>::iterator it = _cgiHeaders.begin();
-	while (it != _cgiHeaders.end()) {
+	while (it != _cgiHeaders.end())
+	{
 		_response += it->first + ": " + it->second + "\r\n";
 		it++;
 	}
-	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) {
+	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end())
+	{
 		std::ostringstream contentLengthStream;
 		contentLengthStream << _content.size();
 		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
@@ -251,8 +256,10 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 	struct dirent *entry;
 	int count = 0;
 
-	while ((entry = readdir(dir)) != NULL) {
-		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+	while ((entry = readdir(dir)) != NULL)
+	{
+		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
+		{
 			closedir(dir);
 			return (false);
 		}
@@ -264,36 +271,43 @@ bool Response::isDirectoryEmpty(const std::string &dirPath)
 
 void Response::handleDelete()
 {
-	std::string	filePath = _req.getCompletPath();
-	struct stat	fileStat;
-
-
-	if (stat(filePath.c_str(), &fileStat) != 0) {
+	std::string filePath = _req.getCompletPath();
+	struct stat fileStat;
+	if (this->_req.getCode() == 405)
+		return ;
+	if (stat(filePath.c_str(), &fileStat) != 0)
+	{
 		_req.setCode(404);
 		return;
 	}
-	if (S_ISDIR(fileStat.st_mode)) {
-		if (access(filePath.c_str(), W_OK | X_OK) != 0) {
+	if (S_ISDIR(fileStat.st_mode))
+	{
+		if (access(filePath.c_str(), W_OK | X_OK) != 0)
+		{
 			_req.setCode(403);
 			return;
 		}
-		if (!isDirectoryEmpty(filePath)) {
-		
+		if (!isDirectoryEmpty(filePath))
+		{
+
 			_req.setCode(409);
 			return;
 		}
-		if (rmdir(filePath.c_str()) != 0) {
+		if (rmdir(filePath.c_str()) != 0)
+		{
 			_req.setCode(500);
 			return;
 		}
 		_req.setCode(204);
 		return;
 	}
-	if (access(filePath.c_str(), W_OK) != 0) {
+	if (access(filePath.c_str(), W_OK) != 0)
+	{
 		_req.setCode(403);
 		return;
 	}
-	if (unlink(filePath.c_str()) != 0) {
+	if (unlink(filePath.c_str()) != 0)
+	{
 		_req.setCode(500);
 		return;
 	}

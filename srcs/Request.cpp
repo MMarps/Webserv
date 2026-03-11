@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/10 15:14:18 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/11 16:59:26 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ void Request::parse(ServerConfig &server, Client *client, int code)
 	this->_root = server.root;
 	this->_index = server.index;
 	makeRequest(server, client);
+	std::cout << *this << std::endl;
 	if (this->_code == 301 || (this->_location && this->_location->has_return))
 		return ;
 	checkRequest();
@@ -137,6 +138,7 @@ void Request::prepareReq(ServerConfig &server)
 	}
 	cutPath();
 	makeAllPathRules(server);
+	std::cout << _code << std::endl;
 	if (this->_code != 200)
 	{
 		checkErrorPage(server);
@@ -165,6 +167,8 @@ void Request::checkErrorPage(ServerConfig &server)
 	if (this->_code != 200 && !server.error_pages.empty()
 		&& !server.error_pages[this->_code].empty())
 	{
+		if (!verifFile(server.error_pages[this->_code]))
+			return ;
 		this->_completPath = server.error_pages[this->_code];
 		makeExtentionAndNameFile(this->_completPath);
 		return ;
@@ -238,7 +242,7 @@ void Request::makeAllPathRules(ServerConfig &server)
 	std::vector<std::string>::iterator it = this->_cutPath.begin();
 	for (; it != this->_cutPath.end(); it++)
 	{
-		if (this->_code == 301)
+		if (this->_code == 301 || this->_code == 405)
 			return ;
 		newPath += *it;
 		newCompletPath = this->_root + newPath;
@@ -274,9 +278,11 @@ void Request::makeAllPathRules(ServerConfig &server)
 }
 
 void Request::accessFolder(std::string newCompletPath)
-{
+{	
 	if (this->_path != "/" && access(newCompletPath.c_str(), X_OK) != 0)
 	{
+		if (!verifFile(newCompletPath))
+			return ;
 		this->_code = 403;
 	}
 }
@@ -308,7 +314,7 @@ int Request::checkPathType(ServerConfig &server, bool slash,
 	return (0);
 }
 
-void Request::verifFile(std::string path)
+bool Request::verifFile(std::string path)
 {
 	struct stat	st;
 
@@ -320,15 +326,16 @@ void Request::verifFile(std::string path)
 			this->_code = 403;
 		else
 			this->_code = 500;
-		return ;
+		return false;
 	}
+	return true;
 }
 
 void Request::copyLocationRules(ServerConfig &server, std::string &folder)
 {
 	std::string formatPath;
 	formatPath = folder;
-	if (!formatPath.empty() && formatPath[formatPath.size() - 1] == '/')
+	if (!formatPath.empty() && (formatPath[formatPath.size() - 1] == '/' && formatPath.size() != 1))
 		formatPath.erase(formatPath.size() - 1);
 	for (size_t i = 0; i < server.locations.size(); ++i)
 	{
