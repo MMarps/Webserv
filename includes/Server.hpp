@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: andrea <andrea@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:11:24 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/10 15:23:39 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/14 23:22:05 by andrea           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,7 @@ class Server {
 		void					_handleClientData(int clientFd);
 		void					_parseResponse(Client* c, int errCode);
 		void					_sendResponse(int clientFd);
+		void					_checkCGITimeouts();
 
 		void					_closeSocketFds();
 		void					_closeAllClients();

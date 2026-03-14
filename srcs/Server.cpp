@@ -3,15 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: andrea <andrea@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/01 16:18:11 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/10 15:18:51 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/14 23:40:29 by andrea           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include "ConfigPrint.hpp"
+
+static void	_killAndReapChild(pid_t pid) {
+	if (pid <= 0)
+		return;
+	if (kill(pid, SIGKILL) < 0 && errno == ESRCH)
+		return;
+
+	int status;
+	for (int i = 0; i < 5; ++i) {
+		pid_t	reaped = waitpid(pid, &status, WNOHANG);
+		if (reaped == pid || (reaped == -1 && errno == ECHILD))
+			return;
+		usleep(10000);
+	}
+}
 
 Server::Server(const std::string &confFileName)
 	: _conf(),
@@ -29,6 +44,7 @@ Server::Server(const std::string &confFileName)
 
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
+	signal(SIGPIPE, SIG_IGN);
 
 	Logger::init(_conf.servers);
 	Logger::log("Logger initialised");
@@ -171,7 +187,7 @@ void	Server::run() {
 	// printConfig(getConfig());
 	Logger::log("Server Ready");
 	while (true) {
-		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, -1);
+		nfds = epoll_wait(_epollFd, _events, MAX_EVENTS, 1000);
 		if (nfds < 0) {
 			if (errno == EINTR && g_terminate) {
 				std::cout << std::endl;
@@ -185,6 +201,9 @@ void	Server::run() {
 				continue ;
 			}
 		}
+		_checkCGITimeouts();
+		if (nfds == 0)
+			continue ;
 		for (int i = 0; i < nfds; i++) {
 			currentFd = _events[i].data.fd;
 			currentEvent = _events[i].events;
@@ -219,6 +238,27 @@ void	Server::run() {
 	}
 }
 
+void	Server::_checkCGITimeouts() {
+	std::vector<int>	timedOutClients;
+
+	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		Client *client = it->second;
+		if (client && client->_cgi && client->_cgi->isTimedOut())
+			timedOutClients.push_back(it->first);
+	}
+
+	for (size_t i = 0; i < timedOutClients.size(); ++i) {
+		int fd = timedOutClients[i];
+		if (_clients.find(fd) == _clients.end())
+			continue ;
+		Client *client = _clients[fd];
+		if (!client || !client->_cgi)
+			continue ;
+		Logger::error("CGI timeout reached, killing process", client->getServerIdx());
+		_handleCGIError(client, 504);
+	}
+}
+
 void	Server::_closeConnection(int fd) {
 	int					srvIdx;
 	std::stringstream	oss;
@@ -249,10 +289,8 @@ void	Server::_closeConnection(int fd) {
 			_cgiFdToClientFd.erase(pipeOut);
 		}
 		pid_t pid = client->_cgi->getPid();
-		if (pid > 0) {
-			kill(pid, SIGKILL);
-			waitpid(pid, NULL, 0);
-		}
+		if (pid > 0)
+			_killAndReapChild(pid);
 	}
 
 	if (epoll_ctl(_epollFd, EPOLL_CTL_DEL, fd, NULL) < 0)
@@ -385,7 +423,14 @@ void	Server::_handleClientData(int clientFd) {
 /////////////////////////////////////
 
 void	Server::_handleCGIData(int cgiFd, uint32_t events) {
-	int		clientFd = _cgiFdToClientFd[cgiFd];
+	std::map<int, int>::iterator	it = _cgiFdToClientFd.find(cgiFd);
+	if (it == _cgiFdToClientFd.end()) {
+		epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+		close(cgiFd);
+		return;
+	}
+
+	int		clientFd = it->second;
 	
 	if (_clients.find(clientFd) == _clients.end()) {
 		epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
@@ -410,7 +455,11 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 				char buffer[4096];
 				ssize_t bytesRead = read(cgiFd, buffer, sizeof(buffer));
 				if (bytesRead > 0) {
-					cgi->appendOutput(buffer, bytesRead);
+					if (!cgi->appendOutput(buffer, bytesRead)) {
+						Logger::error("CGI output too large", client->getServerIdx());
+						_handleCGIError(client, 502);
+						return;
+					}
 				}
 				else {
 					break;
@@ -432,13 +481,15 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 		}
 		
 		int status;
-		pid_t result = waitpid(cgi->getPid(), &status, 0);
+		pid_t result = waitpid(cgi->getPid(), &status, WNOHANG);
 		if (result > 0) {
 			cgi->finalizeCGI(status);
 			_buildCGIResponse(client);
 			_modEpoll(clientFd, EPOLLOUT);
 			Logger::info("CGI completed after EPOLLHUP, response ready", client->getServerIdx());
 		}
+		else if (result == 0)
+			return;
 		else
 			_handleCGIError(client, 502);
 		return;
@@ -451,7 +502,11 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 			
 			
 			if (bytesRead > 0) {
-				cgi->appendOutput(buffer, bytesRead);
+				if (!cgi->appendOutput(buffer, bytesRead)) {
+					Logger::error("CGI output too large", client->getServerIdx());
+					_handleCGIError(client, 502);
+					break;
+				}
 			}
 			else if (bytesRead == 0) {
 				int pipeIn2 = cgi->getPipeIn();
@@ -467,13 +522,15 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 					_cgiFdToClientFd.erase(pipeIn2);
 				}
 				int	status;
-				pid_t	result = waitpid(cgi->getPid(), &status, 0);
+				pid_t	result = waitpid(cgi->getPid(), &status, WNOHANG);
 				if (result > 0) {
 					cgi->finalizeCGI(status);
 					_buildCGIResponse(client);
 					_modEpoll(clientFd, EPOLLOUT);
 					Logger::info("CGI completed, response ready", client->getServerIdx());
 				}
+				else if (result == 0)
+					break;
 				else
 					_handleCGIError(client, 502);
 				break;
@@ -493,9 +550,16 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 
 	if (events & EPOLLOUT) {
 		std::vector<char>	&bodyVec = client->getBody();
-		size_t	toWrite = bodyVec.size() - cgi->getWrittenBytes();
+		size_t	writtenBytes = cgi->getWrittenBytes();
+		if (writtenBytes >= bodyVec.size()) {
+			epoll_ctl(_epollFd, EPOLL_CTL_DEL, cgiFd, NULL);
+			close(cgiFd);
+			_cgiFdToClientFd.erase(cgiFd);
+			return;
+		}
+		size_t	toWrite = bodyVec.size() - writtenBytes;
 		if (toWrite > 0) {
-			ssize_t written = write(cgiFd, bodyVec.data() + cgi->getWrittenBytes(), toWrite);
+			ssize_t written = write(cgiFd, bodyVec.data() + writtenBytes, toWrite);
 			if (written > 0) {
 				cgi->addWrittenBytes(written);
 				if (cgi->getWrittenBytes() >= bodyVec.size()) {
@@ -504,6 +568,10 @@ void	Server::_handleCGIData(int cgiFd, uint32_t events) {
 					_cgiFdToClientFd.erase(cgiFd);
 					Logger::info("POST body sent to CGI", client->getServerIdx());
 				}
+			}
+			else if (written == 0) {
+				Logger::error("CGI write returned 0", client->getServerIdx());
+				_handleCGIError(client, 502);
 			}
 			else if (errno != EAGAIN && errno != EWOULDBLOCK) {
 				Logger::error("CGI write error", client->getServerIdx());
@@ -521,16 +589,7 @@ bool	Server::_isCgiRequest(Request req, Client *c, int clientFd) {
 		if (!c->_cgi->executeAsync(req)) {
 			delete c->_cgi;
 			c->_cgi = NULL;
-			Response	response(req);
-
-			response.makeRep(this->_conf.servers[c->getServerIdx()], c);
-			c->getResponse().append(response.getResponse());
-			const std::vector<char>	&content = response.getContent();
-
-			if (!content.empty())
-				c->getResponse().append(content.data(), content.size());
-			
-			_modEpoll(clientFd, EPOLLOUT);
+			_handleCGIError(c, 502);
 			return (false);
 		}
 
@@ -606,10 +665,8 @@ void	Server::_handleCGIError(Client* client, int errCode) {
 			_cgiFdToClientFd.erase(pipeOut);
 		}
 		pid_t pid = client->_cgi->getPid();
-		if (pid > 0) {
-			kill(pid, SIGKILL);
-			waitpid(pid, NULL, 0);
-		}
+		if (pid > 0)
+			_killAndReapChild(pid);
 		delete client->_cgi;
 		client->_cgi = NULL;
 	}

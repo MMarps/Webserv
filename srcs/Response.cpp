@@ -12,7 +12,7 @@
 
 #include "Response.hpp"
 
-Response::Response(Request &req) : _req(req), _isCGI(false)
+Response::Response(Request &req) : _req(req)
 {
 	_statutMessage.insert(std::make_pair(200, "OK"));
 	_statutMessage.insert(std::make_pair(201, "Created"));
@@ -50,20 +50,6 @@ void Response::makeRep(ServerConfig &server, Client *client)
 	{
 		handleDelete();
 		generateHeader();
-		finalLogger(client->getServerIdx());
-		return;
-	}
-	if (isCGIRequest(server))
-	{
-		_isCGI = true;
-		handleCGI(server);
-		if (_req.getCode() == 502)
-		{
-			generateHeader();
-			finalLogger(client->getServerIdx());
-			return;
-		}
-		buildCGIResponse();
 		finalLogger(client->getServerIdx());
 		return;
 	}
@@ -105,7 +91,7 @@ void Response::generateHeader()
 		this->_response += "\r\n";
 		return;
 	}
-	if ((this->_isCGI && this->_req.getCode() == 502) || (this->_req.getCode() != 200 && this->_req.getFileName().empty()))
+	if (this->_req.getCode() != 200 && this->_req.getFileName().empty())
 	{
 		this->_response += "Content-length: 0\r\n";
 		this->_response += "\r\n";
@@ -194,52 +180,6 @@ std::vector<std::string> Response::getLstDir()
 	closedir(folder);
 	std::sort(lstFiles.begin(), lstFiles.end());
 	return (lstFiles);
-}
-
-bool Response::isCGIRequest(ServerConfig &server)
-{
-	if (_req.getCode() != 200)
-		return (false);
-
-	CGI tmpCGI(_req, server);
-	return (tmpCGI.isCGI(_req, server));
-}
-
-void Response::handleCGI(ServerConfig &server)
-{
-	CGI _cgi(_req, server);
-
-	if (_cgi.isCGI(_req, server) && !_cgi.execute(_req))
-	{
-		this->_req.setCode(502);
-		return;
-	}
-	int statusCode = _cgi.getStatusCode();
-	if (statusCode != 200)
-		this->_req.setCode(statusCode);
-	_cgiHeaders = _cgi.getHeaders();
-	std::string body = _cgi.getBody();
-	_content.assign(body.begin(), body.end()); 
-}
-
-void Response::buildCGIResponse()
-{
-	std::ostringstream statusLine;
-	statusLine << "HTTP/1.1 " << _req.getCode() << ' ' << _statutMessage[_req.getCode()] << "\r\n";
-	_response = statusLine.str();
-
-	std::map<std::string, std::string>::iterator it = _cgiHeaders.begin();
-	while (it != _cgiHeaders.end()) {
-		_response += it->first + ": " + it->second + "\r\n";
-		it++;
-	}
-	if (_cgiHeaders.find("Content-Length") == _cgiHeaders.end()) {
-		std::ostringstream contentLengthStream;
-		contentLengthStream << _content.size();
-		_response += "Content-Length: " + contentLengthStream.str() + "\r\n";
-	}
-	_response += "Connection: close\r\n\r\n";
-	_response.append(_content.begin(), _content.end());
 }
 
 bool Response::isDirectoryEmpty(const std::string &dirPath)

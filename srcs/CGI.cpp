@@ -1,7 +1,7 @@
 #include "CGI.hpp"
 
 CGI::CGI(Request &req, ServerConfig &server) 
-	: _req(req), _server(server), _statusCode(200), _timeout(30), _writtenBytes(0), _pid(-1), _readComplete(false) {
+	: _req(req), _server(server), _statusCode(200), _timeout(30), _writtenBytes(0), _outputOverflow(false), _pid(-1) {
 	_scriptPath = _req.getCompletPath();
 	_pipeIn[0] = -1;
 	_pipeIn[1] = -1;
@@ -104,45 +104,51 @@ void	CGI::executeScript(char **env) {
 	exit(127);
 }
 
-bool	CGI::execute(const Request &req) {
+bool	CGI::validateExecutionContext() {
 	this->_interpreter = findInterpreter();
-	if (this->_interpreter.empty()){
+	if (this->_interpreter.empty())
 		return (false);
-	}
+	if (_server.cgi.find(this->_interpreter) == _server.cgi.end())
+		return (false);
 
-	if (_server.cgi.find(this->_interpreter) == _server.cgi.end()){
-		return (false);
-	}
 	std::string	interpreterPath = _server.cgi[_interpreter];
-	if (access(interpreterPath.c_str(), X_OK) != 0){
+	if (access(interpreterPath.c_str(), X_OK) != 0)
 		return (false);
-	}
-	if (open(_scriptPath.c_str(), O_RDONLY, O_EXCL) < 0){
+
+	int	scriptFd = open(_scriptPath.c_str(), O_RDONLY);
+	if (scriptFd < 0)
 		return (false);
-	}
-
-	char	**cgiEnv = setupEnv(req);
-	if (processScript(cgiEnv)) {
-		freeEnv(cgiEnv);
-		parseOutput();
-		return (true);
-	}
-	freeEnv(cgiEnv);
-
-	return (false);
+	close(scriptFd);
+	return (true);
 }
 
 bool	CGI::processScript(char **env) {
-	if (pipe(_pipeIn) < 0 || pipe(_pipeOut) < 0)
+	if (pipe(_pipeIn) < 0)
 		return (false);
+	if (pipe(_pipeOut) < 0) {
+		close(_pipeIn[0]);
+		close(_pipeIn[1]);
+		_pipeIn[0] = -1;
+		_pipeIn[1] = -1;
+		return (false);
+	}
 
 	fcntl(_pipeIn[1], F_SETFL, O_NONBLOCK);
 	fcntl(_pipeOut[0], F_SETFL, O_NONBLOCK);
 
-	pid_t	pid = fork();
-	if (pid < 0)
+	_pid = fork();
+	if (_pid < 0) {
+		close(_pipeIn[0]);
+		close(_pipeIn[1]);
+		close(_pipeOut[0]);
+		close(_pipeOut[1]);
+		_pipeIn[0] = -1;
+		_pipeIn[1] = -1;
+		_pipeOut[0] = -1;
+		_pipeOut[1] = -1;
 		return (false);
-	if (pid == 0) {
+	}
+	if (_pid == 0) {
 		close(_pipeIn[1]);
 		close(_pipeOut[0]);
 
@@ -166,17 +172,14 @@ bool	CGI::processScript(char **env) {
 	}
 	close(_pipeIn[0]);
 	close(_pipeOut[1]);
+	_pipeIn[0] = -1;
+	_pipeOut[1] = -1;
 	_startTime = time(NULL);
-	_readComplete = false;
 	return (true);
 }
 
 int	CGI::getStatusCode() const {
 	return (this->_statusCode);
-}
-
-std::vector<char>	CGI::getOutput() const {
-	return (this->_output);
 }
 
 std::string	CGI::getBody() const {
@@ -187,8 +190,24 @@ std::map<std::string, std::string>	CGI::getHeaders() const {
 	return (this->_cgiHeaders);
 }
 
-void	CGI::appendOutput(const char* buffer, size_t size) {
+bool	CGI::appendOutput(const char* buffer, size_t size) {
+	if (_outputOverflow)
+		return (false);
+	if (!buffer || size == 0)
+		return (true);
+	if (_output.size() >= MAX_CGI_OUTPUT_BYTES) {
+		_outputOverflow = true;
+		return (false);
+	}
+
+	size_t remaining = MAX_CGI_OUTPUT_BYTES - _output.size();
+	if (size > remaining) {
+		_output.insert(_output.end(), buffer, buffer + remaining);
+		_outputOverflow = true;
+		return (false);
+	}
 	_output.insert(_output.end(), buffer, buffer + size);
+	return (true);
 }
 
 pid_t	CGI::getPid() const {
@@ -200,9 +219,10 @@ void	CGI::finalizeCGI(int status) {
 		if (WEXITSTATUS(status) != 0)
 			_statusCode = 502;
 	}
-	else if (WIFSIGNALED(status)) {
+	else if (WIFSIGNALED(status))
 		_statusCode = 502;
-	}
+	if (_outputOverflow)
+		_statusCode = 502;
 	parseOutput();
 }
 
@@ -222,82 +242,18 @@ void	CGI::addWrittenBytes(size_t bytes) {
 	_writtenBytes += bytes;
 }
 
-bool	CGI::executeAsync(const Request &req) {
-	this->_interpreter = findInterpreter();
-	if (this->_interpreter.empty())
+bool	CGI::isTimedOut() const {
+	if (_startTime == 0)
 		return (false);
+	return (difftime(time(NULL), _startTime) >= _timeout);
+}
 
-	if (_server.cgi.find(this->_interpreter) == _server.cgi.end())
+bool	CGI::executeAsync(const Request &req) {
+	if (!validateExecutionContext())
 		return (false);
-	
-	std::string	interpreterPath = _server.cgi[_interpreter];
-	if (access(interpreterPath.c_str(), X_OK) != 0)
-		return (false);
-	
-	int	scriptFd = open(_scriptPath.c_str(), O_RDONLY);
-	if (scriptFd < 0)
-		return (false);
-	close(scriptFd);
 
 	char	**cgiEnv = setupEnv(req);
-	
-	if (pipe(_pipeIn) < 0) {
-		freeEnv(cgiEnv);
-		return (false);
-	}
-	if (pipe(_pipeOut) < 0) {
-		close(_pipeIn[0]);
-		close(_pipeIn[1]);
-		freeEnv(cgiEnv);
-		return (false);
-	}
-	fcntl(_pipeIn[1], F_SETFL, O_NONBLOCK);
-	fcntl(_pipeOut[0], F_SETFL, O_NONBLOCK);
-
-	_pid = fork();
-	if (_pid < 0) {
-		close(_pipeIn[0]);
-		close(_pipeIn[1]);
-		close(_pipeOut[0]);
-		close(_pipeOut[1]);
-		freeEnv(cgiEnv);
-		return (false);
-	}
-
-	if (_pid == 0) {
-		close(_pipeIn[1]);
-		close(_pipeOut[0]);
-
-		std::string	scriptDir = _scriptPath.substr(0, _scriptPath.find_last_of('/'));
-		if (!scriptDir.empty() && chdir(scriptDir.c_str()) != 0) {
-			close(_pipeIn[0]);
-			close(_pipeOut[1]);
-			exit(1);
-		}
-
-		if (dup2(_pipeIn[0], STDIN_FILENO) < 0) {
-			close(_pipeIn[0]);
-			close(_pipeOut[1]);
-			exit(1);
-		}
-		close(_pipeIn[0]);
-
-		if (dup2(_pipeOut[1], STDOUT_FILENO) < 0) {
-			close(_pipeOut[1]);
-			exit(1);
-		}
-		dup2(_pipeOut[1], STDERR_FILENO);
-		close(_pipeOut[1]);
-
-		executeScript(cgiEnv);
-
-		exit(127);
-	}
-	close(_pipeIn[0]);
-	close(_pipeOut[1]);
-	_startTime = time(NULL);
-	_readComplete = false;
-
+	bool	started = processScript(cgiEnv);
 	freeEnv(cgiEnv);
-	return (true);
+	return (started);
 }
