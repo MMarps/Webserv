@@ -4,6 +4,7 @@ echo "Content-Type: text/html"
 echo ""
 
 echo "<!DOCTYPE html>"
+echo "<meta charset="UTF-8">"
 echo "<html>"
 echo "<head>"
 echo "<title>CGI Bash</title>"
