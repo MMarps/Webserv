@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/16 17:14:53 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/10 15:22:49 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/15 15:12:17 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define CLIENT_HPP
 
 #include "Webserv.hpp"
+#include "CGI.hpp"
 
 class CGI;
 

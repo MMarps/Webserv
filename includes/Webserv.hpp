@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
+/*   By: andrea <andrea@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/10 15:23:51 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/14 23:07:48 by andrea           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,12 @@
 # include <sys/stat.h>
 # include <sys/socket.h>
 # include <sys/select.h>
-# include <sys/epoll.h>
+# if defined(__linux__)
+#  include <sys/epoll.h>
+# elif defined(__APPLE__)
+#  include <sys/event.h>
+#  include <sys/time.h>
+# endif
 # include <ctime>
 # include <sys/wait.h>
 # include <signal.h>

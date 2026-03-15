@@ -52,8 +52,6 @@ bool	CGI::isCGI(const Request &req, const ServerConfig &server) {
 		return (false);
 
 	std::string	extension = req.getFileExtension();
-	if (extension.empty())
-		return (false);
 	
 	if (req.getIsLocation()) {
 		LocationConfig *location = req.getLocation();
@@ -88,12 +86,12 @@ void	CGI::freeEnv(char **env) {
 	delete[] env;
 }
 
-char	**CGI::vectorToEnv(std::vector<std::string> &env) {
+char	**CGI::vectorToEnv(const std::vector<std::string> &env) {
 	int		vecLen = env.size();
 	char	**envRet = new char*[vecLen + 1];
 	int		i = 0;
 	
-	for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++) {
+	for (std::vector<std::string>::const_iterator it = env.begin(); it != env.end(); it++) {
 		size_t	len = it->length() + 1;
 		envRet[i] = new char[len];
 		std::strcpy(envRet[i], it->c_str());

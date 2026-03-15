@@ -47,3 +47,8 @@ webserv
 guideline
 backup
 log
+
+# Local Docker setup
+Dockerfile
+docker-compose.yml
+.dockerignore
