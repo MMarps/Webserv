@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/12 14:32:12 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/15 16:45:07 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/15 18:14:31 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,13 +34,13 @@ void Request::parse(ServerConfig &server, Client *client, int code)
 	this->_index = server.index;
 	makeRequest(server, client);
 	// std::cout << *this << std::endl;
-	if (this->_isRedirection || (this->_location && this->_location->has_return))
+	if (this->_isRedirection || (this->_location
+			&& this->_location->has_return))
 	{
 		if (this->_isRedirection)
 			return ;
 		checkErrorPage(server);
-		return;
-
+		return ;
 	}
 	checkRequest();
 	finalLogger(client);
@@ -58,6 +58,15 @@ void Request::finalLogger(Client *c)
 		+ " parsed", c->getServerIdx());
 }
 
+bool isMethod(std::string method)
+{
+	if ((method == "GET" || method == "POST" || method == "DELETE" || method == "HEAD"))
+	{
+		return (true);
+	}
+	return (false);
+}
+
 void Request::makeRequest(ServerConfig &server, Client *c)
 {
 	bool	headerParsed;
@@ -66,6 +75,7 @@ void Request::makeRequest(ServerConfig &server, Client *c)
 	std::istringstream request(c->getHeader());
 	std::string line;
 	std::string bodyBuffer;
+	int lineCount = 0;
 	headerParsed = false;
 	while (getline(request, line))
 	{
@@ -74,8 +84,7 @@ void Request::makeRequest(ServerConfig &server, Client *c)
 			std::istringstream cut(line);
 			std::string res;
 			cut >> res;
-			if (res == "GET" || res == "POST" || res == "DELETE"
-				|| res == "HEAD")
+			if (lineCount == 0 && isMethod(res))
 				parseMethode(server, line);
 			else
 				parseAttribut(line);
@@ -118,22 +127,21 @@ void Request::prepareReq(ServerConfig &server)
 {
 	int	pathType;
 
+	std::string defPath = "/";
 	cutVariableToPath();
+	copyLocationRules(server, defPath);
 	copyLocationRules(server, this->_path);
-	if (!this->_isLocation)
-	{
-		if (this->_path != "/")
-			pathType = checkPathType(server, false, this->_path);
-		else
-			pathType = checkPathType(server, true, this->_path);
-	}
-	else
+	if (this->_isLocation)
 	{
 		pathType = SERVER_LOCATION;
 		makeLocationRules();
 		if (this->_location && this->_location->has_return)
 			return ;
 	}
+	if (this->_path != "/")
+		pathType = checkPathType(server, false, this->_path);
+	else
+		pathType = checkPathType(server, true, this->_path);
 	if (pathType == DIR_NO_SLASH || (pathType == SERVER_LOCATION
 			&& this->_path[this->_path.size() - 1] != '/'))
 	{
@@ -283,7 +291,7 @@ void Request::makeAllPathRules(ServerConfig &server)
 }
 
 void Request::accessFolder(std::string newCompletPath)
-{	
+{
 	if (this->_path != "/" && access(newCompletPath.c_str(), X_OK) != 0)
 	{
 		if (!verifFile(newCompletPath))
@@ -331,16 +339,17 @@ bool Request::verifFile(std::string path)
 			this->_code = 403;
 		else
 			this->_code = 500;
-		return false;
+		return (false);
 	}
-	return true;
+	return (true);
 }
 
 void Request::copyLocationRules(ServerConfig &server, std::string &folder)
 {
 	std::string formatPath;
 	formatPath = folder;
-	if (!formatPath.empty() && (formatPath[formatPath.size() - 1] == '/' && formatPath.size() != 1))
+	if (!formatPath.empty() && (formatPath[formatPath.size() - 1] == '/'
+			&& formatPath.size() != 1))
 		formatPath.erase(formatPath.size() - 1);
 	for (size_t i = 0; i < server.locations.size(); ++i)
 	{
@@ -489,7 +498,7 @@ void Request::parseAttribut(std::string &line)
 		this->_httpHeaders["Content-Length"] = res;
 	}
 	else if (!headerName.empty())
-	{ 
+	{
 		std::string headerValue;
 		getline(cut, headerValue);
 		if (!headerValue.empty() && headerValue[0] == ' ')
@@ -516,7 +525,10 @@ void Request::checkRequest()
 		return ;
 	if (this->_methode.empty() || this->_path.empty() || this->_version.empty()
 		|| this->_host.empty())
+	{
 		this->_code = 400;
+		return ;
+	}
 	verifFile(this->_completPath);
 }
 
