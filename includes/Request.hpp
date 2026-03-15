@@ -6,7 +6,7 @@
 /*   By: jle-doua <jle-doua@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/08 13:31:18 by jle-doua          #+#    #+#             */
-/*   Updated: 2026/03/11 16:49:26 by jle-doua         ###   ########.fr       */
+/*   Updated: 2026/03/15 16:25:19 by jle-doua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ private:
 	std::string _host;
 	std::string _cgiPath;
 	std::string _newPath;
+	std::string _referer;
 	LocationConfig *_location;
 	bool _isLocation;
 	bool _isPost;
@@ -50,6 +51,7 @@ private:
 	bool _isRedirection;
 	bool _urlIsMessage;
 	bool _isCgi;
+	bool _haveReferer;
 	int _code;
 	std::vector<std::string> _index;
 	std::vector<std::string> _cutPath;
