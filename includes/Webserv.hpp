@@ -3,13 +3,12 @@
 /*                                                        :::      ::::::::   */
 /*   Webserv.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: andrea <andrea@student.42.fr>              +#+  +:+       +#+        */
+/*   By: arotondo <arotondo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/28 17:45:47 by mmarpaul          #+#    #+#             */
-/*   Updated: 2026/03/14 23:07:48 by andrea           ###   ########.fr       */
+/*   Updated: 2026/03/16 12:20:59 by arotondo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #ifndef WEBSERV_HPP
 # define WEBSERV_HPP
@@ -24,12 +23,8 @@
 # include <sys/stat.h>
 # include <sys/socket.h>
 # include <sys/select.h>
-# if defined(__linux__)
-#  include <sys/epoll.h>
-# elif defined(__APPLE__)
-#  include <sys/event.h>
-#  include <sys/time.h>
-# endif
+# include <sys/epoll.h>
+# include <sys/time.h>
 # include <ctime>
 # include <sys/wait.h>
 # include <signal.h>
